@@ -91,3 +91,11 @@ export const clearDoctorMrAssignments = async (doctorId: string) => {
   await repo.clearDoctorMrAssignments(doctorId);
   return { message: 'All MR assignments cleared for doctor' };
 };
+
+export const resetUserPassword = async (userId: string, newPassword: string) => {
+  const user = await repo.findUserById(userId);
+  if (!user) throw notFound('User not found');
+  if (user.role === 'SUPER_ADMIN') throw badRequest('Cannot reset password of a super admin');
+  const hashed = await hashPassword(newPassword);
+  return repo.updateUserPassword(userId, hashed);
+};

@@ -30,3 +30,6 @@ export const toggleUserStatus = (userId: string) =>
 
 export const clearDoctorMrAssignments = (doctorId: string) =>
   api.post(`/admin/doctors/${doctorId}/clear-mr`).then((r) => r.data);
+
+export const resetUserPassword = (userId: string, newPassword: string) =>
+  api.post(`/admin/users/${userId}/reset-password`, { newPassword }).then((r) => r.data);

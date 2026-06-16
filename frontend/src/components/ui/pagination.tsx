@@ -47,39 +47,39 @@ export const Pagination = ({ page, totalPages, total, onPageChange, className }:
   };
 
   return (
-    <div className={cn('flex flex-col sm:flex-row items-center justify-between gap-4', className)}>
+    <div className={cn('flex flex-col sm:flex-row items-center justify-between gap-2', className)}>
       {total !== undefined && (
         <p className="text-sm text-muted-foreground">
           <span className="font-medium">{total}</span> total results
         </p>
       )}
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-0.5">
         <Button
           variant="outline"
           size="sm"
           disabled={page <= 1}
           onClick={() => goToPage(1)}
-          className="h-9 w-9 p-0 rounded-lg hidden sm:inline-flex"
+          className="h-7 w-7 p-0 rounded-lg hidden sm:inline-flex"
           title="First page"
         >
-          <ChevronsLeft className="h-4 w-4" />
+          <ChevronsLeft className="h-3.5 w-3.5" />
         </Button>
         <Button
           variant="outline"
           size="sm"
           disabled={page <= 1}
           onClick={() => goToPage(page - 1)}
-          className="h-9 px-3 rounded-lg"
+          className="h-7 px-2 rounded-lg"
         >
-          <ChevronLeft className="h-4 w-4 sm:mr-1" />
-          <span className="hidden sm:inline">Prev</span>
+          <ChevronLeft className="h-3.5 w-3.5 sm:mr-1" />
+          <span className="hidden sm:inline text-xs">Prev</span>
         </Button>
 
         {getVisiblePages().map((p, i) =>
           p === 'ellipsis' ? (
-            <span key={`e-${i}`} className="w-9 h-9 flex items-center justify-center text-sm text-muted-foreground">
+            <span key={`e-${i}`}           className="w-7 h-7 flex items-center justify-center text-xs text-muted-foreground">
               ...
             </span>
           ) : (
@@ -87,7 +87,7 @@ export const Pagination = ({ page, totalPages, total, onPageChange, className }:
               key={p}
               onClick={() => goToPage(p)}
               className={cn(
-                'relative h-9 min-w-[2.25rem] rounded-lg text-sm font-medium transition-all px-2',
+                'relative h-7 min-w-[1.75rem] rounded-lg text-xs font-medium transition-all px-1.5',
                 p === page
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -103,24 +103,24 @@ export const Pagination = ({ page, totalPages, total, onPageChange, className }:
           size="sm"
           disabled={page >= totalPages}
           onClick={() => goToPage(page + 1)}
-          className="h-9 px-3 rounded-lg"
+          className="h-7 px-2 rounded-lg"
         >
-          <span className="hidden sm:inline">Next</span>
-          <ChevronRight className="h-4 w-4 sm:ml-1" />
+          <span className="hidden sm:inline text-xs">Next</span>
+          <ChevronRight className="h-3.5 w-3.5 sm:ml-1" />
         </Button>
         <Button
           variant="outline"
           size="sm"
           disabled={page >= totalPages}
           onClick={() => goToPage(totalPages)}
-          className="h-9 w-9 p-0 rounded-lg hidden sm:inline-flex"
+          className="h-7 w-7 p-0 rounded-lg hidden sm:inline-flex"
           title="Last page"
         >
-          <ChevronsRight className="h-4 w-4" />
+          <ChevronsRight className="h-3.5 w-3.5" />
         </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             Page {page} of {totalPages || 1}
           </span>

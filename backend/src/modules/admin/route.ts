@@ -15,6 +15,7 @@ router.get('/users/:userId', adminController.getUser);
 router.patch('/users/:userId/status', adminController.toggleUserStatus);
 router.delete('/doctors/:userId', adminController.deleteDoctor);
 router.post('/doctors/:userId/reset-password', adminController.resetDoctorPassword);
+router.post('/users/:userId/reset-password', adminController.resetUserPassword);
 router.get('/subscriptions', adminController.listSubscriptions);
 router.patch('/subscriptions/:id', adminController.updateSubscription);
 

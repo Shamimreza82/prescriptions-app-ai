@@ -246,11 +246,14 @@ useAuthGuard();  // Redirects to /auth/login if no token in localStorage
 - Use `cn()` utility from `@/lib/utils` for conditional classes
 - Dark mode via `dark:` prefix and `theme-provider.tsx`
 
-## Super Admin
-- **Login:** `admin@presmanage.com` / `admin123`
+## Demo Credentials
 
-## Medical Representative (Demo)
-- **Login:** `mr@example.com` / `mr123`
+| Role | Email | Password |
+|---|---|---|
+| **Super Admin** | `admin@presmanage.com` | `admin123` |
+| **Doctor** | `doctor@example.com` | `doctor123` |
+| **Medical Representative** | `mr@example.com` | `mr123` |
+| **Receptionist** | `receptionist@example.com` | `rec123` |
 - **Assigned to:** Dr. John Doe (seeded doctor)
 - **Dashboard:** `/dashboard/mr`
 - **Permissions:** View-only — can see assigned doctors' prescriptions and patients

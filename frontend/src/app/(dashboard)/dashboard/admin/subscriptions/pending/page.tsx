@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { usePendingSubscriptions, useConfirmSubscription, useRejectSubscription } from '@/features/plans/hooks';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -12,23 +13,40 @@ import { Loader2, CheckCircle2, ChevronDown, CheckCircle, XCircle } from 'lucide
 
 function Dropdown({ onConfirm, onReject, disabled }: { onConfirm: () => void; onReject: () => void; disabled: boolean }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (
+        buttonRef.current && !buttonRef.current.contains(e.target as Node) &&
+        menuRef.current && !menuRef.current.contains(e.target as Node)
+      ) setOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  useEffect(() => {
+    if (open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        right: window.innerWidth - rect.right,
+        zIndex: 9999,
+      });
+    }
+  }, [open]);
+
   return (
-    <div className="relative" ref={ref}>
-      <Button size="sm" onClick={() => setOpen(!open)} disabled={disabled} className="gap-1">
+    <>
+      <Button ref={buttonRef} size="sm" onClick={() => setOpen(!open)} disabled={disabled} className="gap-1">
         Actions <ChevronDown className="h-3 w-3" />
       </Button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-lg py-1 overflow-hidden">
+      {open && createPortal(
+        <div ref={menuRef} className="w-44 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-lg py-1 overflow-hidden" style={menuStyle}>
           <button
             onClick={() => { setOpen(false); onConfirm(); }}
             className="flex items-center gap-2 w-full px-3.5 py-2.5 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-green-600 dark:text-green-400"
@@ -41,9 +59,10 @@ function Dropdown({ onConfirm, onReject, disabled }: { onConfirm: () => void; on
           >
             <XCircle className="h-4 w-4" /> Reject
           </button>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
@@ -132,7 +151,7 @@ export default function PendingSubscriptionsPage() {
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(sub.createdAt).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="text-right relative">
+                    <TableCell className="text-right">
                       <Dropdown
                         onConfirm={() => setConfirmDialog({ id: sub.id, action: 'confirm', doctorName: sub.doctor?.fullName, planName: sub.plan?.name })}
                         onReject={() => setConfirmDialog({ id: sub.id, action: 'reject', doctorName: sub.doctor?.fullName, planName: sub.plan?.name })}

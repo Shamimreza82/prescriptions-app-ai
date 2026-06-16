@@ -2,16 +2,39 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAdminUser } from '@/features/dashboard/hooks';
+import { useState } from 'react';
+import { useAdminUser, useResetUserPassword } from '@/features/dashboard/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Mail, Shield, Calendar, Clock, CheckCircle, XCircle, User, Building2, Stethoscope, FileText, Pill, Syringe, CreditCard, Activity } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ArrowLeft, Mail, Shield, Calendar, Clock, CheckCircle, XCircle, User, Building2, Stethoscope, FileText, Pill, Syringe, CreditCard, Activity, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: user, isLoading } = useAdminUser(id);
+  const [resetDialog, setResetDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const resetPassword = useResetUserPassword();
+
+  const handleResetPassword = () => {
+    if (!newPassword || newPassword.length < 6) return;
+    if (newPassword !== confirmPassword) return;
+    resetPassword.mutate(
+      { userId: id, newPassword },
+      {
+        onSuccess: () => {
+          setResetDialog(false);
+          setNewPassword('');
+          setConfirmPassword('');
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -265,6 +288,83 @@ export default function AdminUserDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Admin Actions */}
+      {user.role !== 'SUPER_ADMIN' && (
+        <Card className="premium-card border-red-200 dark:border-red-900/50">
+          <CardHeader><CardTitle className="text-base flex items-center gap-2 text-red-600 dark:text-red-400"><KeyRound className="h-4 w-4" /> Admin Actions</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Reset this user's password. They will need to use the new password on next login.</p>
+            <Button variant="destructive" size="sm" onClick={() => setResetDialog(true)} className="rounded-lg">
+              <KeyRound className="h-4 w-4 mr-1.5" /> Reset Password
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={resetDialog} onOpenChange={(v) => { if (!v) { setResetDialog(false); setNewPassword(''); setConfirmPassword(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for <strong>{user?.email}</strong>. The user will need to use this password to log in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">New Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="premium-input w-full h-11 px-4 pr-11"
+                  placeholder="Min 6 characters"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {newPassword.length > 0 && newPassword.length < 6 && (
+                <p className="text-xs text-red-500 mt-1">Password must be at least 6 characters</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Confirm Password</label>
+              <div className="relative">
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="premium-input w-full h-11 px-4 pr-11"
+                  placeholder="Re-enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+                <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+              )}
+            </div>
+            <Button
+              className="w-full h-11"
+              disabled={!newPassword || newPassword.length < 6 || newPassword !== confirmPassword || resetPassword.isPending}
+              onClick={handleResetPassword}
+            >
+              {resetPassword.isPending ? 'Resetting...' : 'Reset Password'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Links */}
       {hasDoctor && (

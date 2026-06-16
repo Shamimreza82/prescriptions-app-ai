@@ -41,6 +41,12 @@ export const resetDoctorPassword = catchAsync(async (req: AuthRequest, res) => {
   sendSuccess(res, { message: 'Password reset successfully' });
 });
 
+export const resetUserPassword = catchAsync(async (req: AuthRequest, res) => {
+  const { newPassword } = req.body;
+  await adminService.resetUserPassword(req.params.userId as string, newPassword);
+  sendSuccess(res, { message: 'Password reset successfully' });
+});
+
 export const listSubscriptions = catchAsync(async (req: AuthRequest, res) => {
   const [subscriptions, total] = await adminService.listSubscriptions(req.query);
   const page = parseInt(req.query.page as string) || 1;

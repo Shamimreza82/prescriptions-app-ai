@@ -87,3 +87,18 @@ export const useToggleUserStatus = () => {
     },
   });
 };
+
+export const useResetUserPassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, newPassword }: { userId: string; newPassword: string }) =>
+      dashboardApi.resetUserPassword(userId, newPassword),
+    onSuccess: (data) => {
+      toast.success(data.message || 'Password reset successfully');
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.adminUsers });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to reset password');
+    },
+  });
+};
