@@ -1,6 +1,7 @@
 import { NextFunction, Response } from 'express';
 import { AuthRequest } from '../../types/express';
 import { sendSuccess, sendPaginated } from '../../utils/apiResponse';
+import { createAuditLog } from '../../utils/auditLogger';
 import * as subscriptionService from './service';
 
 export const getDoctorDashboard = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -70,9 +71,26 @@ export const getAdminSubscriptions = async (req: AuthRequest, res: Response, nex
   }
 };
 
+export const deleteLogs = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { startDate, endDate } = req.query as { startDate: string; endDate: string };
+    const result = await subscriptionService.deleteActivityLogs(startDate, endDate);
+    sendSuccess(res, { deleted: result.count }, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const activate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const sub = await subscriptionService.activateSubscription(req.user!.doctorId!, req.body.planId);
+    await createAuditLog({
+      userId: req.user!.userId,
+      action: 'CREATE',
+      entity: 'Subscription',
+      entityId: sub.id,
+      details: { planId: req.body.planId, doctorId: req.user!.doctorId },
+    });
     sendSuccess(res, sub);
   } catch (error) {
     next(error);

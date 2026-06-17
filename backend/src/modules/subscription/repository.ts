@@ -60,7 +60,20 @@ export const activatePlan = (doctorId: string, planId: string, patientLimit: num
     include: { plan: true },
   });
 
-export const getAuditLogs = (pagination: { skip: number; limit: number; search: string }) => {
+export const deleteAuditLogs = (startDate: string, endDate: string) => {
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+  return db.auditLog.deleteMany({
+    where: {
+      createdAt: {
+        gte: new Date(startDate),
+        lte: end,
+      },
+    },
+  });
+};
+
+export const getAuditLogs = (pagination: { skip: number; limit: number; search: string; dateFrom?: string; dateTo?: string }) => {
   const where: any = {};
   if (pagination.search) {
     where.OR = [
@@ -68,6 +81,15 @@ export const getAuditLogs = (pagination: { skip: number; limit: number; search: 
       { entity: { contains: pagination.search, mode: 'insensitive' } },
       { user: { email: { contains: pagination.search, mode: 'insensitive' } } },
     ];
+  }
+  if (pagination.dateFrom || pagination.dateTo) {
+    where.createdAt = {};
+    if (pagination.dateFrom) where.createdAt.gte = new Date(pagination.dateFrom);
+    if (pagination.dateTo) {
+      const end = new Date(pagination.dateTo);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
   }
   return Promise.all([
     db.auditLog.findMany({

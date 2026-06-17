@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../../config/database';
+import type { Prisma } from '@prisma/client';
 import { CreatePrescriptionInput, UpdatePrescriptionInput } from './types';
 import { PaginationParams } from '../../utils/pagination';
 
@@ -84,7 +85,7 @@ export const updatePrescription = (
   data: UpdatePrescriptionInput & { doctorId: string }
 ) => {
   const { medicines, investigations, followUpDate, ...rest } = data;
-  return db.$transaction(async (tx) => {
+  return db.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.medicine.deleteMany({ where: { prescriptionId: id } });
     await tx.investigation.deleteMany({ where: { prescriptionId: id } });
     return tx.prescription.update({

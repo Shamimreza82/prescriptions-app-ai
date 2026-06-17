@@ -47,11 +47,26 @@ export const useAdminPatients = (params?: { page?: number; limit?: number; searc
     queryFn: () => dashboardApi.getAdminPatients(params),
   });
 
-export const useAdminLogs = (params?: { page?: number; limit?: number; search?: string }) =>
+export const useAdminLogs = (params?: { page?: number; limit?: number; search?: string; dateFrom?: string; dateTo?: string }) =>
   useQuery({
     queryKey: [...dashboardKeys.admin, 'logs', params],
     queryFn: () => dashboardApi.getAdminLogs(params),
   });
+
+export const useDeleteAdminLogs = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ startDate, endDate }: { startDate: string; endDate: string }) =>
+      dashboardApi.deleteAdminLogs(startDate, endDate),
+    onSuccess: (data) => {
+      toast.success(`${data.data.deleted} log(s) deleted successfully`);
+      queryClient.invalidateQueries({ queryKey: [...dashboardKeys.admin, 'logs'] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to delete logs');
+    },
+  });
+};
 
 export const useAdminUser = (userId: string) =>
   useQuery({

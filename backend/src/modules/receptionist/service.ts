@@ -3,6 +3,7 @@ import { getPaginationParams } from '../../utils/pagination';
 import { db } from '../../config/database';
 import * as repo from './repository';
 import { Request } from 'express';
+import type { Prisma } from '@prisma/client';
 
 const getReceptionistOrThrow = async (userId: string) => {
   const rec = await repo.findReceptionistByUserId(userId);
@@ -29,7 +30,7 @@ export const getDashboardStats = async (userId: string) => {
   ]);
 
   const monthlyCounts = new Array(12).fill(0);
-  prescriptions.forEach((rx) => {
+  prescriptions.forEach((rx: { createdAt: Date }) => {
     const m = new Date(rx.createdAt).getMonth();
     monthlyCounts[m]++;
   });
@@ -139,7 +140,7 @@ export const createReceptionist = async (input: {
 
   const hashed = await import('../../utils/password').then((m) => m.hashPassword(input.password));
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     const user = await tx.user.create({
       data: {
         email: input.email,
@@ -187,7 +188,7 @@ export const createReceptionistByDoctor = async (doctorUserId: string, input: {
 
   const hashed = await import('../../utils/password').then((m) => m.hashPassword(input.password));
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     const user = await tx.user.create({
       data: {
         email: input.email,

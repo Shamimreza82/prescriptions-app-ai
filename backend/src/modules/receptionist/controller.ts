@@ -87,6 +87,13 @@ export const getTodayAppointments = async (req: AuthRequest, res: Response, next
 export const createAppointment = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const apt = await receptionistService.createAppointmentForDoctor(req.user!.userId, req.body);
+    await createAuditLog({
+      userId: req.user!.userId,
+      action: 'CREATE',
+      entity: 'Appointment',
+      entityId: apt.id,
+      details: { patientId: apt.patientId, date: apt.date },
+    });
     sendSuccess(res, apt, 201);
   } catch (error) {
     next(error);
@@ -96,6 +103,7 @@ export const createAppointment = async (req: AuthRequest, res: Response, next: N
 export const updateAppointment = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const apt = await receptionistService.updateAppointmentForDoctor(req.user!.userId, req.params.id as string, req.body);
+    await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Appointment', entityId: apt.id });
     sendSuccess(res, apt);
   } catch (error) {
     next(error);
@@ -147,6 +155,13 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
 export const createReceptionist = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await receptionistService.createReceptionist(req.body);
+    await createAuditLog({
+      userId: req.user!.userId,
+      action: 'CREATE',
+      entity: 'Receptionist',
+      entityId: result.id,
+      details: { email: result.email },
+    });
     sendSuccess(res, result, 201);
   } catch (error) {
     next(error);
@@ -156,6 +171,7 @@ export const createReceptionist = async (req: AuthRequest, res: Response, next: 
 export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await receptionistService.deleteReceptionist(req.params.id as string);
+    await createAuditLog({ userId: req.user!.userId, action: 'DELETE', entity: 'Receptionist', entityId: req.params.id as string });
     sendSuccess(res, result);
   } catch (error) {
     next(error);
@@ -176,6 +192,13 @@ export const getMyReceptionists = async (req: AuthRequest, res: Response, next: 
 export const createReceptionistByDoctor = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await receptionistService.createReceptionistByDoctor(req.user!.userId, req.body);
+    await createAuditLog({
+      userId: req.user!.userId,
+      action: 'CREATE',
+      entity: 'Receptionist',
+      entityId: result.id,
+      details: { email: result.email },
+    });
     sendSuccess(res, result, 201);
   } catch (error) {
     next(error);
@@ -185,6 +208,7 @@ export const createReceptionistByDoctor = async (req: AuthRequest, res: Response
 export const deleteMyReceptionist = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await receptionistService.deleteMyReceptionist(req.user!.userId, req.params.id as string);
+    await createAuditLog({ userId: req.user!.userId, action: 'DELETE', entity: 'Receptionist', entityId: req.params.id as string });
     sendSuccess(res, result);
   } catch (error) {
     next(error);

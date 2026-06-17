@@ -111,12 +111,13 @@ export const useRecPrescription = (id: string) =>
 
 // Doctor-specific hooks for managing own receptionists
 export const doctorRecKeys = {
-  list: ['doctor', 'receptionists', 'list'] as const,
+  all: ['doctor', 'receptionists'] as const,
+  list: (params?: Record<string, unknown>) => ['doctor', 'receptionists', 'list', params] as const,
 };
 
 export const useMyReceptionists = (params?: { page?: number; limit?: number; search?: string }) =>
   useQuery({
-    queryKey: [...doctorRecKeys.list, params],
+    queryKey: doctorRecKeys.list(params as Record<string, unknown>),
     queryFn: () => receptionistApi.getMyReceptionists(params),
   });
 
@@ -125,7 +126,7 @@ export const useCreateReceptionistByDoctor = () => {
   return useMutation({
     mutationFn: receptionistApi.createReceptionistByDoctor,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: doctorRecKeys.list });
+      qc.invalidateQueries();
       toast.success('Receptionist created successfully');
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to create receptionist'),
@@ -137,7 +138,7 @@ export const useDeleteReceptionistByDoctor = () => {
   return useMutation({
     mutationFn: receptionistApi.deleteReceptionistByDoctor,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: doctorRecKeys.list });
+      qc.invalidateQueries();
       toast.success('Receptionist deleted successfully');
     },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to delete receptionist'),

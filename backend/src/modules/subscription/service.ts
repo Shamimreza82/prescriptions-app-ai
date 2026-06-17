@@ -3,6 +3,7 @@ import { db } from '../../config/database';
 import { Request } from 'express';
 import { badRequest } from '../../utils/errors';
 import * as repo from './repository';
+import type { Prisma } from '@prisma/client';
 
 export const getDoctorDashboardStats = async (doctorId: string) => {
   const [totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, monthlyData] =
@@ -14,11 +15,11 @@ export const getAdminDashboardStats = async () => {
   const [totalDoctors, activeDoctors, totalPatients, totalPrescriptions, revenue, planDist, statusDist, pendingCount] =
     await repo.getAdminStats();
 
-  const planIds = planDist.map((p) => p.planId);
+  const planIds = planDist.map((p: { planId: string }) => p.planId);
   const plans = await db.plan.findMany({ where: { id: { in: planIds } }, select: { id: true, name: true } });
-  const planMap = new Map(plans.map((p) => [p.id, p.name]));
+  const planMap = new Map(plans.map((p: { id: string; name: string }) => [p.id, p.name]));
 
-  const planDistribution = planDist.map((p) => ({
+  const planDistribution = planDist.map((p: { planId: string; _count: number }) => ({
     plan: planMap.get(p.planId) || p.planId,
     planId: p.planId,
     _count: p._count,
@@ -42,6 +43,12 @@ export const getDoctorSubscription = (doctorId: string) =>
 export const getActivityLogs = (query: Request['query']) => {
   const pagination = getPaginationParams(query);
   return repo.getAuditLogs(pagination);
+};
+
+export const deleteActivityLogs = (startDate: string, endDate: string) => {
+  if (!startDate || !endDate) throw badRequest('startDate and endDate are required');
+  if (new Date(endDate) < new Date(startDate)) throw badRequest('endDate must be after startDate');
+  return repo.deleteAuditLogs(startDate, endDate);
 };
 
 export const getAdminDoctors = (query: Request['query']) => {

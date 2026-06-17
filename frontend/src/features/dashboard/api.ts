@@ -19,8 +19,11 @@ export const getAdminSubscriptions = (params?: { page?: number; limit?: number; 
 export const getAdminPatients = (params?: { page?: number; limit?: number; search?: string }) =>
   api.get('/stats/admin/patients', { params }).then((r) => r.data);
 
-export const getAdminLogs = (params?: { page?: number; limit?: number; search?: string }) =>
+export const getAdminLogs = (params?: { page?: number; limit?: number; search?: string; dateFrom?: string; dateTo?: string }) =>
   api.get('/stats/logs', { params }).then((r) => r.data);
+
+export const deleteAdminLogs = (startDate: string, endDate: string) =>
+  api.delete('/stats/logs', { params: { startDate, endDate } }).then((r) => r.data);
 
 export const getAdminUser = (userId: string) =>
   api.get<{ success: boolean; data: any }>(`/admin/users/${userId}`).then((r) => r.data.data);

@@ -16,6 +16,7 @@ router.get('/admin/subscriptions', authorize('SUPER_ADMIN'), subscriptionControl
 router.get('/admin/patients', authorize('SUPER_ADMIN'), subscriptionController.getAdminPatients);
 router.get('/my', authorize('DOCTOR'), subscriptionController.getMySubscription);
 router.get('/logs', authorize('SUPER_ADMIN'), subscriptionController.getLogs);
+router.delete('/logs', authorize('SUPER_ADMIN'), subscriptionController.deleteLogs);
 router.post('/activate', authorize('DOCTOR'), validateBody(z.object({ planId: z.string().uuid() })), subscriptionController.activate);
 
 export default router;

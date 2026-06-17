@@ -1,6 +1,7 @@
 import { AuthRequest } from '../../types/express';
 import { sendSuccess, sendPaginated } from '../../utils/apiResponse';
 import { catchAsync } from '../../utils/catchAsync';
+import { createAuditLog } from '../../utils/auditLogger';
 import * as adminService from './service';
 
 export const getDashboardStats = catchAsync(async (_req: AuthRequest, res) => {
@@ -17,33 +18,39 @@ export const listDoctors = catchAsync(async (req: AuthRequest, res) => {
 
 export const approveDoctor = catchAsync(async (req: AuthRequest, res) => {
   await adminService.approveDoctor(req.params.userId as string);
+    await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.userId as string, details: { status: 'approved' } });
   sendSuccess(res, { message: 'Doctor approved successfully' });
 });
 
 export const toggleDoctorStatus = catchAsync(async (req: AuthRequest, res) => {
   await adminService.toggleDoctorStatus(req.params.userId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.userId as string, details: { action: 'toggle_status' } });
   sendSuccess(res, { message: 'Doctor status updated' });
 });
 
 export const toggleUserStatus = catchAsync(async (req: AuthRequest, res) => {
   const user = await adminService.toggleUserStatus(req.params.userId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'User', entityId: req.params.userId as string, details: { isActive: user.isActive } });
   sendSuccess(res, { message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully` });
 });
 
 export const deleteDoctor = catchAsync(async (req: AuthRequest, res) => {
   await adminService.deleteDoctor(req.params.userId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'DELETE', entity: 'Doctor', entityId: req.params.userId as string });
   sendSuccess(res, { message: 'Doctor deleted successfully' });
 });
 
 export const resetDoctorPassword = catchAsync(async (req: AuthRequest, res) => {
   const { newPassword } = req.body;
   await adminService.resetDoctorPassword(req.params.userId as string, newPassword);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.userId as string, details: { action: 'reset_password' } });
   sendSuccess(res, { message: 'Password reset successfully' });
 });
 
 export const resetUserPassword = catchAsync(async (req: AuthRequest, res) => {
   const { newPassword } = req.body;
   await adminService.resetUserPassword(req.params.userId as string, newPassword);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'User', entityId: req.params.userId as string, details: { action: 'reset_password' } });
   sendSuccess(res, { message: 'Password reset successfully' });
 });
 
@@ -56,6 +63,7 @@ export const listSubscriptions = catchAsync(async (req: AuthRequest, res) => {
 
 export const updateSubscription = catchAsync(async (req: AuthRequest, res) => {
   const sub = await adminService.updateSubscriptionPlan(req.params.id as string, req.body);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Subscription', entityId: req.params.id as string, details: req.body });
   sendSuccess(res, sub);
 });
 
@@ -71,16 +79,19 @@ export const getPlan = catchAsync(async (req: AuthRequest, res) => {
 
 export const createPlan = catchAsync(async (req: AuthRequest, res) => {
   const plan = await adminService.createPlan(req.body);
+  await createAuditLog({ userId: req.user!.userId, action: 'CREATE', entity: 'Plan', entityId: plan.id, details: { name: plan.name } });
   sendSuccess(res, plan, 201);
 });
 
 export const updatePlan = catchAsync(async (req: AuthRequest, res) => {
   const plan = await adminService.editPlan(req.params.id as string, req.body);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Plan', entityId: req.params.id as string, details: req.body });
   sendSuccess(res, plan);
 });
 
 export const deletePlan = catchAsync(async (req: AuthRequest, res) => {
   await adminService.removePlan(req.params.id as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'DELETE', entity: 'Plan', entityId: req.params.id as string });
   sendSuccess(res, { message: 'Plan deleted successfully' });
 });
 
@@ -91,5 +102,6 @@ export const getUser = catchAsync(async (req: AuthRequest, res) => {
 
 export const clearDoctorMrAssignments = catchAsync(async (req: AuthRequest, res) => {
   const result = await adminService.clearDoctorMrAssignments(req.params.doctorId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'clear_mr_assignments' } });
   sendSuccess(res, result);
 });

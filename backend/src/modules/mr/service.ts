@@ -101,13 +101,14 @@ export const getAvailableDoctors = () => repo.findDoctorsForAssignment();
 export const getDashboardStats = async (userId: string) => {
   const mr = await repo.findMrByUserId(userId);
   if (!mr) throw notFound('MR profile not found');
-  const doctorIds = mr.doctors.map((d) => d.doctorId);
+  type MrDoctorAssignment = typeof mr.doctors[number];
+  const doctorIds = mr.doctors.map((d: MrDoctorAssignment) => d.doctorId);
   const totalDoctors = doctorIds.length;
   const todaysPrescriptions = doctorIds.length > 0
     ? await repo.getTodaysPrescriptionsByDoctors(doctorIds)
     : 0;
   const totalPrescriptions = mr.doctors.reduce(
-    (sum, d) => sum + (d.doctor._count?.prescriptions || 0), 0
+    (sum: number, d: MrDoctorAssignment) => sum + (d.doctor._count?.prescriptions || 0), 0
   );
   return { totalDoctors, todaysPrescriptions, totalPrescriptions };
 };
@@ -115,9 +116,9 @@ export const getDashboardStats = async (userId: string) => {
 export const getDoctorPrescriptionById = async (mrUserId: string, doctorId: string, prescriptionId: string) => {
   const mr = await repo.findMrByUserId(mrUserId);
   if (!mr) throw notFound('MR profile not found');
-  const assigned = mr.doctors.some((d) => d.doctorId === doctorId);
+  const assigned = mr.doctors.some((d: { doctorId: string }) => d.doctorId === doctorId);
   if (!assigned) throw badRequest('Doctor is not assigned to you');
-  const doctorIds = mr.doctors.map((d) => d.doctorId);
+  const doctorIds = mr.doctors.map((d: { doctorId: string }) => d.doctorId);
   const rx = await repo.findPrescriptionForMr(prescriptionId, doctorIds);
   if (!rx) throw notFound('Prescription not found');
   return rx;
