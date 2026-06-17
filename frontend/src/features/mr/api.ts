@@ -21,7 +21,7 @@ export const getDoctorPrescriptionPdfUrl = (doctorId: string, prescriptionId: st
 export const getAvailableDoctors = () =>
   api.get('/mr/available-doctors').then((r) => r.data.data);
 
-export const getMrs = (params?: { page?: number; limit?: number; search?: string }) =>
+export const getMrs = (params?: { page?: number; limit?: number; search?: string; status?: string; verified?: string; role?: string }) =>
   api.get('/mr', { params }).then((r) => r.data);
 
 export const getMrById = (id: string) =>

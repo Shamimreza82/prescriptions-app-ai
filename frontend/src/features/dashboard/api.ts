@@ -10,7 +10,7 @@ export const getAdminDashboard = () =>
 export const getAdminDoctors = (params?: { page?: number; limit?: number; search?: string }) =>
   api.get('/stats/admin/doctors', { params }).then((r) => r.data);
 
-export const getAdminUsers = (params?: { page?: number; limit?: number; search?: string }) =>
+export const getAdminUsers = (params?: { page?: number; limit?: number; search?: string; status?: string; verified?: string; role?: string }) =>
   api.get('/stats/admin/users', { params }).then((r) => r.data);
 
 export const getAdminSubscriptions = (params?: { page?: number; limit?: number; search?: string; status?: string; planId?: string }) =>

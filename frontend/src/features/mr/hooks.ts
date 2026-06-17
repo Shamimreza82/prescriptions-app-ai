@@ -33,7 +33,7 @@ export const useDoctorPrescriptions = (doctorId: string, params?: { page?: numbe
     enabled: !!doctorId,
   });
 
-export const useMrs = (params?: { page?: number; limit?: number; search?: string }) =>
+export const useMrs = (params?: { page?: number; limit?: number; search?: string; status?: string; verified?: string; role?: string }) =>
   useQuery({
     queryKey: [...mrKeys.mrs, params],
     queryFn: () => mrApi.getMrs(params),

@@ -22,7 +22,12 @@ export const getMrById = async (id: string) => {
 
 export const getAllMrs = (query: Request['query']) => {
   const pagination = getPaginationParams(query);
-  return repo.findAllMrs(pagination);
+  const filters = {
+    status: query.status as string | undefined,
+    verified: query.verified as string | undefined,
+    role: query.role as string | undefined,
+  };
+  return repo.findAllMrs(pagination, filters);
 };
 
 export const createMr = async (input: CreateMrInput) => {

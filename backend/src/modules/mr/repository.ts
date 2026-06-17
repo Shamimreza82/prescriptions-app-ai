@@ -42,20 +42,27 @@ export const findMrByEmail = (email: string) =>
     include: { mr: true },
   });
 
-export const findAllMrs = (pagination: PaginationParams) => {
+export const findAllMrs = (pagination: PaginationParams, filters: { status?: string; verified?: string; role?: string } = {}) => {
   const where: any = {};
   if (pagination.search) {
     where.OR = [
       { fullName: { contains: pagination.search, mode: 'insensitive' } },
+      { phone: { contains: pagination.search, mode: 'insensitive' } },
+      { user: { email: { contains: pagination.search, mode: 'insensitive' } } },
     ];
   }
+  if (filters.status === 'active') where.user = { ...where.user, isActive: true };
+  if (filters.status === 'suspended') where.user = { ...where.user, isActive: false };
+  if (filters.verified === 'verified') where.user = { ...where.user, isVerified: true };
+  if (filters.verified === 'unverified') where.user = { ...where.user, isVerified: false };
+  if (filters.role) where.user = { ...where.user, role: filters.role };
   return Promise.all([
     db.mr.findMany({
       where,
       skip: pagination.skip,
       take: pagination.limit,
       include: {
-        user: { select: { id: true, email: true, isActive: true, createdAt: true } },
+        user: { select: { id: true, email: true, isActive: true, isVerified: true, role: true, createdAt: true } },
         _count: { select: { doctors: true } },
         doctors: {
           include: {

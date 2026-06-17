@@ -133,13 +133,18 @@ export const getAllDoctorsForAdmin = (pagination: { skip: number; limit: number;
   ] as const);
 };
 
-export const getAllUsers = (pagination: { skip: number; limit: number; search: string }) => {
+export const getAllUsers = (pagination: { skip: number; limit: number; search: string }, filters: { status?: string; verified?: string; role?: string } = {}) => {
   const where: any = {};
   if (pagination.search) {
     where.OR = [
       { email: { contains: pagination.search, mode: 'insensitive' } },
     ];
   }
+  if (filters.status === 'active') where.isActive = true;
+  if (filters.status === 'suspended') where.isActive = false;
+  if (filters.verified === 'verified') where.isVerified = true;
+  if (filters.verified === 'unverified') where.isVerified = false;
+  if (filters.role) where.role = filters.role;
   return Promise.all([
     db.user.findMany({
       where,

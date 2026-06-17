@@ -58,7 +58,12 @@ export const getAdminDoctors = (query: Request['query']) => {
 
 export const getAdminUsers = (query: Request['query']) => {
   const pagination = getPaginationParams(query);
-  return repo.getAllUsers(pagination);
+  const filters = {
+    status: query.status as string | undefined,
+    verified: query.verified as string | undefined,
+    role: query.role as string | undefined,
+  };
+  return repo.getAllUsers(pagination, filters);
 };
 
 export const getAdminSubscriptions = (query: Request['query']) => {

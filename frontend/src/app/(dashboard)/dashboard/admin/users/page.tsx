@@ -9,13 +9,17 @@ import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Eye } from 'lucide-react';
+import { Eye, MoreHorizontal, CheckCircle2, XCircle } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 export default function AdminUsersPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [verified, setVerified] = useState('');
+  const [role, setRole] = useState('');
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useAdminUsers({ page, limit: 10, search });
+  const { data, isLoading } = useAdminUsers({ page, limit: 10, search, status, verified, role });
   const toggleStatus = useToggleUserStatus();
   const [toggleTarget, setToggleTarget] = useState<{ id: string; email: string; isActive: boolean } | null>(null);
 
@@ -24,6 +28,41 @@ export default function AdminUsersPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">All Users</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage platform users</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px]">
+          <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
+        </div>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="suspended">Inactive</option>
+        </select>
+        <select
+          value={verified}
+          onChange={(e) => { setVerified(e.target.value); setPage(1); }}
+          className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Verification</option>
+          <option value="verified">Verified</option>
+          <option value="unverified">Unverified</option>
+        </select>
+        <select
+          value={role}
+          onChange={(e) => { setRole(e.target.value); setPage(1); }}
+          className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Roles</option>
+          <option value="SUPER_ADMIN">Super Admin</option>
+          <option value="DOCTOR">Doctor</option>
+          <option value="RECEPTIONIST">Receptionist</option>
+          <option value="MEDICAL_REPRESENTATIVE">Medical Representative</option>
+        </select>
       </div>
 
       <ConfirmDialog
@@ -41,7 +80,6 @@ export default function AdminUsersPage() {
         }}
       />
 
-      <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
       {isLoading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />)}</div>
       ) : (
@@ -72,24 +110,24 @@ export default function AdminUsersPage() {
                       <TableCell>{user.doctor?.fullName || '—'}</TableCell>
                       <TableCell className="text-muted-foreground text-xs">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}
-                          >
-                            <Eye className="h-3.5 w-3.5 mr-1" /> Details
-                          </Button>
-                          {user.role !== 'SUPER_ADMIN' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setToggleTarget({ id: user.id, email: user.email, isActive: user.isActive })}
-                            >
-                              {user.isActive ? 'Deactivate' : 'Activate'}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/admin/users/${user.id}`)}>
+                              <Eye className="h-4 w-4" /> Details
+                            </DropdownMenuItem>
+                            {user.role !== 'SUPER_ADMIN' && (
+                              <DropdownMenuItem onClick={() => setToggleTarget({ id: user.id, email: user.email, isActive: user.isActive })}>
+                                {user.isActive ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                                {user.isActive ? 'Deactivate' : 'Activate'}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))

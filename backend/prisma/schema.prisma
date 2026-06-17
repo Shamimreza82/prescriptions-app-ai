@@ -64,6 +64,11 @@ model User {
   auditLogs     AuditLog[]
   notifications Notification[]
 
+  @@index([role])
+  @@index([isActive])
+  @@index([isVerified])
+  @@index([role, isActive])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -92,6 +97,11 @@ model Doctor {
   receptionists       Receptionist[]
   mrAssignments       DoctorMrAssignment[]
 
+  @@index([fullName])
+  @@index([specialization])
+  @@index([clinicName])
+  @@index([createdAt])
+  @@index([specialization, createdAt])
   @@map("doctors")
 }
 
@@ -107,6 +117,9 @@ model Receptionist {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
+  @@index([doctorId])
+  @@index([fullName])
+  @@index([phone])
   @@map("receptionists")
 }
 
@@ -121,6 +134,9 @@ model Mr {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   doctors   DoctorMrAssignment[]
 
+  @@index([fullName])
+  @@index([phone])
+  @@index([createdAt])
   @@map("mrs")
 }
 
@@ -133,6 +149,8 @@ model DoctorMrAssignment {
   doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   mr        Mr       @relation(fields: [mrId], references: [id], onDelete: Cascade)
 
+  @@index([doctorId])
+  @@index([mrId])
   @@unique([doctorId, mrId])
   @@map("doctor_mr_assignments")
 }
@@ -160,6 +178,10 @@ model Patient {
   prescriptions    Prescription[]
   appointments     Appointment[]
 
+  @@index([doctorId])
+  @@index([fullName])
+  @@index([phone])
+  @@index([doctorId, createdAt])
   @@unique([doctorId, phone])
   @@map("patients")
 }
@@ -189,6 +211,11 @@ model Prescription {
   medicines       Medicine[]
   investigations  Investigation[]
 
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([createdAt])
+  @@index([doctorId, createdAt])
+  @@index([doctorId, patientId])
   @@map("prescriptions")
 }
 
@@ -205,6 +232,7 @@ model Medicine {
 
   prescription  Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
 
+  @@index([prescriptionId])
   @@map("medicines")
 }
 
@@ -217,6 +245,7 @@ model Investigation {
 
   prescription  Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
 
+  @@index([prescriptionId])
   @@map("investigations")
 }
 
@@ -237,6 +266,11 @@ model Appointment {
   doctor        Doctor            @relation(fields: [doctorId], references: [id], onDelete: Cascade)
   patient       Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([doctorId, date])
+  @@index([doctorId, status])
+  @@index([doctorId, date, status])
   @@map("appointments")
 }
 
@@ -254,6 +288,7 @@ model Plan {
 
   subscriptions     Subscription[]
 
+  @@index([isActive])
   @@map("plans")
 }
 
@@ -274,6 +309,9 @@ model Subscription {
   plan          Plan               @relation(fields: [planId], references: [id])
   payments      Payment[]
 
+  @@index([planId])
+  @@index([status])
+  @@index([planId, status])
   @@map("subscriptions")
 }
 
@@ -290,6 +328,8 @@ model Payment {
 
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
+  @@index([subscriptionId])
+  @@index([createdAt])
   @@map("payments")
 }
 
@@ -304,6 +344,9 @@ model Notification {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -319,5 +362,10 @@ model AuditLog {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([entity, createdAt])
   @@map("audit_logs")
 }

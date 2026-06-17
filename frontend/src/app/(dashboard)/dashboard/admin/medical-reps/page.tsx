@@ -30,13 +30,14 @@ type CreateMrForm = z.infer<typeof createMrSchema>;
 
 export default function AdminMedicalRepsPage() {
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
   const [assignMrId, setAssignMrId] = useState<string | null>(null);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const { data, isLoading, isFetching } = useMrs({ page, limit: 10, search });
+  const { data, isLoading, isFetching } = useMrs({ page, limit: 10, search, status });
   const createMr = useCreateMr();
   const deleteMr = useDeleteMr();
   const assignDoctors = useAssignDoctors();
@@ -142,7 +143,20 @@ export default function AdminMedicalRepsPage() {
         onConfirm={() => deleteId && deleteMr.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
 
-      <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex-1 min-w-[200px]">
+          <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} />
+        </div>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          className="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="suspended">Inactive</option>
+        </select>
+      </div>
 
       {isLoading && !data ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />)}</div>

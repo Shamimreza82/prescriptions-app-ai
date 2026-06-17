@@ -29,7 +29,7 @@ export const useAdminDoctors = (params?: { page?: number; limit?: number; search
     queryFn: () => dashboardApi.getAdminDoctors(params),
   });
 
-export const useAdminUsers = (params?: { page?: number; limit?: number; search?: string }) =>
+export const useAdminUsers = (params?: { page?: number; limit?: number; search?: string; status?: string; verified?: string; role?: string }) =>
   useQuery({
     queryKey: [...dashboardKeys.adminUsers, params],
     queryFn: () => dashboardApi.getAdminUsers(params),
