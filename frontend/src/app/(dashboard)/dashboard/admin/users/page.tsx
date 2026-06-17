@@ -88,26 +88,28 @@ export default function AdminUsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Verified</TableHead>
-                  <TableHead>Doctor Profile</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data?.data?.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No users found</TableCell></TableRow>
                 ) : (
                   data?.data?.map((user: any) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.email}</TableCell>
+                      <TableCell className="font-medium">
+                        {user.doctor?.fullName || user.receptionist?.fullName || user.mr?.fullName || '—'}
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
                       <TableCell><Badge variant={user.role === 'SUPER_ADMIN' ? 'warning' : user.role === 'DOCTOR' ? 'success' : 'secondary'}>{user.role.replace('_', ' ')}</Badge></TableCell>
                       <TableCell><Badge variant={user.isActive ? 'success' : 'destructive'}>{user.isActive ? 'Active' : 'Inactive'}</Badge></TableCell>
                       <TableCell><Badge variant={user.isVerified ? 'success' : 'secondary'}>{user.isVerified ? 'Yes' : 'No'}</Badge></TableCell>
-                      <TableCell>{user.doctor?.fullName || '—'}</TableCell>
                       <TableCell className="text-muted-foreground text-xs">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

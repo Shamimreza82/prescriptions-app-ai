@@ -141,7 +141,7 @@ export const getDoctorPrescriptions = (doctorId: string, pagination: PaginationP
 export const findDoctorsForAssignment = () =>
   db.doctor.findMany({
     where: { user: { isActive: true } },
-    select: { id: true, fullName: true, clinicName: true, userId: true },
+    select: { id: true, fullName: true, clinicName: true, bmdcRegNo: true, userId: true, user: { select: { email: true } } },
     orderBy: { fullName: 'asc' },
   });
 

@@ -153,6 +153,7 @@ export const getAllUsers = (pagination: { skip: number; limit: number; search: s
       include: {
         doctor: { select: { id: true, fullName: true, clinicName: true } },
         receptionist: { select: { id: true, fullName: true } },
+        mr: { select: { id: true, fullName: true } },
         _count: { select: { auditLogs: true } },
       },
       orderBy: { createdAt: 'desc' },

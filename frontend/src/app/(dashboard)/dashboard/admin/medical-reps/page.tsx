@@ -35,6 +35,7 @@ export default function AdminMedicalRepsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [assignMrId, setAssignMrId] = useState<string | null>(null);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
+  const [searchAssign, setSearchAssign] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useMrs({ page, limit: 10, search, status });
@@ -271,32 +272,33 @@ export default function AdminMedicalRepsPage() {
         </>
       )}
 
-      <Dialog open={!!assignMrId} onOpenChange={(open) => { if (!open) { setAssignMrId(null); setSelectedDoctors([]); } }}>
+      <Dialog open={!!assignMrId} onOpenChange={(open) => { if (!open) { setAssignMrId(null); setSelectedDoctors([]); setSearchAssign(''); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Assign Doctors to MR</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <input
-              placeholder="Search doctors..."
+              placeholder="Search by name, BMDC no, or email..."
+              value={searchAssign}
+              onChange={(e) => setSearchAssign(e.target.value)}
               className="premium-input w-full h-10 px-4 text-sm"
-              onChange={(e) => {
-                const val = e.target.value.toLowerCase();
-                const items = document.querySelectorAll('.assign-doctor-item');
-                items.forEach((el) => {
-                  const text = el.textContent?.toLowerCase() || '';
-                  el.classList.toggle('hidden', !text.includes(val));
-                });
-              }}
             />
             <div className="max-h-72 overflow-y-auto space-y-2">
-            {availableDoctors?.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No active doctors available</p>
-            ) : (
-              availableDoctors?.map((doc: any) => (
+            {(() => {
+              const list = availableDoctors || [];
+              const filtered = searchAssign
+                ? list.filter((doc: any) =>
+                    doc.fullName.toLowerCase().includes(searchAssign.toLowerCase()) ||
+                    doc.bmdcRegNo?.toLowerCase().includes(searchAssign.toLowerCase()) ||
+                    doc.user?.email?.toLowerCase().includes(searchAssign.toLowerCase())
+                  )
+                : list;
+              if (filtered.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">No doctors match your search</p>;
+              return filtered.map((doc: any) => (
                 <label
                   key={doc.id}
-                  className={`assign-doctor-item flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
                     selectedDoctors.includes(doc.id)
                       ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -317,11 +319,11 @@ export default function AdminMedicalRepsPage() {
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{doc.fullName}</p>
                     <p className="text-xs text-muted-foreground">{doc.clinicName}</p>
-                    <p className="text-xs text-muted-foreground/60">{doc.user?.email} {doc.bmdcRegNo ? `• ${doc.bmdcRegNo}` : ''}</p>
+                    <p className="text-xs text-muted-foreground/60">{doc.user?.email}{doc.bmdcRegNo ? ` • ${doc.bmdcRegNo}` : ''}</p>
                   </div>
                 </label>
-              ))
-              )}
+              ));
+            })()}
             </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
