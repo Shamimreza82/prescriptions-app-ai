@@ -4,7 +4,7 @@ import { PaginationParams } from '../../utils/pagination';
 export const findDoctorById = (doctorId: string) =>
   db.doctor.findUnique({
     where: { id: doctorId },
-    include: { user: { select: { email: true, role: true } } },
+    include: { user: { select: { email: true, role: true, isVerified: true } } },
   });
 
 export const updateDoctor = (doctorId: string, data: any) =>

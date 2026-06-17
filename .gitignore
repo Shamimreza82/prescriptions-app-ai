@@ -6,3 +6,4 @@ dist/
 *.log
 uploads/*
 !uploads/.gitkeep
+medicine-backend-v2/

@@ -59,13 +59,14 @@ export default function AdminDoctorsPage() {
                   <TableHead>Clinic</TableHead>
                   <TableHead>Verified</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>MRs</TableHead>
                   <TableHead>Patients</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data?.data?.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">No doctors found</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No doctors found</TableCell></TableRow>
                 ) : (
                   data?.data?.map((doc: any) => {
                     const mrs = doc.mrAssignments || [];
@@ -94,6 +95,9 @@ export default function AdminDoctorsPage() {
                           <Badge variant={doc.user?.isActive ? 'success' : 'destructive'}>
                             {doc.user?.isActive ? 'Active' : 'Inactive'}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="badge-gradient-blue">{(doc.mrAssignments || []).length} MR{(doc.mrAssignments || []).length !== 1 ? 's' : ''}</span>
                         </TableCell>
                         <TableCell>{doc._count?.patients || 0}</TableCell>
                         <TableCell className="text-right">
