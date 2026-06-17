@@ -1,25 +1,26 @@
 'use client';
 
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { api } from '@/lib/axios';
-import { useCreatePrescription } from '@/features/prescriptions/hooks';
+import { usePrescription, useUpdatePrescription } from '@/features/prescriptions/hooks';
 import { prescriptionSchema } from '@/features/prescriptions/schema';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { api } from '@/lib/axios';
 import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical } from 'lucide-react';
 import { useMedicineSearch, useLabTestSearch } from '@/features/medicine/hooks';
 
 type FormData = z.infer<typeof prescriptionSchema>;
 const emptyMedicine = { name: '', strength: '', dosage: '', frequency: '', duration: '' };
 
-function NewPrescriptionForm() {
+function EditPrescriptionForm() {
+  const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const create = useCreatePrescription();
-  const [profileStatus, setProfileStatus] = useState<{ isProfileComplete: boolean; isVerified: boolean; loading: boolean }>({ isProfileComplete: true, isVerified: true, loading: true });
+  const { data: rx, isLoading: rxLoading } = usePrescription(id);
+  const update = useUpdatePrescription(id);
+
   const [patients, setPatients] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [patientSearch, setPatientSearch] = useState('');
@@ -46,14 +47,6 @@ function NewPrescriptionForm() {
   const medSearch = useMedicineSearch(debouncedMedQuery);
   const invSearch = useLabTestSearch(debouncedInvQuery);
 
-  useEffect(() => {
-    api.get('/patients?limit=100').then((r) => setPatients(r.data.data)).catch(() => {});
-    api.get('/doctors/profile').then((r) => {
-      const p = r.data.data;
-      setProfileStatus({ isProfileComplete: p.isProfileComplete, isVerified: p.user?.isVerified, loading: false });
-    }).catch(() => setProfileStatus((s) => ({ ...s, loading: false })));
-  }, []);
-
   const {
     register,
     control,
@@ -65,8 +58,7 @@ function NewPrescriptionForm() {
   } = useForm<FormData>({
     resolver: zodResolver(prescriptionSchema),
     defaultValues: {
-      patientId: searchParams.get('patientId') || '',
-      symptoms: '', chiefComplaint: '', diagnosis: '', diagnosisNotes: '',
+      patientId: '', symptoms: '', chiefComplaint: '', diagnosis: '', diagnosisNotes: '',
       bloodPressure: '', pulseRate: '', temperature: '', oxygenSaturation: '',
       advice: '', foodAdvice: '', followUpDate: '',
       medicines: [emptyMedicine],
@@ -74,8 +66,8 @@ function NewPrescriptionForm() {
     },
   });
 
-  const { fields: medFields, append: addMed, remove: removeMed } = useFieldArray({ control, name: 'medicines' });
-  const { fields: invFields, append: addInv, remove: removeInv } = useFieldArray({ control, name: 'investigations' });
+  const { fields: medFields, append: addMed, remove: removeMed, replace: replaceMeds } = useFieldArray({ control, name: 'medicines' });
+  const { fields: invFields, append: addInv, remove: removeInv, replace: replaceInvs } = useFieldArray({ control, name: 'investigations' });
 
   const medDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const invDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -115,107 +107,87 @@ function NewPrescriptionForm() {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (medDropdownRef.current && !medDropdownRef.current.contains(e.target as Node)) {
-        setActiveMedIndex(null);
-      }
-      if (invDropdownRef.current && !invDropdownRef.current.contains(e.target as Node)) {
-        setActiveInvIndex(null);
-      }
+      if (medDropdownRef.current && !medDropdownRef.current.contains(e.target as Node)) setActiveMedIndex(null);
+      if (invDropdownRef.current && !invDropdownRef.current.contains(e.target as Node)) setActiveInvIndex(null);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  useEffect(() => {
+    api.get('/patients?limit=100').then((r) => setPatients(r.data.data)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!rx) return;
+    setValue('patientId', rx.patientId || '');
+    setValue('symptoms', rx.symptoms || '');
+    setValue('chiefComplaint', rx.chiefComplaint || '');
+    setValue('diagnosis', rx.diagnosis || '');
+    setValue('diagnosisNotes', rx.diagnosisNotes || '');
+    setValue('bloodPressure', rx.bloodPressure || '');
+    setValue('pulseRate', rx.pulseRate || '');
+    setValue('temperature', rx.temperature || '');
+    setValue('oxygenSaturation', rx.oxygenSaturation || '');
+    setValue('advice', rx.advice || '');
+    setValue('foodAdvice', rx.foodAdvice || '');
+    setValue('followUpDate', rx.followUpDate ? rx.followUpDate.split('T')[0] : '');
+    if (rx.medicines?.length) {
+      replaceMeds(rx.medicines.map((m: any) => ({
+        name: m.name, strength: m.strength || '', dosage: m.dosage, frequency: m.frequency, duration: m.duration,
+      })));
+    }
+    if (rx.investigations?.length) {
+      replaceInvs(rx.investigations.map((i: any) => ({
+        name: i.name, notes: i.notes || '',
+      })));
+    }
+  }, [rx, setValue, replaceMeds, replaceInvs]);
+
   const watchPatientId = watch('patientId');
   useEffect(() => {
     if (watchPatientId && patients.length) {
-      const p = patients.find((p) => p.id === watchPatientId);
+      const p = patients.find((p: any) => p.id === watchPatientId);
       setSelectedPatient(p || null);
+      if (p) setPatientSearch(p.fullName);
     }
   }, [watchPatientId, patients]);
 
   const onSubmit = async (data: FormData) => {
     try {
-      await create.mutateAsync({
+      await update.mutateAsync({
         ...data,
         followUpDate: data.followUpDate || undefined,
         investigations: data.investigations?.filter((i) => i.name),
       });
-      toast.success('Prescription created');
-      router.push('/prescriptions');
+      toast.success('Prescription updated');
+      router.push(`/prescriptions/${id}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to create prescription');
+      toast.error(err.response?.data?.message || 'Failed to update prescription');
     }
   };
 
   const meds = watch('medicines');
   const invs = watch('investigations');
 
-  const handlePrint = () => {
-    const printEl = document.getElementById('print-content');
-    if (!printEl) return;
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head><title>Prescription</title><style>
-      body { font-family: Arial, sans-serif; padding: 40px; margin: 0; }
-      table { width: 100%; border-collapse: collapse; }
-      td, th { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-      @media print { body { padding: 0; } }
-    </style></head><body>${printEl.innerHTML}</body></html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => win.print(), 300);
-  };
-
-  const saveDraft = () => {
-    const formData = watch();
-    localStorage.setItem('prescription-draft', JSON.stringify(formData));
-    toast.success('Draft saved');
-  };
-
-  useEffect(() => {
-    const saved = localStorage.getItem('prescription-draft');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        reset(data);
-      } catch {}
-    }
-  }, [reset]);
+  if (rxLoading) return <div className="flex justify-center items-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" /></div>;
 
   return (
     <div className="min-h-screen bg-[#f7f9fb] dark:bg-gray-950">
       <div className="max-w-[1600px] mx-auto p-8">
         <div className="flex items-center gap-4 mb-6">
-          <button type="button" onClick={() => router.push('/prescriptions')} className="p-2.5 rounded-xl hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors">
+          <button type="button" onClick={() => router.push(`/prescriptions/${id}`)} className="p-2.5 rounded-xl hover:bg-gray-200/50 transition-colors">
             <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div>
-            <h1 className="text-xl font-extrabold text-gray-800 dark:text-gray-200">New Prescription</h1>
-            <p className="text-sm text-gray-400">Create a new prescription for your patient</p>
+            <h1 className="text-xl font-extrabold text-gray-800 dark:text-gray-200">Edit Prescription</h1>
+            <p className="text-sm text-gray-400">Update the prescription details</p>
           </div>
         </div>
         <div className="grid grid-cols-12 gap-8">
-        {/* ===== LEFT SIDE: Prescription Builder ===== */}
         <div className="col-span-12 lg:col-span-7 xl:col-span-8 space-y-8">
 
-          {!profileStatus.loading && (!profileStatus.isVerified || !profileStatus.isProfileComplete) && (
-            <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                  {!profileStatus.isVerified ? 'Account Pending Approval' : 'Profile Incomplete'}
-                </p>
-                <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-                  {!profileStatus.isVerified
-                    ? 'Your account has not been verified by an admin yet.'
-                    : 'Please complete your profile before creating prescriptions.'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* A. Patient Selection */}
+          {/* Patient Selection */}
           <section className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-transparent">
             <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Patient <span className="text-red-500">*</span></label>
             {errors.patientId && <p className="text-xs text-red-500 mb-2">{errors.patientId.message as string}</p>}
@@ -230,15 +202,10 @@ function NewPrescriptionForm() {
                     <span>{selectedPatient.gender?.charAt(0) || '?'}, {selectedPatient.age || '?'} Years</span>
                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
                     <span>ID: {selectedPatient.patientId || '—'}</span>
-                    {selectedPatient.phone && (
-                      <>
-                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                        <span>{selectedPatient.phone}</span>
-                      </>
-                    )}
+                    {selectedPatient.phone && <><span className="w-1 h-1 bg-gray-300 rounded-full" /><span>{selectedPatient.phone}</span></>}
                   </div>
                 </div>
-                <button type="button" onClick={() => { setValue('patientId', ''); setSelectedPatient(null); }} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <button type="button" onClick={() => { setValue('patientId', ''); setSelectedPatient(null); setPatientSearch(''); }} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -256,23 +223,17 @@ function NewPrescriptionForm() {
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowPatientResults(false)} />
                     <div className="absolute top-full mt-1 left-0 right-0 z-20 max-h-56 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl animate-fade-in">
-                      {patients.filter((p) =>
-                        !patientSearch ||
-                        p.fullName?.toLowerCase().includes(patientSearch.toLowerCase()) ||
-                        p.patientId?.toLowerCase().includes(patientSearch.toLowerCase()) ||
-                        (p.phone && p.phone.includes(patientSearch))
+                      {patients.filter((p: any) =>
+                        !patientSearch || p.fullName?.toLowerCase().includes(patientSearch.toLowerCase()) ||
+                        p.patientId?.toLowerCase().includes(patientSearch.toLowerCase()) || (p.phone && p.phone.includes(patientSearch))
                       ).length === 0 ? (
                         <p className="text-sm text-gray-400 text-center py-4">No patients found</p>
                       ) : (
-                        patients.filter((p) =>
-                          !patientSearch ||
-                          p.fullName?.toLowerCase().includes(patientSearch.toLowerCase()) ||
-                          p.patientId?.toLowerCase().includes(patientSearch.toLowerCase()) ||
-                          (p.phone && p.phone.includes(patientSearch))
-                        ).map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
+                        patients.filter((p: any) =>
+                          !patientSearch || p.fullName?.toLowerCase().includes(patientSearch.toLowerCase()) ||
+                          p.patientId?.toLowerCase().includes(patientSearch.toLowerCase()) || (p.phone && p.phone.includes(patientSearch))
+                        ).map((p: any) => (
+                          <button key={p.id} type="button"
                             onClick={() => { setValue('patientId', p.id, { shouldValidate: true }); setPatientSearch(p.fullName); setShowPatientResults(false); }}
                             className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
                           >
@@ -289,46 +250,18 @@ function NewPrescriptionForm() {
                 )}
               </div>
             )}
-            {selectedPatient && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8 pt-6 border-t border-gray-200/60 dark:border-gray-700/60">
-                <div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Weight / ওজন</p>
-                  <p className="text-lg font-bold text-teal-800 dark:text-teal-300">{selectedPatient.weight || '—'} <span className="text-xs font-medium text-gray-400">kg</span></p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Blood Group / রক্ত</p>
-                  <p className="text-lg font-bold text-red-600">{selectedPatient.bloodGroup?.replace('_', '+') || '—'}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Last Visit / শেষ</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedPatient.lastVisit || '—'}</p>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-2 text-teal-600 bg-teal-50 dark:bg-teal-900/30 px-3 py-1 rounded-full text-xs font-bold border border-teal-100 dark:border-teal-800">
-                    <span className="animate-pulse w-2 h-2 bg-teal-500 rounded-full" />
-                    Auto-saving draft
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-2">Draft mode</p>
-                </div>
-              </div>
-            )}
           </section>
 
-          {/* B. Clinical Section */}
+          {/* Vitals */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                  Chief Complaint / প্রধান সমস্যা
-                  <span className="text-[10px] text-gray-400 font-normal">CC</span>
-                </label>
-              </div>
+              <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                Chief Complaint / প্রধান সমস্যা <span className="text-[10px] text-gray-400 font-normal">CC</span>
+              </label>
               <textarea {...register('chiefComplaint')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[100px] shadow-sm resize-none" placeholder="e.g. Occasional chest pain, SOB for 2 days..." />
             </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Vitals / ভাইটালস</label>
-              </div>
+              <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Vitals / ভাইটালস</label>
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">BP</p>
@@ -356,91 +289,68 @@ function NewPrescriptionForm() {
             </div>
           </section>
 
-          {/* C. Conflict Warning */}
-          <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 p-4 flex items-center gap-4 rounded-r-xl">
-            <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-            <div>
-              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Drug Interaction Warning</p>
-              <p className="text-xs text-amber-700 dark:text-amber-400">Check for potential interactions before finalizing.</p>
-            </div>
-          </div>
-
-          {/* D. Medicine Entry */}
+          {/* Medicine Entry */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-teal-500/10 shadow-lg relative">
-            <div className="absolute top-0 right-0 p-4">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-                Alt + N
-              </div>
-            </div>
             <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">
               <span className="w-8 h-8 bg-teal-500/10 text-teal-600 rounded-full flex items-center justify-center">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </span>
               Add Medication / ঔষধ যোগ করুন
             </h3>
-
             {errors.medicines && !Array.isArray(errors.medicines) && (
               <p className="text-xs text-red-500 mb-4">{errors.medicines.message as string}</p>
             )}
-
             <div className="space-y-4">
               {medFields.map((field, i) => (
                 <div key={field.id} className="grid grid-cols-12 gap-4 items-start">
-                    <div className="col-span-12 md:col-span-4 space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></label>
-                      <div className="relative" ref={activeMedIndex === i ? medDropdownRef : undefined}>
-                        <input
-                          value={activeMedIndex === i ? medQuery : watch(`medicines.${i}.name`)}
-                          onChange={(e) => handleMedInputChange(i, e.target.value)}
-                          onFocus={() => { setActiveMedIndex(i); setMedQuery(watch(`medicines.${i}.name`)); }}
-                          placeholder="Type Brand or Generic name..."
-                          className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.name && 'border-red-500')}
-                        />
-                        <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        {activeMedIndex === i && medQuery.length >= 2 && (
-                          <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-60 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
-                            {medSearch.isLoading ? (
-                              <p className="text-sm text-gray-400 text-center py-4">Searching...</p>
-                            ) : medSearch.data?.brands.length === 0 && medSearch.data?.generics.length === 0 ? (
-                              <p className="text-sm text-gray-400 text-center py-4">No results found</p>
-                            ) : (
-                              <>
-                                {medSearch.data?.brands.slice(0, 5).map((b) => (
-                                  <button
-                                    key={`brand-${b.id}`}
-                                    type="button"
-                                    onClick={() => selectMedicine(i, b.name, b.strength)}
-                                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
-                                  >
-                                    <Pill className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-gray-900 dark:text-white">{b.name} <span className="text-xs font-normal text-gray-500">{b.strength}</span></p>
-                                      <p className="text-xs text-gray-400 truncate">{b.company?.name} · {b.form}</p>
-                                    </div>
-                                  </button>
-                                ))}
-                                {medSearch.data?.generics.slice(0, 5).map((g) => (
-                                  <button
-                                    key={`generic-${g.id}`}
-                                    type="button"
-                                    onClick={() => selectMedicine(i, g.name)}
-                                    className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
-                                  >
-                                    <FlaskConical className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-gray-900 dark:text-white">{g.name}</p>
-                                      <p className="text-xs text-gray-400 truncate">Generic</p>
-                                    </div>
-                                  </button>
-                                ))}
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {errors.medicines?.[i]?.name && <p className="text-xs text-red-500">{errors.medicines[i]?.name?.message}</p>}
+                  <div className="col-span-12 md:col-span-4 space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></label>
+                    <div className="relative" ref={activeMedIndex === i ? medDropdownRef : undefined}>
+                      <input
+                        value={activeMedIndex === i ? medQuery : watch(`medicines.${i}.name`)}
+                        onChange={(e) => handleMedInputChange(i, e.target.value)}
+                        onFocus={() => { setActiveMedIndex(i); setMedQuery(watch(`medicines.${i}.name`)); }}
+                        placeholder="Type Brand or Generic name..."
+                        className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.name && 'border-red-500')}
+                      />
+                      <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                      {activeMedIndex === i && medQuery.length >= 2 && (
+                        <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-60 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
+                          {medSearch.isLoading ? (
+                            <p className="text-sm text-gray-400 text-center py-4">Searching...</p>
+                          ) : medSearch.data?.brands.length === 0 && medSearch.data?.generics.length === 0 ? (
+                            <p className="text-sm text-gray-400 text-center py-4">No results found</p>
+                          ) : (
+                            <>
+                              {medSearch.data?.brands.slice(0, 5).map((b: any) => (
+                                <button key={`brand-${b.id}`} type="button" onClick={() => selectMedicine(i, b.name, b.strength)}
+                                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                                >
+                                  <Pill className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{b.name} <span className="text-xs font-normal text-gray-500">{b.strength}</span></p>
+                                    <p className="text-xs text-gray-400 truncate">{b.company?.name} · {b.form}</p>
+                                  </div>
+                                </button>
+                              ))}
+                              {medSearch.data?.generics.slice(0, 5).map((g: any) => (
+                                <button key={`generic-${g.id}`} type="button" onClick={() => selectMedicine(i, g.name)}
+                                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+                                >
+                                  <FlaskConical className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{g.name}</p>
+                                    <p className="text-xs text-gray-400 truncate">Generic</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
+                    {errors.medicines?.[i]?.name && <p className="text-xs text-red-500">{errors.medicines[i]?.name?.message}</p>}
+                  </div>
                   <div className="col-span-6 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength</label>
                     <input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
@@ -470,7 +380,6 @@ function NewPrescriptionForm() {
                 </div>
               ))}
             </div>
-
             <div className="flex items-center gap-4 mt-6">
               <button type="button" onClick={() => addMed(emptyMedicine)} className="flex-1 bg-teal-600 text-white font-bold h-[54px] rounded-xl shadow-md shadow-teal-600/20 hover:scale-[1.01] transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm">
                 <Plus className="w-5 h-5" /> Add to Prescription
@@ -495,9 +404,7 @@ function NewPrescriptionForm() {
                     return (
                       <span key={field.id} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-lg text-xs font-bold border border-teal-100 dark:border-teal-800 flex items-center gap-1">
                         {inv.name}
-                        <button type="button" onClick={() => removeInv(i)} className="hover:text-red-500">
-                          <X className="w-3 h-3" />
-                        </button>
+                        <button type="button" onClick={() => removeInv(i)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
                       </span>
                     );
                   })}
@@ -520,11 +427,8 @@ function NewPrescriptionForm() {
                         ) : invSearch.data?.length === 0 ? (
                           <p className="text-sm text-gray-400 text-center py-4">No tests found</p>
                         ) : (
-                          invSearch.data?.map((t) => (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => selectLabTest(i, t.name)}
+                          invSearch.data?.map((t: any) => (
+                            <button key={t.id} type="button" onClick={() => selectLabTest(i, t.name)}
                               className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
                             >
                               <FlaskConical className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
@@ -538,22 +442,18 @@ function NewPrescriptionForm() {
                       </div>
                     )}
                     {invFields.length > 1 && (
-                      <button type="button" onClick={() => removeInv(i)} className="p-2 text-gray-400 hover:text-red-500">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <button type="button" onClick={() => removeInv(i)} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                     )}
                   </div>
                 ))}
                 {invFields.length === 0 && (
-                  <div className="flex-1">
-                    <input placeholder="Search tests..." className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-gray-300" />
-                  </div>
+                  <div className="flex-1"><input placeholder="Search tests..." className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-gray-300" /></div>
                 )}
               </div>
             </div>
           </section>
 
-          {/* E. Medicine Table */}
+          {/* Medicine Table */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-100/50 dark:bg-gray-800/50">
@@ -566,9 +466,7 @@ function NewPrescriptionForm() {
               </thead>
               <tbody className="divide-y divide-gray-200/50">
                 {medFields.filter((_, i) => watch(`medicines.${i}.name`)).length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-400">No medicines added yet</td>
-                  </tr>
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-400">No medicines added yet</td></tr>
                 ) : (
                   medFields.map((field, i) => {
                     const m = watch(`medicines.${i}`);
@@ -587,14 +485,9 @@ function NewPrescriptionForm() {
                           <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold">{m.duration || '—'} Days</span>
                         </td>
                         <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="button" className="p-2 text-gray-400 hover:text-teal-600 transition-colors" title="Copy">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                            </button>
-                            <button type="button" onClick={() => removeMed(i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                          <button type="button" onClick={() => removeMed(i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     );
@@ -604,7 +497,7 @@ function NewPrescriptionForm() {
             </table>
           </section>
 
-          {/* F. Advice & Tests */}
+          {/* Advice & Follow-up */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Lifestyle Advice / পরামর্শ</label>
@@ -615,9 +508,7 @@ function NewPrescriptionForm() {
               <textarea {...register('foodAdvice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none" placeholder="Dietary recommendations..." />
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Follow-up / পুনরায়</label>
               <div className="flex gap-2">
-                <select
-                  value={followUpPreset}
-                  onChange={handleFollowUpPreset}
+                <select value={followUpPreset} onChange={handleFollowUpPreset}
                   className="w-1/2 bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none appearance-none"
                 >
                   <option value="">Quick select</option>
@@ -628,13 +519,8 @@ function NewPrescriptionForm() {
                   <option value="14">14 Days</option>
                   <option value="30">1 Month</option>
                 </select>
-                <input
-                  type="date"
-                  {...register('followUpDate')}
-                  onChange={(e) => {
-                    setFollowUpPreset('');
-                    register('followUpDate').onChange(e);
-                  }}
+                <input type="date" {...register('followUpDate')}
+                  onChange={(e) => { setFollowUpPreset(''); register('followUpDate').onChange(e); }}
                   className="w-1/2 bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
                 />
               </div>
@@ -643,7 +529,7 @@ function NewPrescriptionForm() {
 
         </div>
 
-        {/* ===== RIGHT SIDE: Live Preview Panel ===== */}
+        {/* Right - Preview */}
         <aside className="col-span-12 lg:col-span-5 xl:col-span-4">
           <div className="sticky top-8 space-y-6">
             <div className="flex items-center justify-between px-2">
@@ -651,34 +537,20 @@ function NewPrescriptionForm() {
                 <svg className="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 Prescription Preview
               </h3>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 bg-white dark:bg-gray-900 px-3 py-1 rounded-full shadow-sm border border-gray-100 dark:border-gray-800">
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                Cmd + S
-              </div>
             </div>
-
-            {/* Printable Sheet Simulation */}
-            <div id="print-content" className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl overflow-hidden min-h-[842px] relative transform origin-top transition-transform duration-500 border border-gray-100 dark:border-gray-800">
-              {/* Letterhead */}
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl overflow-hidden min-h-[842px] relative border border-gray-100 dark:border-gray-800">
               <div className="p-8 border-b-4 border-teal-600">
                 <div className="flex justify-between items-start">
                   <div className="space-y-0.5">
                     <h1 className="text-xl font-extrabold text-teal-800 dark:text-teal-300">Dr. {selectedPatient?.doctorName || 'Doctor'}</h1>
                     <p className="text-[11px] font-bold text-gray-500">MBBS, FCPS</p>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Consultant</p>
                   </div>
                   <div className="text-right">
-                    <div className="w-12 h-12 bg-teal-800 rounded-lg flex items-center justify-center text-white ml-auto mb-2">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                    </div>
                     <p className="text-[10px] font-bold text-teal-800 dark:text-teal-300">PRESMANAGE</p>
                   </div>
                 </div>
               </div>
-
-              {/* Rx Content */}
               <div className="p-8 grid grid-cols-12 gap-8 text-[11px]">
-                {/* Left Column - Patient Info */}
                 <div className="col-span-4 border-r border-gray-100 dark:border-gray-700 pr-6 space-y-6">
                   {selectedPatient && (
                     <div>
@@ -702,21 +574,12 @@ function NewPrescriptionForm() {
                       <p className="text-gray-600 dark:text-gray-400">{watch('diagnosis')}</p>
                     </div>
                   )}
-                  <div className="pt-10">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center text-gray-300 mb-2">
-                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-                    </div>
-                    <p className="text-[8px] text-gray-300">Scan for e-validation</p>
-                  </div>
                 </div>
-
-                {/* Right Column - Rx */}
                 <div className="col-span-8 space-y-8">
                   <div className="flex items-center gap-4 text-teal-600 opacity-50">
                     <span className="text-4xl font-serif italic" style={{ fontFamily: 'serif' }}>Rx</span>
                     <div className="h-[1px] flex-1 bg-gray-100 dark:bg-gray-700" />
                   </div>
-
                   <div className="space-y-6">
                     {medFields.filter((_, i) => watch(`medicines.${i}.name`)).length === 0 ? (
                       <p className="text-gray-400 italic">No medicines prescribed</p>
@@ -728,36 +591,29 @@ function NewPrescriptionForm() {
                           <div key={field.id} className="relative pl-2 border-l-2 border-teal-300/50">
                             <p className="font-bold text-sm text-gray-900 dark:text-white">{m.name}{m.strength ? ` ${m.strength}` : ''}</p>
                             <p className="text-gray-500 text-[10px]">{m.dosage} · {m.frequency} · {m.duration} Days</p>
-                            
                           </div>
                         );
                       })
                     )}
                   </div>
-
                   {invs && invs.filter((_, i) => watch(`investigations.${i}.name`)).length > 0 && (
                     <div className="mt-10">
                       <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Investigations</h4>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {invs.filter((_, i) => watch(`investigations.${i}.name`)).map((_, i) => watch(`investigations.${i}.name`)).join(', ')}
-                      </p>
+                      <p className="text-gray-600 dark:text-gray-400">{invs.filter((_, i) => watch(`investigations.${i}.name`)).map((_, i) => watch(`investigations.${i}.name`)).join(', ')}</p>
                     </div>
                   )}
-
                   {watch('advice') && (
                     <div className="mt-8">
                       <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Advice</h4>
                       <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{watch('advice')}</p>
                     </div>
                   )}
-
                   {watch('foodAdvice') && (
                     <div className="mt-6">
                       <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Food Advice</h4>
                       <p className="text-gray-600 dark:text-gray-400">{watch('foodAdvice')}</p>
                     </div>
                   )}
-
                   {watch('followUpDate') && (
                     <div className="mt-6">
                       <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Follow-up</h4>
@@ -765,18 +621,6 @@ function NewPrescriptionForm() {
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Signature */}
-              <div className="absolute bottom-12 right-12 text-center">
-                <div className="w-40 h-[1px] bg-gray-200 dark:bg-gray-700 mb-2 mx-auto" />
-                <p className="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase">Dr. {selectedPatient?.doctorName || 'Doctor'}</p>
-                <p className="text-[8px] text-gray-400">Reg No: —</p>
-              </div>
-
-              {/* Watermark */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 pointer-events-none opacity-[0.03] text-teal-900 select-none">
-                <span className="text-8xl font-black">RX</span>
               </div>
             </div>
           </div>
@@ -786,22 +630,14 @@ function NewPrescriptionForm() {
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800">
-        <button type="button" onClick={handlePrint} className="text-gray-600 dark:text-gray-300 px-6 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-          Print
-        </button>
-        <button type="button" onClick={saveDraft} className="text-gray-600 dark:text-gray-300 px-6 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-          Save Draft
-        </button>
         <button
           type="submit"
-          disabled={create.isPending || !profileStatus.isVerified || !profileStatus.isProfileComplete}
+          disabled={update.isPending}
           onClick={handleSubmit(onSubmit)}
           className="bg-teal-600 text-white rounded-full px-8 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-teal-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-          {create.isPending ? 'Creating...' : 'Finalize &amp; Send'}
+          {update.isPending ? 'Updating...' : 'Update Prescription'}
         </button>
       </div>
     </div>
@@ -815,7 +651,7 @@ function cn(...classes: (string | false | undefined | null)[]) {
 export default function Page() {
   return (
     <Suspense fallback={<div className="flex justify-center items-center min-h-screen bg-[#f7f9fb]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" /></div>}>
-      <NewPrescriptionForm />
+      <EditPrescriptionForm />
     </Suspense>
   );
 }

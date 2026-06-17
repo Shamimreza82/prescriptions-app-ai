@@ -1,11 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { usePrescription } from '@/features/prescriptions/hooks';
 import { downloadPrescriptionPDF, printPrescriptionPDF } from '@/features/prescriptions/api';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Download, Printer } from 'lucide-react';
+import { ArrowLeft, Download, Printer, Pencil } from 'lucide-react';
 
 export default function PrescriptionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,11 @@ export default function PrescriptionDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/prescriptions/${rx.id}/edit`}>
+              <Pencil className="h-4 w-4 mr-2" />Edit
+            </Link>
+          </Button>
           <Button variant="outline" onClick={() => downloadPrescriptionPDF(rx.id)}>
             <Download className="h-4 w-4 mr-2" />PDF
           </Button>

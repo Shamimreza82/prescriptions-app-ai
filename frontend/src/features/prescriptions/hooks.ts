@@ -35,6 +35,19 @@ export const useCreatePrescription = () => {
   });
 };
 
+export const useUpdatePrescription = (id: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => rxApi.updatePrescription(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: rxKeys.all });
+      qc.invalidateQueries({ queryKey: rxKeys.detail(id) });
+      toast.success('Prescription updated successfully');
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update prescription'),
+  });
+};
+
 export const useDeletePrescription = () => {
   const qc = useQueryClient();
   return useMutation({

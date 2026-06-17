@@ -6,7 +6,6 @@ const medicineSchema = z.object({
   dosage: z.string().min(1, 'Dosage is required'),
   frequency: z.string().min(1, 'Frequency is required'),
   duration: z.string().min(1, 'Duration is required'),
-  instructions: z.string().optional(),
 });
 
 const investigationSchema = z.object({

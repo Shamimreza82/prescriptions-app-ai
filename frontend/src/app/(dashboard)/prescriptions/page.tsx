@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Plus, Search, MoreHorizontal, Eye, Download, Trash2 } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Download, Trash2, Pencil } from 'lucide-react';
 
 export default function PrescriptionsPage() {
   const [search, setSearch] = useState('');
@@ -122,6 +122,11 @@ export default function PrescriptionsPage() {
                   <Link href={`/prescriptions/${rx.id}`} onClick={() => setMenuTarget(null)}>
                     <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                       <Eye className="h-4 w-4 text-blue-500" /> View Details
+                    </button>
+                  </Link>
+                  <Link href={`/prescriptions/${rx.id}/edit`} onClick={() => setMenuTarget(null)}>
+                    <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <Pencil className="h-4 w-4 text-amber-500" /> Edit
                     </button>
                   </Link>
                   <button
