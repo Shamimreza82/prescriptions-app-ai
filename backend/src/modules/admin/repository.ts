@@ -65,11 +65,11 @@ export const getAdminStats = async () => {
     db.subscription.groupBy({ by: ['planId'], _count: true }),
   ]);
 
-  const planIds = planDistribution.map((item) => item.planId);
+  const planIds = planDistribution.map((item: { planId: string }) => item.planId);
   const plans = await db.plan.findMany({ where: { id: { in: planIds } }, select: { id: true, name: true } });
-  const planMap = new Map(plans.map((plan) => [plan.id, plan.name]));
+  const planMap = new Map(plans.map((plan: { id: string; name: string }) => [plan.id, plan.name]));
 
-  const normalizedPlanDistribution = planDistribution.map((item) => ({
+  const normalizedPlanDistribution = planDistribution.map((item: { planId: string; _count: number }) => ({
     plan: planMap.get(item.planId) || item.planId,
     _count: item._count,
   }));

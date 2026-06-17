@@ -4,6 +4,7 @@ import { badRequest, unauthorized } from '../../utils/errors';
 import { db } from '../../config/database';
 import * as repo from './repository';
 import { RegisterInput, LoginInput, Tokens } from './types';
+import type { Prisma } from '@prisma/client';
 
 const generateTokens = (payload: {
   userId: string;
@@ -23,7 +24,7 @@ export const registerUser = async (input: RegisterInput) => {
 
   const hashed = await hashPassword(input.password);
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     const user = await tx.user.create({
       data: {
         email: input.email,

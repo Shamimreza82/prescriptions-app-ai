@@ -1,5 +1,6 @@
 import { db } from '../../config/database';
 import { PaginationParams, PaginationParamsExtended } from '../../utils/pagination';
+import type { Prisma } from '@prisma/client';
 
 export const findMrByUserId = (userId: string) =>
   db.mr.findUnique({
@@ -82,7 +83,7 @@ export const deleteMr = (id: string) =>
   db.mr.delete({ where: { id } });
 
 export const assignDoctors = (mrId: string, doctorIds: string[]) =>
-  db.$transaction(async (tx) => {
+  db.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.doctorMrAssignment.deleteMany({ where: { mrId } });
     if (doctorIds.length > 0) {
       await tx.doctorMrAssignment.createMany({

@@ -6,6 +6,7 @@ import * as repo from './repository';
 import { CreateMrInput, UpdateMrInput, AssignDoctorsInput } from './types';
 import { Request } from 'express';
 import { generatePrescriptionPDF } from '../prescription/pdf';
+import type { Prisma } from '@prisma/client';
 
 export const getMyProfile = async (userId: string) => {
   const mr = await repo.findMrByUserId(userId);
@@ -30,7 +31,7 @@ export const createMr = async (input: CreateMrInput) => {
 
   const hashed = await hashPassword(input.password);
 
-  const result = await db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
     const user = await tx.user.create({
       data: {
         email: input.email,
@@ -82,7 +83,7 @@ export const getMyDoctors = async (userId: string, query: Request['query']) => {
 export const getDoctorPatients = async (mrUserId: string, doctorId: string) => {
   const mr = await repo.findMrByUserId(mrUserId);
   if (!mr) throw notFound('MR profile not found');
-  const assigned = mr.doctors.some((d) => d.doctorId === doctorId);
+  const assigned = mr.doctors.some((d: { doctorId: string }) => d.doctorId === doctorId);
   if (!assigned) throw badRequest('Doctor is not assigned to you');
   return repo.getDoctorPatients(doctorId);
 };
@@ -90,7 +91,7 @@ export const getDoctorPatients = async (mrUserId: string, doctorId: string) => {
 export const getDoctorPrescriptions = async (mrUserId: string, doctorId: string, query: Request['query']) => {
   const mr = await repo.findMrByUserId(mrUserId);
   if (!mr) throw notFound('MR profile not found');
-  const assigned = mr.doctors.some((d) => d.doctorId === doctorId);
+  const assigned = mr.doctors.some((d: { doctorId: string }) => d.doctorId === doctorId);
   if (!assigned) throw badRequest('Doctor is not assigned to you');
   const pagination = getPaginationParams(query);
   return repo.getDoctorPrescriptions(doctorId, pagination);
