@@ -20,6 +20,7 @@ function NewPrescriptionForm() {
   const searchParams = useSearchParams();
   const create = useCreatePrescription();
   const [profileStatus, setProfileStatus] = useState<{ isProfileComplete: boolean; isVerified: boolean; loading: boolean }>({ isProfileComplete: true, isVerified: true, loading: true });
+  const [doctorProfile, setDoctorProfile] = useState<any>(null);
   const [patients, setPatients] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
   const [patientSearch, setPatientSearch] = useState('');
@@ -31,6 +32,7 @@ function NewPrescriptionForm() {
   const [invQuery, setInvQuery] = useState('');
   const [debouncedMedQuery, setDebouncedMedQuery] = useState('');
   const [debouncedInvQuery, setDebouncedInvQuery] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
   const [followUpPreset, setFollowUpPreset] = useState('');
 
   const handleFollowUpPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -50,6 +52,7 @@ function NewPrescriptionForm() {
     api.get('/patients?limit=100').then((r) => setPatients(r.data.data)).catch(() => {});
     api.get('/doctors/profile').then((r) => {
       const p = r.data.data;
+      setDoctorProfile(p);
       setProfileStatus({ isProfileComplete: p.isProfileComplete, isVerified: p.user?.isVerified, loading: false });
     }).catch(() => setProfileStatus((s) => ({ ...s, loading: false })));
   }, []);
@@ -190,8 +193,8 @@ function NewPrescriptionForm() {
   }, [reset]);
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] dark:bg-gray-950">
-      <div className="max-w-[1600px] mx-auto p-8">
+    <div className="min-h-screen bg-[#f7f9fb] dark:bg-gray-950 pb-24">
+      <div className="max-w-[1600px] mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:p-8">
         <div className="flex items-center gap-4 mb-6">
           <button type="button" onClick={() => router.push('/prescriptions')} className="p-2.5 rounded-xl hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors">
             <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -201,9 +204,9 @@ function NewPrescriptionForm() {
             <p className="text-sm text-gray-400">Create a new prescription for your patient</p>
           </div>
         </div>
-        <div className="grid grid-cols-12 gap-8">
+        <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
         {/* ===== LEFT SIDE: Prescription Builder ===== */}
-        <div className="col-span-12 lg:col-span-7 xl:col-span-8 space-y-8">
+        <div className="col-span-12 lg:col-span-7 xl:col-span-8 space-y-6 sm:space-y-8">
 
           {!profileStatus.loading && (!profileStatus.isVerified || !profileStatus.isProfileComplete) && (
             <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
@@ -392,8 +395,8 @@ function NewPrescriptionForm() {
 
             <div className="space-y-4">
               {medFields.map((field, i) => (
-                <div key={field.id} className="grid grid-cols-12 gap-4 items-start">
-                    <div className="col-span-12 md:col-span-4 space-y-1.5">
+                <div key={field.id} className="grid grid-cols-12 gap-3 sm:gap-4 items-start">
+                    <div className="col-span-12 sm:col-span-6 md:col-span-4 space-y-1.5">
                       <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></label>
                       <div className="relative" ref={activeMedIndex === i ? medDropdownRef : undefined}>
                         <input
@@ -447,26 +450,69 @@ function NewPrescriptionForm() {
                       </div>
                       {errors.medicines?.[i]?.name && <p className="text-xs text-red-500">{errors.medicines[i]?.name?.message}</p>}
                     </div>
-                  <div className="col-span-6 md:col-span-2 space-y-1.5">
+                  <div className="col-span-6 sm:col-span-4 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength</label>
                     <input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
                   </div>
-                  <div className="col-span-6 md:col-span-2 space-y-1.5">
+                  <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Dose <span className="text-red-500">*</span></label>
-                    <input {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
+                    <input list={`dosage-suggestions-${i}`} {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
+                    <datalist id={`dosage-suggestions-${i}`}>
+                      <option value="1+0+0" />
+                      <option value="0+0+1" />
+                      <option value="1+0+1" />
+                      <option value="1+1+0" />
+                      <option value="½+0+½" />
+                      <option value="1+1+1" />
+                      <option value="1½+0+1½" />
+                      <option value="2+0+2" />
+                      <option value="1+1+½" />
+                      <option value="½+½+½" />
+                      <option value="1+0+½" />
+                      <option value="2+0+0" />
+                      <option value="0+0+2" />
+                      <option value="1+0+0+1" />
+                    </datalist>
                     {errors.medicines?.[i]?.dosage && <p className="text-xs text-red-500">{errors.medicines[i]?.dosage?.message}</p>}
                   </div>
-                  <div className="col-span-6 md:col-span-2 space-y-1.5">
+                  <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq <span className="text-red-500">*</span></label>
-                    <input {...register(`medicines.${i}.frequency`)} placeholder="After meal" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
+                    <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
+                    <datalist id={`freq-suggestions-${i}`}>
+                      <option value="সকাল" />
+                      <option value="দুপুর" />
+                      <option value="রাত" />
+                      <option value="সকাল + দুপুর" />
+                      <option value="সকাল + রাত" />
+                      <option value="দুপুর + রাত" />
+                      <option value="সকাল + দুপুর + রাত" />
+                      <option value="প্রতি ৪ ঘণ্টা" />
+                      <option value="প্রতি ৬ ঘণ্টা" />
+                      <option value="প্রতি ৮ ঘণ্টা" />
+                      <option value="প্রয়োজন মত" />
+                      <option value="সকাল ১ + রাত ১" />
+                      <option value="সকাল ১ + দুপুর ১ + রাত ১" />
+                    </datalist>
                     {errors.medicines?.[i]?.frequency && <p className="text-xs text-red-500">{errors.medicines[i]?.frequency?.message}</p>}
                   </div>
-                  <div className="col-span-6 md:col-span-1 space-y-1.5">
+                  <div className="col-span-6 sm:col-span-3 md:col-span-1 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days</label>
-                    <input {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
+                    <input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
+                    <datalist id={`duration-suggestions-${i}`}>
+                      <option value="3 Days" />
+                      <option value="5 Days" />
+                      <option value="7 Days" />
+                      <option value="10 Days" />
+                      <option value="14 Days" />
+                      <option value="21 Days" />
+                      <option value="30 Days" />
+                      <option value="45 Days" />
+                      <option value="60 Days" />
+                      <option value="90 Days" />
+                    </datalist>
                     {errors.medicines?.[i]?.duration && <p className="text-xs text-red-500">{errors.medicines[i]?.duration?.message}</p>}
                   </div>
-                  <div className="col-span-6 md:col-span-1 flex items-end justify-end pt-1.5">
+                  <div className="col-span-6 sm:col-span-3 md:col-span-1 flex items-end justify-end pt-1.5">
                     {medFields.length > 1 && (
                       <button type="button" onClick={() => removeMed(i)} className="p-3.5 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border border-transparent hover:border-red-200">
                         <Trash2 className="w-4 h-4" />
@@ -651,6 +697,12 @@ function NewPrescriptionForm() {
 
         {/* ===== RIGHT SIDE: Live Preview Panel ===== */}
         <aside className="col-span-12 lg:col-span-5 xl:col-span-4">
+          <div className="sm:hidden flex justify-end mb-3">
+            <button type="button" onClick={() => setShowPreview(!showPreview)} className="text-xs font-bold text-teal-600 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
+              {showPreview ? 'Hide' : 'Show'} Preview
+            </button>
+          </div>
+          <div className={`${showPreview ? 'block' : 'hidden'} sm:block`}>
           <div className="sticky top-8 space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="font-bold text-gray-500 dark:text-gray-400 flex items-center gap-2 text-sm">
@@ -669,14 +721,34 @@ function NewPrescriptionForm() {
               <div className="p-8 border-b-4 border-teal-600">
                 <div className="flex justify-between items-start">
                   <div className="space-y-0.5">
-                    <h1 className="text-xl font-extrabold text-teal-800 dark:text-teal-300">Dr. {selectedPatient?.doctorName || 'Doctor'}</h1>
-                    <p className="text-[11px] font-bold text-gray-500">MBBS, FCPS</p>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-tighter">Consultant</p>
+                    <h1 className="text-xl font-extrabold text-teal-800 dark:text-teal-300">
+                      {doctorProfile?.fullName ? `Dr. ${doctorProfile.fullName}` : 'Dr. Doctor'}
+                    </h1>
+                    <p className="text-[11px] font-bold text-gray-500">{doctorProfile?.degree || 'MBBS, FCPS'}</p>
+                    {doctorProfile?.specialization && (
+                      <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{doctorProfile.specialization}</p>
+                    )}
+                    {doctorProfile?.clinicName && (
+                      <p className="text-[10px] text-gray-400">{doctorProfile.clinicName}</p>
+                    )}
+                    {doctorProfile?.clinicAddress && (
+                      <p className="text-[10px] text-gray-400">{doctorProfile.clinicAddress}</p>
+                    )}
+                    {doctorProfile?.bmdcRegNo && (
+                      <p className="text-[10px] text-gray-400">BMDC: {doctorProfile.bmdcRegNo}</p>
+                    )}
+                    {doctorProfile?.phone && (
+                      <p className="text-[10px] text-gray-400">{doctorProfile.phone}</p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <div className="w-12 h-12 bg-teal-800 rounded-lg flex items-center justify-center text-white ml-auto mb-2">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                    </div>
+                    {doctorProfile?.clinicLogo ? (
+                      <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/${doctorProfile.clinicLogo}`} alt="Clinic" className="w-14 h-14 object-contain ml-auto mb-2" />
+                    ) : (
+                      <div className="w-12 h-12 bg-teal-800 rounded-lg flex items-center justify-center text-white ml-auto mb-2">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                      </div>
+                    )}
                     <p className="text-[10px] font-bold text-teal-800 dark:text-teal-300">PRESMANAGE</p>
                   </div>
                 </div>
@@ -775,9 +847,21 @@ function NewPrescriptionForm() {
 
               {/* Signature */}
               <div className="absolute bottom-12 right-12 text-center">
-                <div className="w-40 h-[1px] bg-gray-200 dark:bg-gray-700 mb-2 mx-auto" />
-                <p className="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase">Dr. {selectedPatient?.doctorName || 'Doctor'}</p>
-                <p className="text-[8px] text-gray-400">Reg No: —</p>
+                {doctorProfile?.signatureImg ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/${doctorProfile.signatureImg}`}
+                    alt="Signature"
+                    className="h-10 mx-auto mb-1 object-contain"
+                  />
+                ) : (
+                  <div className="w-40 h-[1px] bg-gray-200 dark:bg-gray-700 mb-2 mx-auto" />
+                )}
+                <p className="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase">
+                  {doctorProfile?.fullName ? `Dr. ${doctorProfile.fullName}` : 'Dr. Doctor'}
+                </p>
+                {doctorProfile?.bmdcRegNo && (
+                  <p className="text-[8px] text-gray-400">Reg No: {doctorProfile.bmdcRegNo}</p>
+                )}
               </div>
 
               {/* Watermark */}
@@ -786,23 +870,24 @@ function NewPrescriptionForm() {
               </div>
             </div>
           </div>
+          </div>
         </aside>
       </div>
       </div>
 
       {/* Bottom Action Bar */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800">
-        <button type="button" onClick={handlePrint} className="text-gray-600 dark:text-gray-300 px-6 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-          Print
+      <div className="fixed bottom-4 sm:bottom-8 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 z-50 flex items-center justify-center gap-1 sm:gap-2 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-2xl sm:rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800 overflow-x-auto">
+        <button type="button" onClick={handlePrint} className="text-gray-600 dark:text-gray-300 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+          <span className="hidden sm:inline">Print</span>
         </button>
-        <button type="button" onClick={saveDraft} className="text-gray-600 dark:text-gray-300 px-6 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-          Save Draft
+        <button type="button" onClick={saveDraft} className="text-gray-600 dark:text-gray-300 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+          <span className="hidden sm:inline">Save</span><span> Draft</span>
         </button>
-        <button type="button" onClick={clearDraft} className="text-red-500 dark:text-red-400 px-6 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-          Clear Draft
+        <button type="button" onClick={clearDraft} className="text-red-500 dark:text-red-400 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          Clear
         </button>
         <button
           type="submit"
@@ -811,7 +896,7 @@ function NewPrescriptionForm() {
           className="bg-teal-600 text-white rounded-full px-8 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-teal-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-          {create.isPending ? 'Creating...' : 'Finalize &amp; Send'}
+          {create.isPending ? 'Creating...' : 'Finalize & Send'}
         </button>
       </div>
     </div>

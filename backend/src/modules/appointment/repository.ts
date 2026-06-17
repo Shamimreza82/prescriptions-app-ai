@@ -2,9 +2,23 @@ import { db } from '../../config/database';
 import { CreateAppointmentInput, UpdateAppointmentInput } from './types';
 import { PaginationParams } from '../../utils/pagination';
 
-export const findAppointmentsByDoctor = (doctorId: string, pagination: PaginationParams, status?: string) => {
+export const findAppointmentsByDoctor = (doctorId: string, pagination: PaginationParams, status?: string, search?: string, dateFrom?: string, dateTo?: string) => {
   const where: any = { doctorId };
   if (status) where.status = status;
+  if (dateFrom || dateTo) {
+    where.date = {};
+    if (dateFrom) where.date.gte = new Date(dateFrom);
+    if (dateTo) where.date.lte = new Date(dateTo + 'T23:59:59.999Z');
+  }
+  if (search) {
+    where.patient = {
+      OR: [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search } },
+        { patientId: { contains: search, mode: 'insensitive' } },
+      ],
+    };
+  }
 
   return Promise.all([
     db.appointment.findMany({

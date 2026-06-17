@@ -10,7 +10,10 @@ export const createAppointmentForDoctor = (doctorId: string, input: CreateAppoin
 export const getAppointmentsByDoctor = (doctorId: string, query: Request['query']) => {
   const pagination = getPaginationParams(query);
   const status = query.status as string | undefined;
-  return repo.findAppointmentsByDoctor(doctorId, pagination, status);
+  const search = query.search as string | undefined;
+  const dateFrom = query.dateFrom as string | undefined;
+  const dateTo = query.dateTo as string | undefined;
+  return repo.findAppointmentsByDoctor(doctorId, pagination, status, search, dateFrom, dateTo);
 };
 
 export const updateAppointmentForDoctor = async (id: string, doctorId: string, input: UpdateAppointmentInput) => {
