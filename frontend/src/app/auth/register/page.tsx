@@ -8,12 +8,15 @@ import { registerSchema } from '@/features/auth/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Stethoscope, Mail, Lock, User, ArrowRight, UserPlus } from 'lucide-react';
+import { Stethoscope, Mail, Lock, User, ArrowRight, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { z } from 'zod';
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const register = useRegister();
   const {
     register: reg,
@@ -72,7 +75,10 @@ export default function RegisterPage() {
                   <Label className="text-sm font-medium">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="password" placeholder="Min 6 chars" className="pl-10 h-11 premium-input" {...reg('password')} />
+                    <Input type={showPassword ? 'text' : 'password'} placeholder="Min 6 chars" className="pl-10 pr-11 h-11 premium-input" {...reg('password')} />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                   {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </div>
@@ -80,7 +86,10 @@ export default function RegisterPage() {
                   <Label className="text-sm font-medium">Confirm</Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="password" placeholder="Confirm" className="pl-10 h-11 premium-input" {...reg('confirmPassword')} />
+                    <Input type={showConfirm ? 'text' : 'password'} placeholder="Confirm" className="pl-10 pr-11 h-11 premium-input" {...reg('confirmPassword')} />
+                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                   {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
                 </div>

@@ -190,7 +190,7 @@ async function main() {
 
   console.log('Prescription created:', rx.prescriptionNo);
 
-  const mrPassword = await bcrypt.hash('mr123', 12);
+  const mrPassword = await bcrypt.hash('mr123456', 12);
   const mrUser = await prisma.user.upsert({
     where: { email: 'mr@example.com' },
     update: {},

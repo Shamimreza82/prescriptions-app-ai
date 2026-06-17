@@ -9,12 +9,14 @@ import { loginSchema } from '@/features/auth/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Stethoscope, Moon, Sun, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Stethoscope, Moon, Sun, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { z } from 'zod';
 
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
   const login = useLogin();
   const { theme, toggle } = useThemeContext();
   const {
@@ -44,9 +46,9 @@ export default function LoginPage() {
         <div className="w-full max-w-md animate-fade-in">
           {/* Logo/brand */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-glow mb-4 animate-scale-in">
+            {/* <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-glow mb-4 animate-scale-in">
               <Stethoscope className="h-8 w-8 text-white" />
-            </div>
+            </div> */}
             <h1 className="text-3xl font-bold text-gradient">PresManage</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">Doctor Prescription Management System</p>
           </div>
@@ -72,7 +74,10 @@ export default function LoginPage() {
                 <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="password" type="password" placeholder="Enter your password" className="pl-10 h-11 premium-input" {...register('password')} />
+                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="pl-10 pr-11 h-11 premium-input" {...register('password')} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
               </div>
@@ -110,7 +115,7 @@ export default function LoginPage() {
               {[
                 { label: 'Admin', email: 'admin@presmanage.com', pass: 'admin123' },
                 { label: 'Doctor', email: 'doctor@example.com', pass: 'doctor123' },
-                { label: 'MR', email: 'mr@example.com', pass: 'mr123' },
+                { label: 'MR', email: 'mr@example.com', pass: 'mr123456' },
               ].map((cred) => (
                 <button
                   key={cred.label}
