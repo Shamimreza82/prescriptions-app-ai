@@ -22,7 +22,7 @@ const formAbbr: Record<string, string> = {
 const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
 const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
 
-const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '' };
+const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '', instructions: '' };
 
 function EditPrescriptionForm() {
   const { id } = useParams<{ id: string }>();
@@ -154,7 +154,7 @@ function EditPrescriptionForm() {
     setValue('followUpDate', rx.followUpDate ? rx.followUpDate.split('T')[0] : '');
     if (rx.medicines?.length) {
       replaceMeds(rx.medicines.map((m: any) => ({
-        name: m.name, strength: m.strength || '', dosage: m.dosage, frequency: m.frequency, duration: m.duration,
+        name: m.name, strength: m.strength || '', form: m.form || '', dosage: m.dosage, frequency: m.frequency, duration: m.duration, instructions: m.instructions || '',
       })));
     }
     if (rx.investigations?.length) {
@@ -322,7 +322,8 @@ function EditPrescriptionForm() {
             )}
             <div className="space-y-4">
               {medFields.map((field, i) => (
-                <div key={field.id} className="grid grid-cols-12 gap-4 items-start">
+                <div key={field.id} className="bg-gray-50/50 dark:bg-gray-800/30 rounded-xl p-3 sm:p-4 border border-gray-100 dark:border-gray-700/50">
+                <div className="grid grid-cols-12 gap-4 items-start">
                   <div className="col-span-12 md:col-span-4 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></label>
                     <div className="relative" ref={activeMedIndex === i ? medDropdownRef : undefined}>
@@ -377,17 +378,35 @@ function EditPrescriptionForm() {
                   </div>
                   <div className="col-span-6 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Dose <span className="text-red-500">*</span></label>
-                    <input {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
+                    <input list={`dosage-suggestions-${i}`} {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
+                    <datalist id={`dosage-suggestions-${i}`}>
+                      <option value="1+0+0" /><option value="0+0+1" /><option value="1+0+1" /><option value="1+1+0" />
+                      <option value="½+0+½" /><option value="1+1+1" /><option value="1½+0+1½" /><option value="2+0+2" />
+                      <option value="1+1+½" /><option value="½+½+½" /><option value="1+0+½" /><option value="2+0+0" />
+                      <option value="0+0+2" /><option value="1+0+0+1" />
+                    </datalist>
                     {errors.medicines?.[i]?.dosage && <p className="text-xs text-red-500">{errors.medicines[i]?.dosage?.message}</p>}
                   </div>
                   <div className="col-span-6 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq <span className="text-red-500">*</span></label>
-                    <input {...register(`medicines.${i}.frequency`)} placeholder="After meal" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
+                    <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
+                    <datalist id={`freq-suggestions-${i}`}>
+                      <option value="সকাল" /><option value="দুপুর" /><option value="রাত" />
+                      <option value="সকাল + দুপুর" /><option value="সকাল + রাত" /><option value="দুপুর + রাত" />
+                      <option value="সকাল + দুপুর + রাত" /><option value="প্রতি ৪ ঘণ্টা" /><option value="প্রতি ৬ ঘণ্টা" />
+                      <option value="প্রতি ৮ ঘণ্টা" /><option value="প্রয়োজন মত" />
+                      <option value="সকাল ১ + রাত ১" /><option value="সকাল ১ + দুপুর ১ + রাত ১" />
+                    </datalist>
                     {errors.medicines?.[i]?.frequency && <p className="text-xs text-red-500">{errors.medicines[i]?.frequency?.message}</p>}
                   </div>
                   <div className="col-span-6 md:col-span-1 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days</label>
-                    <input {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
+                    <input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
+                    <datalist id={`duration-suggestions-${i}`}>
+                      <option value="3 Days" /><option value="5 Days" /><option value="7 Days" /><option value="10 Days" />
+                      <option value="14 Days" /><option value="21 Days" /><option value="30 Days" /><option value="45 Days" />
+                      <option value="60 Days" /><option value="90 Days" />
+                    </datalist>
                     {errors.medicines?.[i]?.duration && <p className="text-xs text-red-500">{errors.medicines[i]?.duration?.message}</p>}
                   </div>
                   <div className="col-span-6 md:col-span-1 flex items-end justify-end pt-1.5">
@@ -397,6 +416,11 @@ function EditPrescriptionForm() {
                       </button>
                     )}
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Instructions / নির্দেশনা</label>
+                  <textarea {...register(`medicines.${i}.instructions`)} placeholder="e.g. Before meal, Avoid dairy..." rows={2} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none resize-none" />
+                </div>
                 </div>
               ))}
             </div>
@@ -497,7 +521,7 @@ function EditPrescriptionForm() {
                     return (
                       <tr key={field.id} className="bg-white dark:bg-gray-900 hover:bg-teal-50/30 dark:hover:bg-teal-950/20 transition-colors group">
                         <td className="px-6 py-5">
-                          <p className="font-bold text-gray-900 dark:text-white">{m.name}{m.strength ? ` (${m.strength})` : ''}</p>
+                          <p className="font-bold text-gray-900 dark:text-white">{getForm(m.form)} {m.name}{m.strength ? ` (${m.strength})` : ''}</p>
                           <p className="text-xs text-gray-400">{m.strength ? `Strength: ${m.strength}` : ''}</p>
                         </td>
                         <td className="px-6 py-5">
@@ -569,7 +593,7 @@ function EditPrescriptionForm() {
                     <p className="text-[11px] font-bold text-gray-500">MBBS, FCPS</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-bold text-teal-800 dark:text-teal-300">PRESMANAGE</p>
+                    <p className="text-[7px] font-bold text-teal-800 dark:text-teal-300">Forwarded by PRESMANAGE</p>
                   </div>
                 </div>
               </div>

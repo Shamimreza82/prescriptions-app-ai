@@ -63,7 +63,7 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
 export const downloadPdf = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const rx = await prescriptionService.getPrescriptionById(req.params.id as string, req.user!.doctorId!);
-    const pdfData = { ...rx, createdAt: rx.createdAt.toISOString() };
+    const pdfData = { ...rx, createdAt: rx.createdAt.toISOString(), updatedAt: rx.updatedAt?.toISOString() };
     const pdf = await generatePrescriptionPDF(pdfData);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=prescription-${rx.prescriptionNo}.pdf`);
@@ -76,7 +76,7 @@ export const downloadPdf = async (req: AuthRequest, res: Response, next: NextFun
 export const printPdf = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const rx = await prescriptionService.getPrescriptionById(req.params.id as string, req.user!.doctorId!);
-    const pdfData = { ...rx, createdAt: rx.createdAt.toISOString() };
+    const pdfData = { ...rx, createdAt: rx.createdAt.toISOString(), updatedAt: rx.updatedAt?.toISOString() };
     const pdf = await generatePrescriptionPDF(pdfData);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=prescription.pdf');

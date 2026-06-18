@@ -32,6 +32,7 @@ export interface Prescription {
   followUpDate?: string;
   notes?: string;
   createdAt: string;
+  updatedAt?: string;
   patient?: any;
   doctor?: any;
 }

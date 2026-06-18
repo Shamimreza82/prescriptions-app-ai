@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePrescriptions, useDeletePrescription } from '@/features/prescriptions/hooks';
-import { downloadPrescriptionPDF } from '@/features/prescriptions/api';
+import { downloadPrescriptionPDF, printPrescriptionPDF } from '@/features/prescriptions/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -129,6 +129,12 @@ export default function PrescriptionsPage() {
                       <Pencil className="h-4 w-4 text-amber-500" /> Edit
                     </button>
                   </Link>
+                  <button
+                    onClick={() => { printPrescriptionPDF(rx.id); setMenuTarget(null); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    <Download className="h-4 w-4 text-sky-500" /> Print
+                  </button>
                   <button
                     onClick={() => { downloadPrescriptionPDF(rx.id); setMenuTarget(null); }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"

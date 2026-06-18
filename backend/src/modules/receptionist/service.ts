@@ -139,7 +139,7 @@ export const getPrescriptionById = async (userId: string, prescriptionId: string
 export const downloadPrescriptionPdf = async (userId: string, prescriptionId: string) => {
   const rx = await getPrescriptionById(userId, prescriptionId);
   const { generatePrescriptionPDF } = await import('../prescription/pdf');
-  const pdfData = { ...rx, createdAt: rx.createdAt.toISOString() };
+  const pdfData = { ...rx, createdAt: rx.createdAt.toISOString(), updatedAt: rx.updatedAt?.toISOString() };
   return generatePrescriptionPDF(pdfData);
 };
 

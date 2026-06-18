@@ -6,6 +6,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/lib/axios';
 import { useCreatePrescription } from '@/features/prescriptions/hooks';
+import { downloadPrescriptionPDF } from '@/features/prescriptions/api';
 import { prescriptionSchema } from '@/features/prescriptions/schema';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -164,20 +165,20 @@ function NewPrescriptionForm() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await create.mutateAsync({
+      const rx = await create.mutateAsync({
         ...data,
         followUpDate: data.followUpDate || undefined,
         investigations: data.investigations?.filter((i) => i.name),
       });
-      toast.success('Prescription created');
-      router.push('/prescriptions');
+      downloadPrescriptionPDF(rx.id);
+      router.push(`/prescriptions/${rx.id}`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to create prescription');
     }
   };
 
-  const meds = watch('medicines');
-  const invs = watch('investigations');
+  const meds = watch('medicines') || [];
+  const invs = watch('investigations') || [];
 
   const handlePrint = async () => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
@@ -196,7 +197,7 @@ function NewPrescriptionForm() {
     const pGender = selectedPatient?.gender || '';
 
     const w = watch();
-    const medicines = meds.filter((_, i) => w.medicines?.[i]?.name);
+    const medicines = (meds || []).filter((_, i) => w.medicines?.[i]?.name);
     const investigations = invs?.filter((_, i) => w.investigations?.[i]?.name) || [];
 
     let qrDataUrl = '';
@@ -231,7 +232,7 @@ function NewPrescriptionForm() {
       body { margin: 0; padding: 0; }
       .no-print { display: none; }
     }
-    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: 'Noto Sans Bengali', 'Noto Sans', Arial, Helvetica, sans-serif; margin: 0; padding: 0; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .page { width: 186mm; min-height: 273mm; margin: 0 auto; box-sizing: border-box; }
 
     .letterhead { padding: 14px 24px; border-bottom: 3px solid #000; display: flex; justify-content: space-between; align-items: flex-start; }
@@ -242,7 +243,7 @@ function NewPrescriptionForm() {
     .doc-detail { font-size: 9px; font-weight: 600; color: #000; margin: 0; }
     .logo-img { width: 48px; height: 48px; object-fit: contain; display: block; margin: 0 0 4px auto; }
     .logo-placeholder { width: 40px; height: 40px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: 0 0 4px auto; }
-    .brand { font-size: 9px; font-weight: 800; color: #000; margin: 0; }
+    .brand { font-size: 7px; font-weight: 800; color: #000; margin: 0; }
 
     .body-area { padding: 24px 24px 20px; display: grid; grid-template-columns: 4fr 8fr; gap: 24px; font-size: 11px; }
     .left-col { border-right: 1px solid #000; padding-right: 20px; }
@@ -294,7 +295,7 @@ function NewPrescriptionForm() {
         </div>
         <div class="lh-right">
           ${docLogo ? `<img src="${docLogo}" alt="Logo" class="logo-img" />` : `<div class="logo-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>`}
-          <p class="brand">PRESMANAGE</p>
+          <p class="brand">Forwarded by PRESMANAGE</p>
         </div>
       </div>
       <div class="body-area">
@@ -962,7 +963,7 @@ function NewPrescriptionForm() {
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                       </div>
                     )}
-                    <p className="text-[10px] font-bold text-teal-800 dark:text-teal-300">PRESMANAGE</p>
+                    <p className="text-[7px] font-bold text-teal-800 dark:text-teal-300">Forwarded by PRESMANAGE</p>
                   </div>
                 </div>
               </div>

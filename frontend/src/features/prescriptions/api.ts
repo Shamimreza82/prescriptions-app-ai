@@ -39,5 +39,13 @@ export const downloadPrescriptionPDF = async (id: string): Promise<void> => {
 export const printPrescriptionPDF = async (id: string): Promise<void> => {
   const response = await api.get(`/prescriptions/${id}/print`, { responseType: 'blob' });
   const url = window.URL.createObjectURL(new Blob([response.data]));
-  window.open(url, '_blank');
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+    }, 500);
+  };
 };

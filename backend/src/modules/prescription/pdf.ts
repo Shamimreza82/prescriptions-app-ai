@@ -3,6 +3,31 @@ import QRCode from 'qrcode';
 import path from 'path';
 import fs from 'fs';
 
+const FONT_DIR = path.resolve(__dirname, '..', '..', 'fonts');
+const FONT_EN_REG = 'NotoSans';
+const FONT_EN_BOLD = 'NotoSans-Bold';
+const FONT_BN_REG = 'NotoSansBengali';
+const FONT_BN_BOLD = 'NotoSansBengali-Bold';
+
+const isBn = (t: string) => /[\u0980-\u09FF]/.test(t);
+const pick = (t: string, bold = false) => isBn(t) ? (bold ? FONT_BN_BOLD : FONT_BN_REG) : (bold ? FONT_EN_BOLD : FONT_EN_REG);
+const FONT_REG = FONT_EN_REG;
+const FONT_BOLD = FONT_EN_BOLD;
+
+const formAbbr: Record<string, string> = {
+  'Tablet': 'TAB.', 'Capsule': 'CAP.', 'Injection': 'INJ.', 'Inject': 'INJ.',
+  'Syrup': 'SYP.', 'Cream': 'CRM.', 'Ointment': 'OINT.', 'Gel': 'GEL.',
+  'Drop': 'DROP.', 'Inhaler': 'INH.', 'Suspension': 'SUSP.', 'Solution': 'SOLN.',
+  'Lotion': 'LOT.', 'Spray': 'SPRAY.', 'Powder': 'PDR.', 'Sachet': 'SACH.',
+};
+
+const fmtDur = (d?: string) => {
+  if (!d) return '—';
+  return /day/i.test(d) ? d : `${d} Days`;
+};
+
+const PX = (px: number) => px * 72 / 96;
+
 export const generatePrescriptionPDF = async (data: {
   doctor: any;
   patient: any;
@@ -10,6 +35,7 @@ export const generatePrescriptionPDF = async (data: {
   investigations: any[];
   prescriptionNo: string;
   createdAt: string;
+  updatedAt?: string | null;
   symptoms?: string | null;
   chiefComplaint?: string | null;
   diagnosis?: string | null;
@@ -22,10 +48,37 @@ export const generatePrescriptionPDF = async (data: {
   foodAdvice?: string | null;
   followUpDate?: string | Date | null;
 }): Promise<Buffer> => {
+  const M = PX(34);
+  const PAGE_W = 595.28, PAGE_H = 841.89;
+  const CONTENT_W = PAGE_W - M * 2;
+  const PAD = PX(24);
+  const BODY_W = CONTENT_W - PAD * 2;
+  const LEFT_W = PX(158);
+  const GAP = PX(24);
+  const BORDER = 1;
+  const RIGHT_W = BODY_W - LEFT_W - GAP;
+
   const doc = new PDFDocument({
     size: 'A4',
-    margins: { top: 40, bottom: 40, left: 40, right: 40 },
+    margins: { top: M, bottom: M, left: M, right: M },
   });
+  [
+    [FONT_BN_REG, 'NotoSansBengali-Regular.ttf'],
+    [FONT_BN_BOLD, 'NotoSansBengali-Bold.ttf'],
+    [FONT_EN_REG, 'NotoSans-Regular.ttf'],
+    [FONT_EN_BOLD, 'NotoSans-Bold.ttf'],
+  ].forEach(([name, file]) => {
+    const p = path.join(FONT_DIR, file);
+    if (fs.existsSync(p)) doc.registerFont(name as string, p);
+  });
+
+  const origText = doc.text.bind(doc);
+  doc.text = function (t: any, x?: any, y?: any, opts?: any) {
+    const bold = typeof opts?.bold === 'boolean' ? opts.bold : false;
+    const f = bold ? FONT_EN_BOLD : FONT_EN_REG;
+    doc.font(pick(String(t || ''), bold) || f);
+    return origText(t, x, y, opts);
+  } as typeof doc.text;
 
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
@@ -33,162 +86,199 @@ export const generatePrescriptionPDF = async (data: {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    const primary = '#1a56db';
-    const gray = '#6b7280';
-
     const uploadsDir = path.join(__dirname, '../../../uploads');
-
-    const tryImage = (filename: string | null | undefined, x: number, y: number, w: number) => {
-      if (!filename) return;
-      try {
-        const p = path.join(uploadsDir, filename);
-        if (fs.existsSync(p)) doc.image(p, x, y, { width: w });
-      } catch {}
+    const tryImg = (f: string | null | undefined, x: number, y: number, w: number) => {
+      if (!f) return;
+      try { const p = path.join(uploadsDir, f); if (fs.existsSync(p)) doc.image(p, x, y, { width: w }); } catch {}
     };
 
-    tryImage(data.doctor.clinicLogo, 40, 40, 70);
+    const lx = M + PAD;
+    const rx = lx + LEFT_W + GAP + BORDER;
 
-    doc.fontSize(22).font('Helvetica-Bold').fillColor(primary)
-      .text(data.doctor.clinicName || 'Clinic', 120, 45);
-    doc.fontSize(9).font('Helvetica').fillColor(gray)
-      .text(data.doctor.clinicAddress || '', 120, 72)
-      .text(`Phone: ${data.doctor.phone || ''}`, 120, 85);
-
-    doc.fontSize(11).font('Helvetica-Bold').fillColor('#111827')
-      .text(`Dr. ${data.doctor.fullName}`, 40, 130);
-    doc.fontSize(9).font('Helvetica').fillColor(gray)
-      .text((data.doctor.degree || []).join(', '), 40, 145)
-      .text((data.doctor.specialization || []).join(', '), 40, 158)
-      .text(`BMDC: ${data.doctor.bmdcRegNo}`, 40, 171);
-    doc.fontSize(9).font('Helvetica').fillColor(gray)
-      .text(`Rx: ${data.prescriptionNo}`, 350, 130, { align: 'right' })
-      .text(`Date: ${new Date(data.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 350, 143, { align: 'right' });
-
-    doc.moveTo(40, 188).lineTo(552, 188).strokeColor('#e5e7eb').stroke();
-
-    let y = 205;
-    doc.fontSize(13).font('Helvetica-Bold').fillColor(primary).text('Patient Information', 40, y);
-    y += 22;
-    const fields = [
-      ['Name', data.patient.fullName],
-      ['ID', data.patient.patientId],
-      ['Age', `${data.patient.age} years`],
-      ['Gender', data.patient.gender],
-      ['Weight', data.patient.weight ? `${data.patient.weight} kg` : 'N/A'],
+    // ---------- Letterhead ----------
+    const drName = data.doctor.fullName ? `Dr. ${data.doctor.fullName}` : 'Dr. Doctor';
+    const LH_ITEMS: { text: string; size: number; bold: boolean }[] = [
+      { text: drName, size: PX(18), bold: true },
     ];
-    fields.forEach(([l, v]) => {
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#111827').text(`${l}:`, 40, y);
-      doc.font('Helvetica').fillColor(gray).text(`${v}`, 130, y);
-      y += 16;
+    const deg = (data.doctor.degree || []).join(', ');
+    if (deg) LH_ITEMS.push({ text: deg, size: PX(10), bold: true });
+    const spec = (data.doctor.specialization || []).join(', ');
+    if (spec) LH_ITEMS.push({ text: spec, size: PX(9), bold: false });
+    if (data.doctor.clinicName) LH_ITEMS.push({ text: data.doctor.clinicName, size: PX(9), bold: false });
+    if (data.doctor.clinicAddress) LH_ITEMS.push({ text: data.doctor.clinicAddress, size: PX(9), bold: false });
+    if (data.doctor.bmdcRegNo) LH_ITEMS.push({ text: `BMDC: ${data.doctor.bmdcRegNo}`, size: PX(9), bold: false });
+    if (data.doctor.phone) LH_ITEMS.push({ text: data.doctor.phone, size: PX(9), bold: false });
+
+    let ly = 0;
+    LH_ITEMS.forEach((item) => {
+      doc.font(item.bold ? FONT_BOLD : FONT_REG).fontSize(item.size).fillColor('#000');
+      doc.text(item.text, lx, ly, { width: CONTENT_W - PX(80) });
+      ly += item.size + (item.bold ? 2 : 1);
     });
 
-    const vitals = [
-      { l: 'BP', v: data.bloodPressure },
-      { l: 'Pulse', v: data.pulseRate },
-      { l: 'Temp', v: data.temperature },
-      { l: 'SpO2', v: data.oxygenSaturation },
-    ].filter((x) => x.v);
-    if (vitals.length) {
-      y += 5;
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(primary).text('Vital Signs', 40, y);
-      y += 18;
-      vitals.forEach((v) => {
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#111827').text(`${v.l}:`, 40, y);
-        doc.font('Helvetica').fillColor(gray).text(v.v || '', 90, y);
-        y += 14;
-      });
+    const dt = new Date(data.createdAt);
+    const dateStr = `${dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · ${dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    let updateStr = '';
+    if (data.updatedAt) {
+      const ud = new Date(data.updatedAt);
+      if (ud.getTime() !== dt.getTime()) {
+        updateStr = `Last update: ${ud.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · ${ud.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+      }
     }
 
-    if (data.chiefComplaint) {
-      y += 5;
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(primary).text('Chief Complaint', 40, y);
-      y += 16;
-      doc.fontSize(10).font('Helvetica').fillColor('#111827').text(data.chiefComplaint, 40, y);
-      y += 20;
-    }
-    if (data.diagnosis) {
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(primary).text('Diagnosis', 40, y);
-      y += 16;
-      doc.fontSize(10).font('Helvetica').fillColor('#111827').text(data.diagnosis, 40, y);
-      y += 20;
-    }
-    if (data.diagnosisNotes) {
-      doc.fontSize(10).font('Helvetica-Oblique').fillColor(gray).text(data.diagnosisNotes, 40, y);
-      y += 20;
-    }
-
-    if (y > 500) { doc.addPage(); y = 40; }
-
-    doc.fontSize(13).font('Helvetica-Bold').fillColor(primary).text('Medicines', 40, y);
-    y += 22;
-    if (data.medicines?.length) {
-      const colWidths = [140, 90, 90, 90, 80];
-      const headers = ['Medicine', 'Dosage', 'Frequency', 'Duration', 'Instr.'];
-      doc.fontSize(9).font('Helvetica-Bold').fillColor('#374151');
-      let x = 40;
-      headers.forEach((h, i) => { doc.text(h, x, y, { width: colWidths[i] }); x += colWidths[i]; });
-      y += 16;
-      doc.moveTo(40, y - 4).lineTo(552, y - 4).strokeColor('#e5e7eb').stroke();
-      doc.fontSize(9).font('Helvetica').fillColor('#111827');
-      data.medicines.forEach((m: any) => {
-        x = 40;
-        doc.text(`${m.name}${m.strength ? ` ${m.strength}` : ''}`, x, y, { width: colWidths[0] });
-        x += colWidths[0];
-        doc.text(m.dosage, x, y, { width: colWidths[1] }); x += colWidths[1];
-        doc.text(m.frequency, x, y, { width: colWidths[2] }); x += colWidths[2];
-        doc.text(m.duration, x, y, { width: colWidths[3] }); x += colWidths[3];
-        doc.text(m.instructions || '', x, y, { width: colWidths[4] });
-        y += 20;
-        if (y > 700) { doc.addPage(); y = 40; }
-      });
+    tryImg(data.doctor.clinicLogo, lx + CONTENT_W - PX(48), 0, PX(48));
+    if (data.doctor.clinicLogo) {
+      doc.fontSize(PX(7)).font(FONT_BOLD).fillColor('#000')
+        .text('Forwarded by PRESMANAGE', lx + CONTENT_W - PX(60), PX(50), { width: PX(60), align: 'right' });
+      doc.fontSize(PX(8)).font(FONT_REG).fillColor('#000')
+        .text(`Rx: ${data.prescriptionNo}`, lx + CONTENT_W - PX(60), PX(64), { width: PX(60), align: 'right' })
+        .text(dateStr, lx + CONTENT_W - PX(60), PX(74), { width: PX(60), align: 'right' });
+      if (updateStr) doc.fontSize(PX(7)).font(FONT_REG).fillColor('#000').text(updateStr, lx + CONTENT_W - PX(60), PX(84), { width: PX(60), align: 'right' });
+    } else {
+      doc.roundedRect(lx + CONTENT_W - PX(48), 0, PX(40), PX(40), PX(6)).fill('#000');
+      doc.fill('#fff').fontSize(PX(9)).font(FONT_BOLD).text('RX', lx + CONTENT_W - PX(40), PX(14), { width: PX(24), align: 'center' });
+      doc.fill('#000').fontSize(PX(7)).font(FONT_BOLD).text('Forwarded by PRESMANAGE', lx + CONTENT_W - PX(60), PX(42), { width: PX(60), align: 'right' });
+      doc.fontSize(PX(8)).font(FONT_REG).fillColor('#000')
+        .text(`Rx: ${data.prescriptionNo}`, lx + CONTENT_W - PX(60), PX(56), { width: PX(60), align: 'right' })
+        .text(dateStr, lx + CONTENT_W - PX(60), PX(66), { width: PX(60), align: 'right' });
+      if (updateStr) doc.fontSize(PX(7)).font(FONT_REG).fillColor('#000').text(updateStr, lx + CONTENT_W - PX(60), PX(76), { width: PX(60), align: 'right' });
     }
 
-    y += 10;
-    if (data.investigations?.length) {
-      if (y > 600) { doc.addPage(); y = 40; }
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(primary).text('Investigations', 40, y);
-      y += 18;
-      data.investigations.forEach((inv: any) => {
-        doc.fontSize(10).font('Helvetica').fillColor('#111827').text(`• ${inv.name}`, 40, y);
-        y += 16;
-        if (inv.notes) { doc.fontSize(9).font('Helvetica-Oblique').fillColor(gray).text(inv.notes, 55, y); y += 14; }
-      });
+    const lhBottom = ly + PX(10);
+    doc.moveTo(lx, lhBottom).lineTo(lx + CONTENT_W, lhBottom).lineWidth(PX(3)).strokeColor('#000').stroke();
+    let y = lhBottom + PX(24);
+
+    // ---------- Right Column (Rx content) ----------
+    let ry = y;
+    doc.fontSize(PX(36)).fillColor('#000').font(FONT_REG)
+      .text('Rx', rx, ry);
+    doc.moveTo(rx + PX(36), ry + PX(14)).lineTo(rx + RIGHT_W, ry + PX(14)).lineWidth(1).strokeColor('#000').stroke();
+
+    // Medicines
+    const meds = (data.medicines || []).filter((m: any) => m.name);
+    let medY = ry + PX(30);
+    meds.forEach((m: any) => {
+      const prefix = m.form ? (formAbbr[m.form] || m.form.toUpperCase() + '.') : '';
+      doc.fontSize(PX(13)).font(FONT_BOLD).fillColor('#000')
+        .text(`${prefix} ${m.name}${m.strength ? ` ${m.strength}` : ''}`, rx, medY, { width: RIGHT_W });
+      medY += PX(18);
+      const durDisplay = fmtDur(m.duration);
+      doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000')
+        .text(`${m.dosage || '—'} · ${m.frequency || '—'} · ${durDisplay}`, rx + PX(32), medY, { width: RIGHT_W - PX(32) });
+      medY += PX(16);
+      if (m.instructions) {
+        doc.fontSize(PX(10)).font(FONT_REG).fillColor('#000')
+          .text(m.instructions, rx + PX(32), medY, { width: RIGHT_W - PX(32) });
+        medY += PX(14);
+      }
+      medY += PX(6);
+    });
+
+    // Investigations
+    const invs = (data.investigations || []).filter((i: any) => i.name);
+    if (invs.length) {
+      medY += PX(14);
+      doc.fontSize(PX(11)).font(FONT_BOLD).fillColor('#000').text('INVESTIGATIONS', rx, medY, { width: RIGHT_W });
+      doc.moveTo(rx, medY + PX(14)).lineTo(rx + RIGHT_W, medY + PX(14)).lineWidth(2).strokeColor('#000').stroke();
+      medY += PX(20);
+      doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000')
+        .text(invs.map((i: any) => i.name).join(', '), rx, medY, { width: RIGHT_W });
+      medY += PX(18);
     }
 
+    // Advice
     if (data.advice) {
-      if (y > 600) { doc.addPage(); y = 40; }
-      y += 5;
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(primary).text('Advice', 40, y);
-      y += 18;
-      doc.fontSize(10).font('Helvetica').fillColor('#111827').text(data.advice, 40, y);
-      y += 20;
+      medY += PX(8);
+      doc.fontSize(PX(11)).font(FONT_BOLD).fillColor('#000').text('ADVICE', rx, medY, { width: RIGHT_W });
+      doc.moveTo(rx, medY + PX(14)).lineTo(rx + RIGHT_W, medY + PX(14)).lineWidth(2).strokeColor('#000').stroke();
+      medY += PX(20);
+      doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(data.advice, rx, medY, { width: RIGHT_W });
+      medY += PX(18);
     }
+
+    // Food Advice
     if (data.foodAdvice) {
-      doc.fontSize(11).font('Helvetica-Bold').fillColor(primary).text('Food Advice', 40, y);
-      y += 18;
-      doc.fontSize(10).font('Helvetica').fillColor('#111827').text(data.foodAdvice, 40, y);
-      y += 20;
+      medY += PX(8);
+      doc.fontSize(PX(11)).font(FONT_BOLD).fillColor('#000').text('FOOD ADVICE', rx, medY, { width: RIGHT_W });
+      doc.moveTo(rx, medY + PX(14)).lineTo(rx + RIGHT_W, medY + PX(14)).lineWidth(2).strokeColor('#000').stroke();
+      medY += PX(20);
+      doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(data.foodAdvice, rx, medY, { width: RIGHT_W });
+      medY += PX(18);
     }
+
+    // Follow-up
     if (data.followUpDate) {
-      if (y > 650) { doc.addPage(); y = 40; }
-      doc.fontSize(11).font('Helvetica-Bold').fillColor('#dc2626').text('Follow-up:', 40, y);
-      doc.fontSize(11).font('Helvetica').fillColor('#111827').text(
+      medY += PX(8);
+      doc.fontSize(PX(11)).font(FONT_BOLD).fillColor('#000').text('FOLLOW-UP', rx, medY, { width: RIGHT_W });
+      doc.moveTo(rx, medY + PX(14)).lineTo(rx + RIGHT_W, medY + PX(14)).lineWidth(2).strokeColor('#000').stroke();
+      medY += PX(20);
+      doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(
         new Date(data.followUpDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        130, y
+        rx, medY, { width: RIGHT_W }
       );
-      y += 30;
     }
 
-    const sigY = Math.max(y, 630);
-    tryImage(data.doctor.signatureImg, 380, sigY, 120);
-    doc.fontSize(10).font('Helvetica-Bold').fillColor('#111827')
-      .text(`Dr. ${data.doctor.fullName}`, 380, sigY + 40, { align: 'right' });
-    doc.fontSize(9).font('Helvetica').fillColor(gray)
-      .text((data.doctor.degree || []).join(', '), 380, sigY + 54, { align: 'right' })
-      .text(`BMDC: ${data.doctor.bmdcRegNo}`, 380, sigY + 67, { align: 'right' });
+    // ---------- Left Column ----------
+    let ly2 = ry;
 
-    QRCode.toBuffer(JSON.stringify({ rxNo: data.prescriptionNo, doctor: data.doctor.fullName, patient: data.patient.fullName }), { width: 100, margin: 1 })
-      .then((qr) => { doc.image(qr, 430, 40, { width: 70 }); doc.end(); })
-      .catch(() => doc.end());
+    // Patient details
+    if (data.patient) {
+      doc.fontSize(PX(9)).font(FONT_BOLD).fillColor('#000').text('PATIENT DETAILS', lx, ly2, { width: LEFT_W });
+      ly2 += PX(14);
+      doc.fontSize(PX(11)).font(FONT_BOLD).fillColor('#000')
+        .text(data.patient.fullName || '', lx, ly2, { width: LEFT_W });
+      ly2 += PX(16);
+      doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000')
+        .text(`Age: ${data.patient.age || ''}Y | Sex: ${(data.patient.gender || '')?.charAt(0) || ''}`, lx, ly2, { width: LEFT_W });
+      ly2 += PX(16);
+    }
+
+    // Symptoms
+    doc.fontSize(PX(9)).font(FONT_BOLD).fillColor('#000').text('SYMPTOMS', lx, ly2, { width: LEFT_W });
+    ly2 += PX(14);
+    doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(data.symptoms || '—', lx, ly2, { width: LEFT_W });
+    ly2 += PX(18);
+
+    // Vitals
+    doc.fontSize(PX(9)).font(FONT_BOLD).fillColor('#000').text('VITALS', lx, ly2, { width: LEFT_W });
+    ly2 += PX(14);
+    doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(`BP: ${data.bloodPressure || '—'} mmHg`, lx, ly2, { width: LEFT_W });
+    ly2 += PX(14);
+    doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(`HR: ${data.pulseRate || '—'} bpm`, lx, ly2, { width: LEFT_W });
+    ly2 += PX(16);
+
+    // Diagnosis
+    if (data.diagnosis) {
+      doc.fontSize(PX(9)).font(FONT_BOLD).fillColor('#000').text('DIAGNOSIS', lx, ly2, { width: LEFT_W });
+      ly2 += PX(14);
+      doc.fontSize(PX(11)).font(FONT_REG).fillColor('#000').text(data.diagnosis, lx, ly2, { width: LEFT_W });
+      ly2 += PX(18);
+    }
+
+    // QR code
+    ly2 += PX(14);
+    QRCode.toBuffer(
+      JSON.stringify({ rxNo: data.prescriptionNo, doctor: data.doctor.fullName, patient: data.patient.fullName }),
+      { width: PX(72), margin: 1 }
+    ).then((qr) => {
+      doc.image(qr, lx, ly2, { width: PX(72) });
+      doc.fontSize(PX(9)).font(FONT_BOLD).fillColor('#000')
+        .text('Scan for e-validation', lx, ly2 + PX(76), { width: PX(80) });
+
+      // ---------- Signature ----------
+      const sigW = PX(140);
+      const sigX = rx + RIGHT_W - sigW;
+      const sigY = PAGE_H - M - PX(60) - (data.doctor.signatureImg ? PX(50) : PX(20));
+      tryImg(data.doctor.signatureImg, sigX, sigY, PX(120));
+      const sigTextY = data.doctor.signatureImg ? sigY + PX(38) : sigY;
+      doc.fontSize(PX(11)).font(FONT_BOLD).fillColor('#000')
+        .text(drName, sigX, sigTextY, { width: sigW, align: 'right' });
+      if (data.doctor.bmdcRegNo) {
+        doc.fontSize(PX(9)).font(FONT_REG).fillColor('#000')
+          .text(`Reg No: ${data.doctor.bmdcRegNo}`, sigX, sigTextY + PX(14), { width: sigW, align: 'right' });
+      }
+
+      doc.end();
+    }).catch(() => doc.end());
   });
 };
