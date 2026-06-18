@@ -3,7 +3,6 @@ import Script from 'next/script';
 import { QueryProvider } from '@/providers/query-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { ToastProvider } from '@/providers/toast-provider';
-import { SocketProvider } from '@/providers/socket-provider';
 import './globals.css';
 
 export const metadata: Metadata = {

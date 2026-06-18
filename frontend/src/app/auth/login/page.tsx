@@ -116,6 +116,7 @@ export default function LoginPage() {
                 { label: 'Admin', email: 'admin@presmanage.com', pass: 'admin123' },
                 { label: 'Doctor', email: 'doctor@example.com', pass: 'doctor123' },
                 { label: 'MR', email: 'mr@example.com', pass: 'mr123456' },
+                { label: 'receptionist', email: 'receptionist@example.com', pass: '123456' },
               ].map((cred) => (
                 <button
                   key={cred.label}
