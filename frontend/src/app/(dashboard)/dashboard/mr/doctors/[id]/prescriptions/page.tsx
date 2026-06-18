@@ -10,9 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/ui/pagination';
-import { ArrowLeft, FileText, Calendar, User, Download, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, User, Download, Eye, MoreHorizontal } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 export default function DoctorPrescriptionsPage() {
   const { id } = useParams<{ id: string }>();
@@ -118,8 +119,6 @@ export default function DoctorPrescriptionsPage() {
               <TableRow>
                 <TableHead>Rx No</TableHead>
                 <TableHead>Patient</TableHead>
-                <TableHead>Diagnosis</TableHead>
-                <TableHead>Medicines</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -127,7 +126,7 @@ export default function DoctorPrescriptionsPage() {
             <TableBody>
               {data?.data?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                   <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
                     <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     No prescriptions found
                   </TableCell>
@@ -142,21 +141,6 @@ export default function DoctorPrescriptionsPage() {
                         <span>{rx.patient?.fullName}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{rx.diagnosis || '—'}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {rx.medicines?.slice(0, 2).map((m: any) => (
-                          <Badge key={m.id} variant="outline" className="text-xs">
-                            {m.name}
-                          </Badge>
-                        ))}
-                        {rx.medicines?.length > 2 && (
-                          <Badge variant="secondary" className="text-xs">+{rx.medicines.length - 2}</Badge>
-                        )}
-                      </div>
-                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
@@ -164,18 +148,21 @@ export default function DoctorPrescriptionsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/dashboard/mr/doctors/${id}/prescriptions/${rx.id}`)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDownload(rx.id)}>
-                          <Download className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/mr/doctors/${id}/prescriptions/${rx.id}`)}>
+                            <Eye className="h-4 w-4" /> View Prescription
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownload(rx.id)}>
+                            <Download className="h-4 w-4" /> Download PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))

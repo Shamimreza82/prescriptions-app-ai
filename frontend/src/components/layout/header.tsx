@@ -55,13 +55,15 @@ export const Header = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href={role === 'DOCTOR' ? '/prescriptions/new' : role === 'RECEPTIONIST' ? '/dashboard/receptionist/prescriptions' : '/prescriptions'}
-            className="hidden sm:inline-flex items-center gap-2 h-9 px-4 rounded-xl gradient-primary text-white text-xs font-semibold hover:opacity-90 transition-opacity shadow-glow"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Quick Prescription
-          </Link>
+          {role === 'DOCTOR' && (
+            <Link
+              href="/prescriptions/new"
+              className="hidden sm:inline-flex items-center gap-2 h-9 px-4 rounded-xl gradient-primary text-white text-xs font-semibold hover:opacity-90 transition-opacity shadow-glow"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Quick Prescription
+            </Link>
+          )}
           <button className="relative w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             <Bell className="h-4 w-4 text-muted-foreground" />
             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full gradient-primary text-[9px] font-bold text-white flex items-center justify-center shadow-glow">

@@ -1,16 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMyDoctors } from '@/features/mr/hooks';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { SearchBar } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/ui/pagination';
-import { FileText, Stethoscope, ArrowLeft, Eye } from 'lucide-react';
+import { FileText, Stethoscope, ArrowLeft, Eye, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 export default function MrDoctorsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const { data, isLoading } = useMyDoctors({ page, search: search || undefined });
@@ -58,7 +61,6 @@ export default function MrDoctorsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Specialization</TableHead>
                 <TableHead>Clinic</TableHead>
                 <TableHead>BMDC Reg No</TableHead>
                 <TableHead>Patients</TableHead>
@@ -77,7 +79,6 @@ export default function MrDoctorsPage() {
                       {doc.fullName}
                     </Link>
                   </TableCell>
-                  <TableCell>{(doc.specialization || []).join(', ') || '—'}</TableCell>
                   <TableCell>{doc.clinicName || '—'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono text-xs">
@@ -96,11 +97,18 @@ export default function MrDoctorsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/dashboard/mr/doctors/${doc.id}/prescriptions`}>
-                      <Button variant="ghost" size="icon" className="hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-lg">
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </Link>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/dashboard/mr/doctors/${doc.id}/prescriptions`)}>
+                          <Eye className="h-4 w-4" /> View Prescriptions
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
