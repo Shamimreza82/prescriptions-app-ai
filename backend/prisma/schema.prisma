@@ -222,6 +222,7 @@ model Medicine {
   prescriptionId String                                   @map("prescription_id")
   name          String
   strength      String?
+  form          String?
   dosage        String
   frequency     String
   duration      String

@@ -13,7 +13,16 @@ import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical } from
 import { useMedicineSearch, useLabTestSearch } from '@/features/medicine/hooks';
 
 type FormData = z.infer<typeof prescriptionSchema>;
-const emptyMedicine = { name: '', strength: '', dosage: '', frequency: '', duration: '' };
+const formAbbr: Record<string, string> = {
+  'Tablet': 'TAB.', 'Capsule': 'CAP.', 'Injection': 'INJ.', 'Inject': 'INJ.',
+  'Syrup': 'SYP.', 'Cream': 'CRM.', 'Ointment': 'OINT.', 'Gel': 'GEL.',
+  'Drop': 'DROP.', 'Inhaler': 'INH.', 'Suspension': 'SUSP.', 'Solution': 'SOLN.',
+  'Lotion': 'LOT.', 'Spray': 'SPRAY.', 'Powder': 'PDR.', 'Sachet': 'SACH.',
+};
+const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
+const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
+
+const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '' };
 
 function EditPrescriptionForm() {
   const { id } = useParams<{ id: string }>();
@@ -100,9 +109,10 @@ function EditPrescriptionForm() {
     invDebounce.current = setTimeout(() => setDebouncedInvQuery(value), 300);
   }, [setValue]);
 
-  const selectMedicine = useCallback((i: number, name: string, strength?: string) => {
+  const selectMedicine = useCallback((i: number, name: string, strength?: string, form?: string) => {
     setValue(`medicines.${i}.name`, name, { shouldValidate: true });
     if (strength) setValue(`medicines.${i}.strength`, strength, { shouldValidate: true });
+    if (form) setValue(`medicines.${i}.form`, form, { shouldValidate: true });
     setActiveMedIndex(null);
     setMedQuery('');
     setDebouncedMedQuery('');
@@ -333,7 +343,7 @@ function EditPrescriptionForm() {
                           ) : (
                             <>
                               {medSearch.data?.brands.slice(0, 5).map((b: any) => (
-                                <button key={`brand-${b.id}`} type="button" onClick={() => selectMedicine(i, b.name, b.strength)}
+                                <button key={`brand-${b.id}`} type="button" onClick={() => selectMedicine(i, b.name, b.strength, b.form)}
                                   className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
                                 >
                                   <Pill className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
@@ -495,7 +505,7 @@ function EditPrescriptionForm() {
                           <p className="text-[10px] text-gray-500 font-bold">{m.frequency || ''}</p>
                         </td>
                         <td className="px-6 py-5">
-                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold">{m.duration || '—'} Days</span>
+                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold">{fmtDur(m.duration)}</span>
                         </td>
                         <td className="px-6 py-5 text-right">
                           <button type="button" onClick={() => removeMed(i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
@@ -602,8 +612,8 @@ function EditPrescriptionForm() {
                         if (!m.name) return null;
                         return (
                           <div key={field.id} className="relative pl-2 border-l-2 border-teal-300/50">
-                            <p className="font-bold text-sm text-gray-900 dark:text-white">{m.name}{m.strength ? ` ${m.strength}` : ''}</p>
-                            <p className="text-gray-500 text-[10px]">{m.dosage} · {m.frequency} · {m.duration} Days</p>
+                            <p className="font-bold text-sm text-gray-900 dark:text-white">{getForm(m.form)} {m.name}{m.strength ? ` ${m.strength}` : ''}</p>
+                            <p className="text-gray-500 text-[10px]">{m.dosage} · {m.frequency} · {fmtDur(m.duration)}</p>
                           </div>
                         );
                       })

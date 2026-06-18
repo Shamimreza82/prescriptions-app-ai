@@ -11,9 +11,19 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical } from 'lucide-react';
 import { useMedicineSearch, useLabTestSearch } from '@/features/medicine/hooks';
+import QRCodeLib from 'qrcode';
 
 type FormData = z.infer<typeof prescriptionSchema>;
-const emptyMedicine = { name: '', strength: '', dosage: '', frequency: '', duration: '', instructions: '' };
+const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '', instructions: '' };
+
+const formAbbr: Record<string, string> = {
+  'Tablet': 'TAB.', 'Capsule': 'CAP.', 'Injection': 'INJ.', 'Inject': 'INJ.',
+  'Syrup': 'SYP.', 'Cream': 'CRM.', 'Ointment': 'OINT.', 'Gel': 'GEL.',
+  'Drop': 'DROP.', 'Inhaler': 'INH.', 'Suspension': 'SUSP.', 'Solution': 'SOLN.',
+  'Lotion': 'LOT.', 'Spray': 'SPRAY.', 'Powder': 'PDR.', 'Sachet': 'SACH.',
+};
+const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
+const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
 
 function NewPrescriptionForm() {
   const router = useRouter();
@@ -34,6 +44,7 @@ function NewPrescriptionForm() {
   const [debouncedInvQuery, setDebouncedInvQuery] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [followUpPreset, setFollowUpPreset] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState('');
 
   const handleFollowUpPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -55,6 +66,9 @@ function NewPrescriptionForm() {
       setDoctorProfile(p);
       setProfileStatus({ isProfileComplete: p.isProfileComplete, isVerified: p.user?.isVerified, loading: false });
     }).catch(() => setProfileStatus((s) => ({ ...s, loading: false })));
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
+      .then(setQrDataUrl).catch(() => {});
   }, []);
 
   const {
@@ -111,9 +125,10 @@ function NewPrescriptionForm() {
     invDebounce.current = setTimeout(() => setDebouncedInvQuery(value), 300);
   }, [setValue]);
 
-  const selectMedicine = useCallback((i: number, name: string, strength?: string) => {
+  const selectMedicine = useCallback((i: number, name: string, strength?: string, form?: string) => {
     setValue(`medicines.${i}.name`, name, { shouldValidate: true });
     if (strength) setValue(`medicines.${i}.strength`, strength, { shouldValidate: true });
+    if (form) setValue(`medicines.${i}.form`, form, { shouldValidate: true });
     setActiveMedIndex(null);
     setMedQuery('');
     setDebouncedMedQuery('');
@@ -164,20 +179,192 @@ function NewPrescriptionForm() {
   const meds = watch('medicines');
   const invs = watch('investigations');
 
-  const handlePrint = () => {
-    const printEl = document.getElementById('print-content');
-    if (!printEl) return;
+  const handlePrint = async () => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const docName = doctorProfile?.fullName ? `Dr. ${doctorProfile.fullName}` : 'Dr. Doctor';
+    const docDegrees = (doctorProfile?.degree || []).join(', ') || 'MBBS, FCPS';
+    const docSpecs = (doctorProfile?.specialization || []).join(', ');
+    const docClinic = doctorProfile?.clinicName || '';
+    const docAddress = doctorProfile?.clinicAddress || '';
+    const docBmdc = doctorProfile?.bmdcRegNo || '';
+    const docPhone = doctorProfile?.phone || '';
+    const docLogo = doctorProfile?.clinicLogo ? `${apiBase}/uploads/${doctorProfile.clinicLogo}` : '';
+    const docSignature = doctorProfile?.signatureImg ? `${apiBase}/uploads/${doctorProfile.signatureImg}` : '';
+
+    const pName = selectedPatient?.fullName || '';
+    const pAge = selectedPatient?.age || '';
+    const pGender = selectedPatient?.gender || '';
+
+    const w = watch();
+    const medicines = meds.filter((_, i) => w.medicines?.[i]?.name);
+    const investigations = invs?.filter((_, i) => w.investigations?.[i]?.name) || [];
+
+    let qrDataUrl = '';
+    try {
+      qrDataUrl = await QRCodeLib.toDataURL(`${apiBase}/verify`, {
+        width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' },
+      });
+    } catch {}
+
+    const medBlocks = medicines.map((_, i) => {
+      const m = w.medicines[i];
+      const prefix = getForm(m.form);
+      return `
+        <div class="med-block">
+          <div class="med-name">${prefix} ${m.name}${m.strength ? ` ${m.strength}` : ''}</div>
+          <div class="med-line">${m.dosage || '—'} · ${m.frequency || '—'} · ${fmtDur(m.duration)}</div>
+          ${m.instructions ? `<div class="med-inst">${m.instructions}</div>` : ''}
+        </div>`;
+    }).join('');
+
+    const invList = investigations.map((_, i) => w.investigations?.[i]?.name || '').filter(Boolean).join(', ');
+
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head><title>Prescription</title><style>
-      body { font-family: Arial, sans-serif; padding: 40px; margin: 0; }
-      table { width: 100%; border-collapse: collapse; }
-      td, th { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-      @media print { body { padding: 0; } }
-    </style></head><body>${printEl.innerHTML}</body></html>`);
+    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Prescription</title>
+  <style>
+    @page { size: A4; margin: 12mm; }
+    @media print {
+      body { margin: 0; padding: 0; }
+      .no-print { display: none; }
+    }
+    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: 186mm; min-height: 273mm; margin: 0 auto; box-sizing: border-box; }
+
+    .letterhead { padding: 14px 24px; border-bottom: 3px solid #000; display: flex; justify-content: space-between; align-items: flex-start; }
+    .lh-right { text-align: right; }
+    .doc-name { font-size: 18px; font-weight: 800; color: #000; margin: 0 0 1px; }
+    .doc-deg { font-size: 10px; font-weight: 700; color: #000; margin: 0; }
+    .doc-spec { font-size: 9px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+    .doc-detail { font-size: 9px; font-weight: 600; color: #000; margin: 0; }
+    .logo-img { width: 48px; height: 48px; object-fit: contain; display: block; margin: 0 0 4px auto; }
+    .logo-placeholder { width: 40px; height: 40px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: 0 0 4px auto; }
+    .brand { font-size: 9px; font-weight: 800; color: #000; margin: 0; }
+
+    .body-area { padding: 24px 24px 20px; display: grid; grid-template-columns: 4fr 8fr; gap: 24px; font-size: 11px; }
+    .left-col { border-right: 1px solid #000; padding-right: 20px; }
+    .right-col { }
+
+    .section-title { font-size: 9px; font-weight: 800; color: #000; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 6px; }
+    .value-text { font-size: 11px; font-weight: 600; color: #000; margin: 0 0 4px; }
+    .value-bold { font-size: 11px; font-weight: 800; color: #000; margin: 0 0 2px; }
+    .section-gap { margin-bottom: 20px; }
+
+    .rx-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .rx-symbol { font-size: 36px; font-style: italic; font-weight: 700; color: #000; font-family: serif; }
+    .rx-line { height: 1px; flex: 1; background: #000; }
+
+    .med-block { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed #999; }
+    .med-block:last-child { border-bottom: none; }
+    .med-name { font-size: 13px; font-weight: 800; color: #000; margin: 0 0 2px; }
+    .med-line { font-size: 12px; font-weight: 600; color: #000; margin: 0 0 1px; padding-left: 32px; }
+    .med-inst { font-size: 10px; font-weight: 600; color: #000; margin: 2px 0 0; }
+
+    .inv-section { margin-top: 24px; }
+    .inv-label { font-size: 11px; font-weight: 800; color: #000; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 6px; }
+    .inv-value { font-size: 11px; font-weight: 600; color: #000; }
+
+    .sig-area { text-align: right; padding-top: 20px; }
+    .sig-img { height: 40px; margin: 0 0 4px auto; object-fit: contain; display: block; }
+    .sig-line { width: 160px; height: 1px; background: #000; margin: 0 0 6px auto; }
+    .sig-name { font-size: 11px; font-weight: 800; color: #000; text-transform: uppercase; margin: 0; }
+    .sig-reg { font-size: 9px; font-weight: 600; color: #000; margin: 0; }
+
+    .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); pointer-events: none; opacity: 0.03; user-select: none; font-size: 96px; font-weight: 900; color: #000; z-index: 0; }
+
+    .qr-area { margin-top: 36px; }
+    .qr-img { width: 72px; height: 72px; display: block; margin-bottom: 4px; }
+    .qr-label { font-size: 9px; font-weight: 700; color: #000; margin: 0; }
+  </style>
+</head>
+  <body>
+    <div class="page">
+      <div class="letterhead">
+        <div class="lh-left">
+          <p class="doc-name">${docName}</p>
+          <p class="doc-deg">${docDegrees}</p>
+          ${docSpecs ? `<p class="doc-spec">${docSpecs}</p>` : ''}
+          ${docClinic ? `<p class="doc-detail">${docClinic}</p>` : ''}
+          ${docAddress ? `<p class="doc-detail">${docAddress}</p>` : ''}
+          ${docBmdc ? `<p class="doc-detail">BMDC: ${docBmdc}</p>` : ''}
+          ${docPhone ? `<p class="doc-detail">${docPhone}</p>` : ''}
+        </div>
+        <div class="lh-right">
+          ${docLogo ? `<img src="${docLogo}" alt="Logo" class="logo-img" />` : `<div class="logo-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>`}
+          <p class="brand">PRESMANAGE</p>
+        </div>
+      </div>
+      <div class="body-area">
+      <div class="left-col">
+        ${pName ? `<div class="section-gap"><p class="section-title">Patient Details</p><p class="value-bold">${pName}</p><p class="value-text">Age: ${pAge}Y | Sex: ${pGender?.charAt(0)}</p></div>` : ''}
+
+        <div class="section-gap"><p class="section-title">Symptoms</p><p class="value-text">${w.symptoms || '—'}</p></div>
+
+        <div class="section-gap"><p class="section-title">Vitals</p><p class="value-text">BP: ${w.bloodPressure || '—'} mmHg</p><p class="value-text">HR: ${w.pulseRate || '—'} bpm</p></div>
+
+        ${w.diagnosis ? `<div class="section-gap"><p class="section-title">Diagnosis</p><p class="value-text">${w.diagnosis}</p></div>` : ''}
+
+        <div class="qr-area">
+          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR" class="qr-img" />` : '<div style="width:72px;height:72px;background:#e5e7eb;border-radius:6px;margin-bottom:4px;"></div>'}
+          <p class="qr-label">Scan for e-validation</p>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="rx-bar">
+          <span class="rx-symbol">Rx</span>
+          <div class="rx-line"></div>
+        </div>
+
+        ${medBlocks ? `
+        <div class="med-list">
+          ${medBlocks}
+        </div>` : '<p style="font-weight: 600; font-size: 11px; color: #000;">No medicines prescribed</p>'}
+
+        ${invList ? `
+        <div class="inv-section">
+          <p class="inv-label">Investigations</p>
+          <p class="inv-value">${invList}</p>
+        </div>` : ''}
+
+        ${w.advice ? `
+        <div class="inv-section">
+          <p class="inv-label">Advice</p>
+          <p class="inv-value">${w.advice}</p>
+        </div>` : ''}
+
+        ${w.foodAdvice ? `
+        <div class="inv-section">
+          <p class="inv-label">Food Advice</p>
+          <p class="inv-value">${w.foodAdvice}</p>
+        </div>` : ''}
+
+        ${w.followUpDate ? `
+        <div class="inv-section">
+          <p class="inv-label">Follow-up</p>
+          <p class="inv-value">${new Date(w.followUpDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>` : ''}
+      </div>
+    </div>
+
+    <div class="sig-area">
+      ${docSignature ? `<img src="${docSignature}" alt="Signature" class="sig-img" />` : `<div class="sig-line"></div>`}
+      <p class="sig-name">${docName}</p>
+      ${docBmdc ? `<p class="sig-reg">Reg No: ${docBmdc}</p>` : ''}
+    </div>
+
+  </div>
+  <div class="watermark">RX</div>
+  <script>
+    window.onload = function() { window.print(); };
+  </script>
+</body>
+</html>`);
     win.document.close();
     win.focus();
-    setTimeout(() => win.print(), 300);
   };
 
   const saveDraft = () => {
@@ -430,7 +617,7 @@ function NewPrescriptionForm() {
                                   <button
                                     key={`brand-${b.id}`}
                                     type="button"
-                                    onClick={() => selectMedicine(i, b.name, b.strength)}
+                                    onClick={() => selectMedicine(i, b.name, b.strength, b.form)}
                                     className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
                                   >
                                     <Pill className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
@@ -807,9 +994,11 @@ function NewPrescriptionForm() {
                     </div>
                   )}
                   <div className="pt-10">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center text-gray-300 mb-2">
-                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-                    </div>
+                    {qrDataUrl ? (
+                      <img src={qrDataUrl} alt="QR" className="w-[72px] h-[72px] block mb-1" />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded mb-2" />
+                    )}
                     <p className="text-[8px] text-gray-300">Scan for e-validation</p>
                   </div>
                 </div>
@@ -830,8 +1019,8 @@ function NewPrescriptionForm() {
                         if (!m.name) return null;
                         return (
                           <div key={field.id} className="relative pl-2 border-l-2 border-teal-300/50">
-                            <p className="font-bold text-sm text-gray-900 dark:text-white">{m.name}{m.strength ? ` ${m.strength}` : ''}</p>
-                            <p className="text-gray-500 text-[10px]">{m.dosage} · {m.frequency} · {m.duration} Days</p>
+                            <p className="font-bold text-sm text-gray-900 dark:text-white">{getForm(m.form)} {m.name}{m.strength ? ` ${m.strength}` : ''}</p>
+                            <p className="text-gray-500 text-[10px]">{m.dosage} · {m.frequency} · {fmtDur(m.duration)}</p>
                             {m.instructions && <p className="text-gray-400 text-[9px] mt-0.5 italic">{m.instructions}</p>}
                           </div>
                         );
