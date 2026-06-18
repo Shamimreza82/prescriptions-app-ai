@@ -119,6 +119,7 @@ export default function DoctorPrescriptionsPage() {
               <TableRow>
                 <TableHead>Rx No</TableHead>
                 <TableHead>Patient</TableHead>
+                <TableHead>Patient ID</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -126,7 +127,7 @@ export default function DoctorPrescriptionsPage() {
             <TableBody>
               {data?.data?.length === 0 ? (
                 <TableRow>
-                   <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     No prescriptions found
                   </TableCell>
@@ -140,6 +141,11 @@ export default function DoctorPrescriptionsPage() {
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span>{rx.patient?.fullName}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {rx.patient?.patientId || '—'}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">

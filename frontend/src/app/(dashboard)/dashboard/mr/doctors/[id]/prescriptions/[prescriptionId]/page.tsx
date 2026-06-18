@@ -1,22 +1,35 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/axios';
-import { useDoctorPrescriptionById, useMyDoctors } from '@/features/mr/hooks';
-import { Badge } from '@/components/ui/badge';
+import { useDoctorPrescriptionById } from '@/features/mr/hooks';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Calendar, User, Stethoscope, Activity, Thermometer, Heart, Droplets } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { ArrowLeft, Download, Printer } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import QRCodeLib from 'qrcode';
+
+const formAbbr: Record<string, string> = {
+  'Tablet': 'TAB.', 'Capsule': 'CAP.', 'Injection': 'INJ.', 'Inject': 'INJ.',
+  'Syrup': 'SYP.', 'Cream': 'CRM.', 'Ointment': 'OINT.', 'Gel': 'GEL.',
+  'Drop': 'DROP.', 'Inhaler': 'INH.', 'Suspension': 'SUSP.', 'Solution': 'SOLN.',
+  'Lotion': 'LOT.', 'Spray': 'SPRAY.', 'Powder': 'PDR.', 'Sachet': 'SACH.',
+};
+const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
+const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
 
 export default function PrescriptionDetailPage() {
   const { id: doctorId, prescriptionId } = useParams<{ id: string; prescriptionId: string }>();
   const router = useRouter();
-  const { data: doctors } = useMyDoctors();
   const { data: rx, isLoading } = useDoctorPrescriptionById(doctorId, prescriptionId);
+  const [qrDataUrl, setQrDataUrl] = useState('');
 
-  const doctor = doctors?.data?.find((d: any) => d.id === doctorId);
+  useEffect(() => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 72, margin: 1, color: { dark: '#000', light: '#fff' } })
+      .then(setQrDataUrl).catch((e) => console.error(e));
+  }, []);
 
   const handleDownload = async () => {
     try {
@@ -36,232 +49,162 @@ export default function PrescriptionDetailPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
-        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
-        <div className="h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
-      </div>
-    );
-  }
+  if (isLoading) return <div className="space-y-4 max-w-4xl mx-auto">{[1, 2, 3].map((i) => <div key={i} className="h-24 bg-muted rounded animate-pulse" />)}</div>;
+  if (!rx) return <div className="text-center py-12 text-muted-foreground">Prescription not found</div>;
 
-  if (!rx) {
-    return (
-      <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Prescription Not Found</h1>
-        </div>
-      </div>
-    );
-  }
-
-  const vitals = [
-    { label: 'BP', value: rx.bloodPressure, icon: Heart },
-    { label: 'Pulse', value: rx.pulseRate, icon: Activity },
-    { label: 'Temp', value: rx.temperature, icon: Thermometer },
-    { label: 'SpO2', value: rx.oxygenSaturation, icon: Droplets },
-  ].filter((v) => v.value);
+  const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  const docName = rx.doctor?.fullName ? `Dr. ${rx.doctor.fullName}` : 'Dr. Doctor';
+  const docLogo = rx.doctor?.clinicLogo ? `${apiBase}/uploads/${rx.doctor.clinicLogo}` : '';
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <style>{`
+        @page { size: A4; margin: 10mm; }
+        @media print { body * { visibility: hidden; } #print-content, #print-content * { visibility: visible; } #print-content { position: absolute; top: 0; left: 0; width: 100%; border: none !important; box-shadow: none !important; border-radius: 0 !important; } }
+      `}</style>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href={`/dashboard/mr/doctors/${doctorId}/prescriptions`} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Prescription #{rx.prescriptionNo}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {doctor?.fullName || 'Doctor'} &middot; {formatDate(rx.createdAt)}
-            </p>
+            <h1 className="text-2xl font-bold">Prescription #{rx.prescriptionNo}</h1>
+            <p className="text-muted-foreground">{new Date(rx.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
-        <Button onClick={handleDownload} className="rounded-xl gradient-primary text-white shadow-glow">
-          <Download className="h-4 w-4 mr-2" /> Download PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleDownload}>
+            <Download className="h-4 w-4 mr-2" />Download PDF
+          </Button>
+          <Button onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-2" />Print
+          </Button>
+        </div>
       </div>
 
-      <div className="premium-card-static overflow-hidden">
-        <div className="p-6 space-y-8">
-          {/* Doctor Info */}
-          <div className="flex items-start justify-between">
+      {/* ===== Prescription Preview ===== */}
+      <div id="print-content" className="bg-white border shadow-sm" style={{ width: '210mm', margin: '0 auto' }}>
+        {/* Letterhead */}
+        <div className="p-6 border-b-4 border-black flex justify-between items-start">
+          <div>
+            <p className="text-lg font-extrabold text-black">{docName}</p>
+            {(rx.doctor?.degree || []).length > 0 && <p className="text-xs font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
+            {(rx.doctor?.specialization || []).length > 0 && <p className="text-[11px] font-semibold text-black uppercase tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
+            {rx.doctor?.clinicName && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicName}</p>}
+            {rx.doctor?.clinicAddress && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicAddress}</p>}
+            {rx.doctor?.bmdcRegNo && <p className="text-[11px] font-semibold text-black">BMDC: {rx.doctor.bmdcRegNo}</p>}
+            {rx.doctor?.phone && <p className="text-[11px] font-semibold text-black">{rx.doctor.phone}</p>}
+          </div>
+          <div className="text-right">
+            {docLogo ? (
+              <img src={docLogo} alt="" className="w-12 h-12 object-contain ml-auto mb-1" />
+            ) : (
+              <div className="w-10 h-10 bg-black rounded ml-auto mb-1 flex items-center justify-center">
+                <span className="text-white text-[10px] font-bold">RX</span>
+              </div>
+            )}
+            <p className="text-[8px] font-bold text-black">Forwarded by PRESMANAGE</p>
+            <p className="text-[10px] font-semibold text-black mt-1">Rx: {rx.prescriptionNo}</p>
+            <p className="text-[10px] font-semibold text-black">{new Date(rx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+            {rx.updatedAt && rx.updatedAt !== rx.createdAt && <p className="text-[9px] font-semibold text-black">Last update: {new Date(rx.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 grid grid-cols-[4fr_8fr] gap-6 text-[12px]">
+          {/* Left Column */}
+          <div className="border-r border-black pr-5 space-y-5">
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{rx.doctor?.fullName}</h2>
-              <p className="text-sm text-muted-foreground">{(rx.doctor?.degree || []).join(', ')}</p>
-              <p className="text-sm text-muted-foreground">{(rx.doctor?.specialization || []).join(', ')}</p>
-              <p className="text-sm text-muted-foreground">BMDC: {rx.doctor?.bmdcRegNo}</p>
+              <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">PATIENT DETAILS</p>
+              <p className="text-[12px] font-bold text-black">{rx.patient?.fullName || ''}</p>
+              <p className="text-[12px] font-semibold text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''}</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">{rx.doctor?.clinicName}</p>
-              <p className="text-sm text-muted-foreground">{rx.doctor?.clinicAddress}</p>
-              <p className="text-sm text-muted-foreground">{rx.doctor?.phone}</p>
+            <div>
+              <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">SYMPTOMS</p>
+              <p className="text-[12px] font-semibold text-black">{rx.symptoms || '—'}</p>
             </div>
+            <div>
+              <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">VITALS</p>
+              <p className="text-[12px] font-semibold text-black">BP: {rx.bloodPressure || '—'} mmHg</p>
+              <p className="text-[12px] font-semibold text-black">HR: {rx.pulseRate || '—'} bpm</p>
+            </div>
+            {rx.diagnosis && (
+              <div>
+                <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">DIAGNOSIS</p>
+                <p className="text-[12px] font-semibold text-black">{rx.diagnosis}</p>
+              </div>
+            )}
+            {qrDataUrl && (
+              <div className="pt-4">
+                <img src={qrDataUrl} alt="QR" className="w-[72px] h-[72px] block mb-1" />
+                <p className="text-[10px] font-bold text-black">Scan for e-validation</p>
+              </div>
+            )}
           </div>
 
-          <div className="border-t border-gray-100 dark:border-gray-800" />
-
-          {/* Patient Info */}
+          {/* Right Column */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Patient Information</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">Name</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{rx.patient?.fullName}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Patient ID</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{rx.patient?.patientId}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Age / Gender</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{rx.patient?.age} yrs / {rx.patient?.gender}</p>
-              </div>
-              {rx.patient?.weight && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Weight</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{rx.patient.weight} kg</p>
-                </div>
-              )}
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl italic font-bold text-black font-serif">Rx</span>
+              <div className="h-px flex-1 bg-black" />
             </div>
-          </div>
 
-          {/* Vitals */}
-          {vitals.length > 0 && (
-            <>
-              <div className="border-t border-gray-100 dark:border-gray-800" />
+            {rx.medicines?.filter((m: any) => m.name).length > 0 ? (
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Vital Signs</h3>
-                <div className="flex flex-wrap gap-4">
-                  {vitals.map((v) => (
-                    <div key={v.label} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900">
-                      <v.icon className="h-4 w-4 text-teal-600" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">{v.label}</p>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{v.value}</p>
-                      </div>
+                {rx.medicines.filter((m: any) => m.name).map((m: any, i: number) => {
+                  const prefix = getForm(m.form);
+                  return (
+                    <div key={i} className="mb-3 pb-2 border-b border-dashed border-gray-400 last:border-0">
+                      <p className="text-[14px] font-extrabold text-black">{prefix} {m.name}{m.strength ? ` ${m.strength}` : ''}</p>
+                      <p className="text-[13px] font-semibold text-black ml-8">{m.dosage || '—'} · {m.frequency || '—'} · {fmtDur(m.duration)}</p>
+                      {m.instructions && <p className="text-[11px] font-semibold text-black ml-8">{m.instructions}</p>}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            </>
-          )}
+            ) : (
+              <p className="text-[12px] font-semibold text-black">No medicines prescribed</p>
+            )}
 
-          {/* Diagnosis */}
-          {(rx.chiefComplaint || rx.diagnosis) && (
-            <>
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              <div className="grid md:grid-cols-2 gap-6">
-                {rx.chiefComplaint && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Chief Complaint</h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{rx.chiefComplaint}</p>
-                  </div>
-                )}
-                {rx.diagnosis && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Diagnosis</h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{rx.diagnosis}</p>
-                    {rx.diagnosisNotes && (
-                      <p className="text-sm text-muted-foreground mt-1 italic">{rx.diagnosisNotes}</p>
-                    )}
-                  </div>
-                )}
+            {rx.investigations?.filter((i: any) => i.name).length > 0 && (
+              <div className="mt-6">
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">INVESTIGATIONS</p>
+                <p className="text-[12px] font-semibold text-black">{rx.investigations.filter((i: any) => i.name).map((i: any) => i.name).join(', ')}</p>
               </div>
-            </>
-          )}
+            )}
 
-          {/* Medicines */}
-          <div className="border-t border-gray-100 dark:border-gray-800" />
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Medicines</h3>
-              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-900">
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-700 dark:text-gray-300">Medicine</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-700 dark:text-gray-300">Dosage</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-700 dark:text-gray-300">Frequency</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-700 dark:text-gray-300">Duration</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-700 dark:text-gray-300">Instructions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {rx.medicines?.map((m: any, i: number) => (
-                    <tr key={m.id || i} className="hover:bg-gray-50 dark:hover:bg-gray-900/50">
-                      <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-white">
-                        {m.name}{m.strength ? ` ${m.strength}` : ''}
-                      </td>
-                      <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{m.dosage}</td>
-                      <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{m.frequency}</td>
-                      <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300">{m.duration}</td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{m.instructions || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {rx.advice && (
+              <div className="mt-6">
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">ADVICE</p>
+                <p className="text-[12px] font-semibold text-black">{rx.advice}</p>
+              </div>
+            )}
+
+            {rx.foodAdvice && (
+              <div className="mt-6">
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">FOOD ADVICE</p>
+                <p className="text-[12px] font-semibold text-black">{rx.foodAdvice}</p>
+              </div>
+            )}
+
+            {rx.followUpDate && (
+              <div className="mt-6">
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">FOLLOW-UP</p>
+                <p className="text-[12px] font-semibold text-black">{new Date(rx.followUpDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Investigations */}
-          {rx.investigations?.length > 0 && (
-            <>
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Investigations</h3>
-                <div className="space-y-2">
-                  {rx.investigations.map((inv: any) => (
-                    <div key={inv.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-                      <Stethoscope className="h-4 w-4 text-teal-600 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{inv.name}</p>
-                        {inv.notes && <p className="text-xs text-muted-foreground mt-0.5">{inv.notes}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
+        {/* Signature */}
+        <div className="text-right px-6 pb-6">
+          {rx.doctor?.signatureImg ? (
+            <img src={`${apiBase}/uploads/${rx.doctor.signatureImg}`} alt="Signature" className="h-10 ml-auto mb-1 object-contain" />
+          ) : (
+            <div className="w-40 h-px bg-black ml-auto mb-2" />
           )}
-
-          {/* Advice */}
-          {(rx.advice || rx.foodAdvice) && (
-            <>
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              <div className="grid md:grid-cols-2 gap-6">
-                {rx.advice && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Advice</h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{rx.advice}</p>
-                  </div>
-                )}
-                {rx.foodAdvice && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Food Advice</h3>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{rx.foodAdvice}</p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Follow-up */}
-          {rx.followUpDate && (
-            <>
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-medium text-red-600 dark:text-red-400">Follow-up:</span>
-                <span className="text-sm text-gray-900 dark:text-white">
-                  {formatDate(rx.followUpDate)}
-                </span>
-              </div>
-            </>
-          )}
+          <p className="text-[12px] font-extrabold text-black uppercase">{docName}</p>
+          {rx.doctor?.bmdcRegNo && <p className="text-[10px] font-semibold text-black">Reg No: {rx.doctor.bmdcRegNo}</p>}
         </div>
       </div>
     </div>
