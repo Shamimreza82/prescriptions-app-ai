@@ -79,15 +79,6 @@ export default function MrSubscriptionsPage() {
     }
   };
 
-  if (isLoading || loadingPlans) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
-        <div className="h-64 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-4">
@@ -163,7 +154,13 @@ export default function MrSubscriptionsPage() {
         </DialogContent>
       </Dialog>
 
-      {!subscriptions.length ? (
+      {isLoading || loadingPlans ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-12 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : !subscriptions.length ? (
         <div className="premium-card-static p-12 text-center">
           <Stethoscope className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Doctors Assigned</h3>

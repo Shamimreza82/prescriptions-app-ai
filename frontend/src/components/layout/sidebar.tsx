@@ -12,59 +12,67 @@ import {
 } from 'lucide-react';
 import { useThemeContext } from '@/providers/theme-provider';
 
+const navActiveColor = 'from-blue-600 to-indigo-600';
+const navChildActiveColor = 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30';
+
 const doctorMenu = [
-  { href: '/dashboard/doctor', label: 'Dashboard', icon: LayoutDashboard, gradient: 'from-blue-500 to-blue-600' },
-  { href: '/patients', label: 'Patients', icon: Users, gradient: 'from-emerald-500 to-emerald-600' },
-  { href: '/prescriptions', label: 'Prescriptions', icon: FileText, gradient: 'from-violet-500 to-violet-600' },
-  { href: '/appointments', label: 'Appointments', icon: Calendar, gradient: 'from-amber-500 to-orange-500' },
-  { href: '/dashboard/doctor/receptionists', label: 'Receptionists', icon: UserRound, gradient: 'from-orange-500 to-orange-600' },
+  { href: '/dashboard/doctor', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/patients', label: 'Patients', icon: Users },
+  { href: '/prescriptions', label: 'Prescriptions', icon: FileText },
+  { href: '/appointments', label: 'Appointments', icon: Calendar },
+  { href: '/dashboard/doctor/receptionists', label: 'Receptionists', icon: UserRound },
   {
-    label: 'Settings', icon: Settings, gradient: 'from-purple-500 to-purple-600',
+    label: 'Settings', icon: Settings,
     children: [
       { href: '/dashboard/doctor/settings/plans', label: 'Plans', icon: Crown },
       { href: '/dashboard/doctor/settings/change-password', label: 'Change Password', icon: Shield },
     ],
   },
-  { href: '/dashboard/doctor/profile', label: 'My Profile', icon: Building2, gradient: 'from-rose-500 to-rose-600' },
+  { href: '/dashboard/doctor/profile', label: 'My Profile', icon: Building2 },
 ];
 
 const adminMenu = [
-  { href: '/dashboard/admin', label: 'Dashboard', icon: Shield, gradient: 'from-indigo-500 to-indigo-600' },
-  { href: '/dashboard/admin/doctors', label: 'Doctors', icon: Stethoscope, gradient: 'from-emerald-500 to-emerald-600' },
-  { href: '/dashboard/admin/patients', label: 'Patients', icon: PersonStanding, gradient: 'from-sky-500 to-sky-600' },
-  { href: '/dashboard/admin/users', label: 'Users', icon: UserCog, gradient: 'from-violet-500 to-violet-600' },
-  { href: '/dashboard/admin/medical-reps', label: 'Medical Reps', icon: UserRound, gradient: 'from-teal-500 to-teal-600' },
-  { href: '/dashboard/admin/plans', label: 'Plans', icon: Crown, gradient: 'from-purple-500 to-purple-600' },
+  { href: '/dashboard/admin', label: 'Dashboard', icon: Shield },
+  { href: '/dashboard/admin/doctors', label: 'Doctors', icon: Stethoscope },
+  { href: '/dashboard/admin/patients', label: 'Patients', icon: PersonStanding },
+  { href: '/dashboard/admin/users', label: 'Users', icon: UserCog },
+  { href: '/dashboard/admin/medical-reps', label: 'Medical Reps', icon: UserRound },
+  { href: '/dashboard/admin/plans', label: 'Plans', icon: Crown },
   {
-    label: 'Subscriptions', icon: CreditCard, gradient: 'from-amber-500 to-orange-500',
+    label: 'Subscriptions', icon: CreditCard,
     children: [
       { href: '/dashboard/admin/subscriptions', label: 'All Subscriptions', icon: CreditCard },
       { href: '/dashboard/admin/subscriptions/pending', label: 'Pending Subs', icon: CreditCard },
     ],
   },
-  { href: '/dashboard/admin/logs', label: 'Activity Logs', icon: ClipboardList, gradient: 'from-rose-500 to-rose-600' },
+  { href: '/dashboard/admin/logs', label: 'Activity Logs', icon: ClipboardList },
 ];
 
 const mrMenu = [
-  { href: '/dashboard/mr', label: 'Dashboard', icon: LayoutDashboard, gradient: 'from-teal-500 to-teal-600' },
-  { href: '/dashboard/mr/doctors', label: 'Doctors', icon: Stethoscope, gradient: 'from-emerald-500 to-emerald-600' },
-  { href: '/dashboard/mr/subscriptions', label: 'Subscriptions', icon: Crown, gradient: 'from-amber-500 to-orange-500' },
-  { href: '/dashboard/mr/profile', label: 'My Profile', icon: UserRound, gradient: 'from-rose-500 to-rose-600' },
+  { href: '/dashboard/mr', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/mr/doctors', label: 'Doctors', icon: Stethoscope },
+  { href: '/dashboard/mr/subscriptions', label: 'Subscriptions', icon: Crown },
+  { href: '/dashboard/mr/profile', label: 'My Profile', icon: UserRound },
 ];
 
 const recMenu = [
-  { href: '/dashboard/receptionist', label: 'Dashboard', icon: LayoutDashboard, gradient: 'from-orange-500 to-orange-600' },
-  { href: '/dashboard/receptionist/patients', label: 'Patients', icon: Users, gradient: 'from-emerald-500 to-emerald-600' },
-  { href: '/dashboard/receptionist/appointments', label: 'Appointments', icon: Calendar, gradient: 'from-amber-500 to-orange-500' },
-  { href: '/dashboard/receptionist/prescriptions', label: 'Prescriptions', icon: FileText, gradient: 'from-violet-500 to-violet-600' },
+  { href: '/dashboard/receptionist', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/receptionist/patients', label: 'Patients', icon: Users },
+  { href: '/dashboard/receptionist/appointments', label: 'Appointments', icon: Calendar },
+  { href: '/dashboard/receptionist/prescriptions', label: 'Prescriptions', icon: FileText },
 ];
+
+interface MenuChild {
+  href: string;
+  label: string;
+  icon: any;
+}
 
 interface MenuItem {
   href?: string;
   label: string;
   icon: any;
-  gradient?: string;
-  children?: { href: string; label: string; icon: any }[];
+  children?: MenuChild[];
 }
 
 export const Sidebar = () => {
@@ -108,7 +116,7 @@ export const Sidebar = () => {
               'flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 w-full',
               collapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-2.5',
               childActive
-                ? 'text-white bg-gradient-to-r ' + item.gradient
+                ? 'text-white bg-gradient-to-r ' + navActiveColor
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'
             )}
             title={collapsed ? item.label : undefined}
@@ -134,7 +142,7 @@ export const Sidebar = () => {
                     className={cn(
                       'flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 py-2 px-3',
                       isChildActive
-                        ? 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30'
+                        ? navChildActiveColor
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'
                     )}
                   >
@@ -161,7 +169,7 @@ export const Sidebar = () => {
             'flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 relative group',
             collapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-2.5',
             isActive
-              ? 'text-white bg-gradient-to-r ' + item.gradient
+              ? 'text-white bg-gradient-to-r ' + navActiveColor
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/50'
           )}
         >
