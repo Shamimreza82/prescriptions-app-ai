@@ -312,7 +312,7 @@ export default function AdminUserDetailPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="block text-sm font-medium mb-1.5">New Password</label>
+              <label className="block text-sm font-medium mb-1.5">New Password <span className="text-red-500">*</span></label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -334,7 +334,7 @@ export default function AdminUserDetailPage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1.5">Confirm Password</label>
+              <label className="block text-sm font-medium mb-1.5">Confirm Password <span className="text-red-500">*</span></label>
               <div className="relative">
                 <input
                   type={showConfirm ? 'text' : 'password'}

@@ -31,4 +31,4 @@ export const update = (id: string, data: {
   db.plan.update({ where: { id }, data });
 
 export const remove = (id: string) =>
-  db.plan.delete({ where: { id } });
+  db.plan.update({ where: { id }, data: { isActive: false } });

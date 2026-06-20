@@ -50,6 +50,14 @@ export const deleteActivityLogs = (startDate: string, endDate: string) => {
   return repo.deleteAuditLogs(startDate, endDate);
 };
 
+export const deleteActivityLog = (id: string) =>
+  repo.deleteAuditLogById(id);
+
+export const deleteActivityLogsBulk = (ids: string[]) => {
+  if (!ids.length) throw badRequest('No log IDs provided');
+  return repo.deleteAuditLogsByIds(ids);
+};
+
 export const getAdminDoctors = (query: Request['query']) => {
   const pagination = getPaginationParams(query);
   const filters = {

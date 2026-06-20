@@ -16,6 +16,8 @@ router.put('/profile', upload.fields([
 ]), doctorController.updateProfile);
 router.post('/upload-signature', upload.single('signature'), doctorController.uploadSignature);
 router.post('/upload-logo', upload.single('logo'), doctorController.uploadLogo);
+router.delete('/remove-signature', doctorController.removeSignature);
+router.delete('/remove-logo', doctorController.removeLogo);
 
 router.get('/subscription', doctorController.getMySubscription);
 router.post('/subscription/activate', validateBody(z.object({ planId: z.string().uuid(), transactionId: z.string().optional(), notes: z.string().optional() })), doctorController.activatePlan);

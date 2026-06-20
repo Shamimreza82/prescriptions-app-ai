@@ -98,7 +98,7 @@ export default function DoctorPlansPage() {
               <CreditCard className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedPlan?.name} Plan</p>
-                <p className="text-xs text-muted-foreground">${selectedPlan?.price} for {selectedPlan?.duration} days</p>
+                <p className="text-xs text-muted-foreground">৳{selectedPlan?.price} for {selectedPlan?.duration} days</p>
               </div>
             </div>
             <div>
@@ -164,7 +164,7 @@ export default function DoctorPlansPage() {
               )}
 
               <div className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                ${plan.price}
+                ৳{plan.price}
                 <span className="text-sm font-normal text-muted-foreground">
                   {plan.duration > 0 ? ` / ${plan.duration} days` : ''}
                 </span>

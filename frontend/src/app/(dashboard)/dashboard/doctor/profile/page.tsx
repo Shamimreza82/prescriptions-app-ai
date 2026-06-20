@@ -82,6 +82,16 @@ export default function DoctorProfilePage() {
     }
   };
 
+  const handleRemove = async (field: string) => {
+    try {
+      const { data } = await api.delete(`/doctors/remove-${field}`);
+      setProfile((p: any) => ({ ...p, ...data.data }));
+      toast.success('File removed');
+    } catch {
+      toast.error('Remove failed');
+    }
+  };
+
   const handleUpload = async (field: string, file: File | null) => {
     if (!file) return;
     const fd = new FormData();
@@ -209,47 +219,7 @@ export default function DoctorProfilePage() {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid gap-5 md:grid-cols-2">
-        {/* Schedule */}
-        <Card className="premium-card-static">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Chamber Schedule</h3>
-                  <p className="text-xs text-muted-foreground">Weekly availability</p>
-                </div>
-              </div>
-              <button onClick={() => openSection('clinic')} className="p-2 rounded-lg text-muted-foreground hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all opacity-0 group-hover:opacity-100">
-                <Pencil className="h-4 w-4" />
-              </button>
-            </div>
-            {profile?.chamberSchedule && profile.chamberSchedule.length > 0 ? (
-              <div className="space-y-2">
-                {profile.chamberSchedule.map((slot: any, idx: number) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{slot.day}</p>
-                        <p className="text-xs text-muted-foreground">{slot.startTime} — {slot.endTime}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Clock className="h-10 w-10 mx-auto text-muted-foreground/50 mb-3" />
-                <p className="text-sm text-muted-foreground">No schedule set</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-5 md:grid-cols-1">
         {/* Brand Assets */}
         <Card className="premium-card-static">
           <CardContent className="p-5">
@@ -262,57 +232,65 @@ export default function DoctorProfilePage() {
                 <p className="text-xs text-muted-foreground">Signature & clinic logo</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 max-w-md">
               <div className="relative group/upload">
-                <div className="aspect-[3/2] rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-2 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
+                <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
                   {profile?.signatureImg ? (
                     <>
-                      <img src={`http://localhost:5000/uploads/${profile.signatureImg}`} alt="Signature" className="h-full w-full object-contain p-3" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center">
-                        <Label htmlFor="sig" className="cursor-pointer text-xs text-white bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors">
+                      <img src={`http://localhost:5000/uploads/${profile.signatureImg}`} alt="Signature" className="h-full w-full object-contain p-2" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Label htmlFor="sig" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
                           Change
                         </Label>
+                        {(!profile?._count || profile._count.prescriptions === 0) && (
+                          <button type="button" onClick={() => handleRemove('signature')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500 transition-colors">
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                        <Pencil className="h-5 w-5 text-muted-foreground" />
+                    <label htmlFor="sig" className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center pointer-events-none">
+                        <Pencil className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <Label htmlFor="sig" className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                        Upload Signature
-                      </Label>
-                    </>
+                      <span className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors pointer-events-none">
+                        Upload
+                      </span>
+                    </label>
                   )}
                 </div>
                 <input id="sig" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('signature', e.target.files?.[0] || null)} />
-                <p className="text-xs text-center text-muted-foreground mt-2">Signature</p>
+                <p className="text-[11px] text-center text-muted-foreground mt-1.5">Signature</p>
               </div>
 
               <div className="relative group/upload">
-                <div className="aspect-[3/2] rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-2 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
+                <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
                   {profile?.clinicLogo ? (
                     <>
-                      <img src={`http://localhost:5000/uploads/${profile.clinicLogo}`} alt="Logo" className="h-full w-full object-contain p-3" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center">
-                        <Label htmlFor="logo" className="cursor-pointer text-xs text-white bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg hover:bg-white/30 transition-colors">
+                      <img src={`http://localhost:5000/uploads/${profile.clinicLogo}`} alt="Logo" className="h-full w-full object-contain p-2" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Label htmlFor="logo" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
                           Change
                         </Label>
+                        <button type="button" onClick={() => handleRemove('logo')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500 transition-colors">
+                          Remove
+                        </button>
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    <label htmlFor="logo" className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center pointer-events-none">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <Label htmlFor="logo" className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                        Upload Logo
-                      </Label>
-                    </>
+                      <span className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors pointer-events-none">
+                        Upload
+                      </span>
+                    </label>
                   )}
                 </div>
                 <input id="logo" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('logo', e.target.files?.[0] || null)} />
-                <p className="text-xs text-center text-muted-foreground mt-2">Clinic Logo</p>
+                <p className="text-[11px] text-center text-muted-foreground mt-1.5">Clinic Logo</p>
               </div>
             </div>
           </CardContent>
@@ -362,7 +340,8 @@ export default function DoctorProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">BMDC Reg No</Label>
-                  <Input value={form.bmdcRegNo} onChange={(e) => setForm({ ...form, bmdcRegNo: e.target.value })} className="h-11 premium-input" placeholder="A-12345" />
+                  <Input value={form.bmdcRegNo} onChange={(e) => setForm({ ...form, bmdcRegNo: e.target.value })} disabled={!!profile?.bmdcRegNo} className="h-11 premium-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="A-12345" />
+                  {profile?.bmdcRegNo && <p className="text-xs text-muted-foreground">BMDC number can only be set once</p>}
                 </div>
               </div>
             )}

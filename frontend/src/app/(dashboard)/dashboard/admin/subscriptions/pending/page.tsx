@@ -139,7 +139,7 @@ export default function PendingSubscriptionsPage() {
                     <TableCell className="font-medium">{sub.doctor?.fullName}</TableCell>
                     <TableCell>{sub.doctor?.clinicName}</TableCell>
                     <TableCell><Badge variant="secondary">{sub.plan?.name}</Badge></TableCell>
-                    <TableCell>${payment?.amount || sub.plan?.price}</TableCell>
+                    <TableCell>{payment?.amount || sub.plan?.price}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-mono text-xs">
                         {payment?.transactionId || '—'}

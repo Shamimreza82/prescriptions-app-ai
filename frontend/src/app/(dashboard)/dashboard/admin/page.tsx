@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
         <StatsCard title="Active Doctors" value={stats?.activeDoctors || 0} icon={Activity} gradient="gradient-success" />
         <StatsCard title="Total Patients" value={stats?.totalPatients || 0} icon={Shield} gradient="gradient-info" />
         <StatsCard title="Pending Subs" value={stats?.pendingSubscriptions || 0} icon={Clock} gradient="gradient-warning" />
-        <StatsCard title="Revenue" value={`$${stats?.totalRevenue || 0}`} icon={DollarSign} gradient="gradient-warning" />
+        <StatsCard title="Revenue" value={`${stats?.totalRevenue || 0}`} icon={DollarSign} gradient="gradient-warning" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">

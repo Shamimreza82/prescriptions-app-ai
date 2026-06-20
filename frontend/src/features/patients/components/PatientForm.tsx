@@ -77,17 +77,17 @@ export const PatientForm = ({ onSuccess, initialData }: PatientFormProps) => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Full Name *</Label>
+                <Label>Full Name <span className="text-red-500">*</span></Label>
                 <Input {...register('fullName')} />
                 {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Age *</Label>
+                <Label>Age <span className="text-red-500">*</span></Label>
                 <Input type="number" {...register('age')} />
                 {errors.age && <p className="text-xs text-red-500">{errors.age.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Gender *</Label>
+                <Label>Gender <span className="text-red-500">*</span></Label>
                 <Select onValueChange={(v) => setValue('gender', v as any)}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>

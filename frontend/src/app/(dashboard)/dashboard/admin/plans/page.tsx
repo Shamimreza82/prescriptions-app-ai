@@ -78,7 +78,7 @@ function PlanFormDialog({ plan, open, onOpenChange }: { plan?: Plan; open: boole
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-sm font-medium mb-1">Name <span className="text-red-500">*</span></label>
             <input {...register('name')} className="premium-input w-full h-11 px-4" placeholder="Plan name" />
             {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>}
           </div>
@@ -88,24 +88,24 @@ function PlanFormDialog({ plan, open, onOpenChange }: { plan?: Plan; open: boole
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Price ($)</label>
+              <label className="block text-sm font-medium mb-1">Price ($) <span className="text-red-500">*</span></label>
               <input {...register('price')} type="number" step="0.01" className="premium-input w-full h-11 px-4" />
               {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Duration (days)</label>
+              <label className="block text-sm font-medium mb-1">Duration (days) <span className="text-red-500">*</span></label>
               <input {...register('duration')} type="number" className="premium-input w-full h-11 px-4" />
               {errors.duration && <p className="text-xs text-red-500 mt-1">{errors.duration.message}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Patient Limit</label>
+              <label className="block text-sm font-medium mb-1">Patient Limit <span className="text-red-500">*</span></label>
               <input {...register('patientLimit')} type="number" className="premium-input w-full h-11 px-4" />
               {errors.patientLimit && <p className="text-xs text-red-500 mt-1">{errors.patientLimit.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Prescription Limit</label>
+              <label className="block text-sm font-medium mb-1">Prescription Limit <span className="text-red-500">*</span></label>
               <input {...register('prescriptionLimit')} type="number" className="premium-input w-full h-11 px-4" />
               {errors.prescriptionLimit && <p className="text-xs text-red-500 mt-1">{errors.prescriptionLimit.message}</p>}
             </div>
@@ -185,7 +185,7 @@ export default function AdminPlansPage() {
               {plans.map((plan: Plan) => (
                 <TableRow key={plan.id}>
                   <TableCell className="font-medium">{plan.name}</TableCell>
-                  <TableCell>${plan.price}</TableCell>
+                  <TableCell>{plan.price}</TableCell>
                   <TableCell>{plan.duration > 0 ? `${plan.duration} days` : 'Unlimited'}</TableCell>
                   <TableCell>{plan.patientLimit}</TableCell>
                   <TableCell>{plan.prescriptionLimit}</TableCell>

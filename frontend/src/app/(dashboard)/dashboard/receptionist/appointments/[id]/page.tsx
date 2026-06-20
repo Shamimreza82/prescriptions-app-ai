@@ -80,7 +80,7 @@ export default function RecAppointmentDetailPage() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Fee</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">{apt.fee ? `$${apt.fee.toFixed(2)}` : '—'}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{apt.fee ? `${apt.fee.toFixed(2)}` : '—'}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">

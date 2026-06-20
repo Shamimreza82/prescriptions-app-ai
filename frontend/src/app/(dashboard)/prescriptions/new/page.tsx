@@ -8,6 +8,7 @@ import { api } from '@/lib/axios';
 import { useCreatePrescription } from '@/features/prescriptions/hooks';
 import { downloadPrescriptionPDF } from '@/features/prescriptions/api';
 import { prescriptionSchema } from '@/features/prescriptions/schema';
+import { useMySubscription } from '@/features/plans/hooks';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical } from 'lucide-react';
@@ -30,6 +31,8 @@ function NewPrescriptionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const create = useCreatePrescription();
+  const { data: subscription } = useMySubscription();
+  const [rxCount, setRxCount] = useState(0);
   const [profileStatus, setProfileStatus] = useState<{ isProfileComplete: boolean; isVerified: boolean; loading: boolean }>({ isProfileComplete: true, isVerified: true, loading: true });
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
   const [patients, setPatients] = useState<any[]>([]);
@@ -67,6 +70,7 @@ function NewPrescriptionForm() {
       setDoctorProfile(p);
       setProfileStatus({ isProfileComplete: p.isProfileComplete, isVerified: p.user?.isVerified, loading: false });
     }).catch((e) => { console.error(e); setProfileStatus((s) => ({ ...s, loading: false })); });
+    api.get('/prescriptions?limit=1').then((r) => setRxCount(r.data.total || 0)).catch(() => {});
     const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
     QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
       .then(setQrDataUrl).catch((e) => console.error(e));
@@ -180,194 +184,6 @@ function NewPrescriptionForm() {
   const meds = watch('medicines') || [];
   const invs = watch('investigations') || [];
 
-  const handlePrint = async () => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    const docName = doctorProfile?.fullName ? `Dr. ${doctorProfile.fullName}` : 'Dr. Doctor';
-    const docDegrees = (doctorProfile?.degree || []).join(', ') || 'MBBS, FCPS';
-    const docSpecs = (doctorProfile?.specialization || []).join(', ');
-    const docClinic = doctorProfile?.clinicName || '';
-    const docAddress = doctorProfile?.clinicAddress || '';
-    const docBmdc = doctorProfile?.bmdcRegNo || '';
-    const docPhone = doctorProfile?.phone || '';
-    const docLogo = doctorProfile?.clinicLogo ? `${apiBase}/uploads/${doctorProfile.clinicLogo}` : '';
-    const docSignature = doctorProfile?.signatureImg ? `${apiBase}/uploads/${doctorProfile.signatureImg}` : '';
-
-    const pName = selectedPatient?.fullName || '';
-    const pAge = selectedPatient?.age || '';
-    const pGender = selectedPatient?.gender || '';
-
-    const w = watch();
-    const medicines = (meds || []).filter((_, i) => w.medicines?.[i]?.name);
-    const investigations = invs?.filter((_, i) => w.investigations?.[i]?.name) || [];
-
-    let qrDataUrl = '';
-    try {
-      qrDataUrl = await QRCodeLib.toDataURL(`${apiBase}/verify`, {
-        width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' },
-      });
-    } catch {}
-
-    const medBlocks = medicines.map((_, i) => {
-      const m = w.medicines[i];
-      const prefix = getForm(m.form);
-      return `
-        <div class="med-block">
-          <div class="med-name">${prefix} ${m.name}${m.strength ? ` ${m.strength}` : ''}</div>
-          <div class="med-line">${m.dosage || '—'} · ${m.frequency || '—'} · ${fmtDur(m.duration)}</div>
-          ${m.instructions ? `<div class="med-inst">${m.instructions}</div>` : ''}
-        </div>`;
-    }).join('');
-
-    const invList = investigations.map((_, i) => w.investigations?.[i]?.name || '').filter(Boolean).join(', ');
-
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>Prescription</title>
-  <style>
-    @page { size: A4; margin: 12mm; }
-    @media print {
-      body { margin: 0; padding: 0; }
-      .no-print { display: none; }
-    }
-    body { font-family: 'Noto Sans Bengali', 'Noto Sans', Arial, Helvetica, sans-serif; margin: 0; padding: 0; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: 186mm; min-height: 273mm; margin: 0 auto; box-sizing: border-box; }
-
-    .letterhead { padding: 14px 24px; border-bottom: 3px solid #000; display: flex; justify-content: space-between; align-items: flex-start; }
-    .lh-right { text-align: right; }
-    .doc-name { font-size: 18px; font-weight: 800; color: #000; margin: 0 0 1px; }
-    .doc-deg { font-size: 11px; font-weight: 700; color: #000; margin: 0; }
-    .doc-spec { font-size: 10px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
-    .doc-detail { font-size: 10px; font-weight: 600; color: #000; margin: 0; }
-    .logo-img { width: 48px; height: 48px; object-fit: contain; display: block; margin: 0 0 4px auto; }
-    .logo-placeholder { width: 40px; height: 40px; background: #000; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin: 0 0 4px auto; }
-    .brand { font-size: 8px; font-weight: 800; color: #000; margin: 0; }
-
-    .body-area { padding: 24px 24px 20px; display: grid; grid-template-columns: 4fr 8fr; gap: 24px; font-size: 12px; }
-    .left-col { border-right: 1px solid #000; padding-right: 20px; }
-    .right-col { }
-
-    .section-title { font-size: 10px; font-weight: 800; color: #000; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 6px; }
-    .value-text { font-size: 12px; font-weight: 600; color: #000; margin: 0 0 4px; }
-    .value-bold { font-size: 12px; font-weight: 800; color: #000; margin: 0 0 2px; }
-    .section-gap { margin-bottom: 20px; }
-
-    .rx-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-    .rx-symbol { font-size: 36px; font-style: italic; font-weight: 700; color: #000; font-family: serif; }
-    .rx-line { height: 1px; flex: 1; background: #000; }
-
-    .med-block { margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed #999; }
-    .med-block:last-child { border-bottom: none; }
-    .med-name { font-size: 14px; font-weight: 800; color: #000; margin: 0 0 2px; }
-    .med-line { font-size: 13px; font-weight: 600; color: #000; margin: 0 0 1px; padding-left: 32px; }
-    .med-inst { font-size: 11px; font-weight: 600; color: #000; margin: 2px 0 0; }
-
-    .inv-section { margin-top: 24px; }
-    .inv-label { font-size: 12px; font-weight: 800; color: #000; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 6px; }
-    .inv-value { font-size: 12px; font-weight: 600; color: #000; }
-
-    .sig-area { text-align: right; padding-top: 20px; }
-    .sig-img { height: 40px; margin: 0 0 4px auto; object-fit: contain; display: block; }
-    .sig-line { width: 160px; height: 1px; background: #000; margin: 0 0 6px auto; }
-    .sig-name { font-size: 12px; font-weight: 800; color: #000; text-transform: uppercase; margin: 0; }
-    .sig-reg { font-size: 10px; font-weight: 600; color: #000; margin: 0; }
-
-    .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); pointer-events: none; opacity: 0.03; user-select: none; font-size: 96px; font-weight: 900; color: #000; z-index: 0; }
-
-    .qr-area { margin-top: 36px; }
-    .qr-img { width: 72px; height: 72px; display: block; margin-bottom: 4px; }
-    .qr-label { font-size: 10px; font-weight: 700; color: #000; margin: 0; }
-  </style>
-</head>
-  <body>
-    <div class="page">
-      <div class="letterhead">
-        <div class="lh-left">
-          <p class="doc-name">${docName}</p>
-          <p class="doc-deg">${docDegrees}</p>
-          ${docSpecs ? `<p class="doc-spec">${docSpecs}</p>` : ''}
-          ${docClinic ? `<p class="doc-detail">${docClinic}</p>` : ''}
-          ${docAddress ? `<p class="doc-detail">${docAddress}</p>` : ''}
-          ${docBmdc ? `<p class="doc-detail">BMDC: ${docBmdc}</p>` : ''}
-          ${docPhone ? `<p class="doc-detail">${docPhone}</p>` : ''}
-        </div>
-        <div class="lh-right">
-          ${docLogo ? `<img src="${docLogo}" alt="Logo" class="logo-img" />` : `<div class="logo-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg></div>`}
-          <p class="brand">Forwarded by PRESMANAGE</p>
-        </div>
-      </div>
-      <div class="body-area">
-      <div class="left-col">
-        ${pName ? `<div class="section-gap"><p class="section-title">Patient Details</p><p class="value-bold">${pName}</p><p class="value-text">Age: ${pAge}Y | Sex: ${pGender?.charAt(0)}</p></div>` : ''}
-
-        <div class="section-gap"><p class="section-title">Symptoms</p><p class="value-text">${w.symptoms || '—'}</p></div>
-
-        <div class="section-gap"><p class="section-title">Vitals</p><p class="value-text">BP: ${w.bloodPressure || '—'} mmHg</p><p class="value-text">HR: ${w.pulseRate || '—'} bpm</p></div>
-
-        ${w.diagnosis ? `<div class="section-gap"><p class="section-title">Diagnosis</p><p class="value-text">${w.diagnosis}</p></div>` : ''}
-
-        <div class="qr-area">
-          ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR" class="qr-img" />` : '<div style="width:72px;height:72px;background:#e5e7eb;border-radius:6px;margin-bottom:4px;"></div>'}
-          <p class="qr-label">Scan for e-validation</p>
-        </div>
-      </div>
-
-      <div class="right-col">
-        <div class="rx-bar">
-          <span class="rx-symbol">Rx</span>
-          <div class="rx-line"></div>
-        </div>
-
-        ${medBlocks ? `
-        <div class="med-list">
-          ${medBlocks}
-        </div>` : '<p style="font-weight: 600; font-size: 12px; color: #000;">No medicines prescribed</p>'}
-
-        ${invList ? `
-        <div class="inv-section">
-          <p class="inv-label">Investigations</p>
-          <p class="inv-value">${invList}</p>
-        </div>` : ''}
-
-        ${w.advice ? `
-        <div class="inv-section">
-          <p class="inv-label">Advice</p>
-          <p class="inv-value">${w.advice}</p>
-        </div>` : ''}
-
-        ${w.foodAdvice ? `
-        <div class="inv-section">
-          <p class="inv-label">Food Advice</p>
-          <p class="inv-value">${w.foodAdvice}</p>
-        </div>` : ''}
-
-        ${w.followUpDate ? `
-        <div class="inv-section">
-          <p class="inv-label">Follow-up</p>
-          <p class="inv-value">${new Date(w.followUpDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-        </div>` : ''}
-      </div>
-    </div>
-
-    <div class="sig-area">
-      ${docSignature ? `<img src="${docSignature}" alt="Signature" class="sig-img" />` : `<div class="sig-line"></div>`}
-      <p class="sig-name">${docName}</p>
-      ${docBmdc ? `<p class="sig-reg">Reg No: ${docBmdc}</p>` : ''}
-    </div>
-
-  </div>
-  <div class="watermark">RX</div>
-  <script>
-    window.onload = function() { window.print(); };
-  </script>
-</body>
-</html>`);
-    win.document.close();
-    win.focus();
-  };
-
   const saveDraft = () => {
     const formData = watch();
     localStorage.setItem('prescription-draft', JSON.stringify(formData));
@@ -423,6 +239,34 @@ function NewPrescriptionForm() {
                   {!profileStatus.isVerified
                     ? 'Your account has not been verified by an admin yet.'
                     : 'Please complete your profile before creating prescriptions.'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {subscription && rxCount >= subscription.prescriptionLimit && (
+            <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-800 dark:text-red-300">
+                  Prescription Limit Reached
+                </p>
+                <p className="text-sm text-red-700 dark:text-red-400 mt-0.5">
+                  You have used all {subscription.prescriptionLimit} prescriptions in your current plan ({subscription.plan?.name || 'Free'}). Upgrade your subscription to create more prescriptions.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {subscription && rxCount > 0 && rxCount < subscription.prescriptionLimit && rxCount >= subscription.prescriptionLimit * 0.85 && (
+            <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  Approaching Prescription Limit
+                </p>
+                <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+                  You have used {rxCount} of {subscription.prescriptionLimit} prescriptions ({Math.round((rxCount / subscription.prescriptionLimit) * 100)}%). Consider upgrading your plan.
                 </p>
               </div>
             </div>
@@ -1092,10 +936,7 @@ function NewPrescriptionForm() {
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-4 sm:bottom-8 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 z-50 flex items-center justify-center gap-1 sm:gap-2 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-2xl sm:rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800 overflow-x-auto">
-        <button type="button" onClick={handlePrint} className="text-gray-600 dark:text-gray-300 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
-          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-          <span className="hidden sm:inline">Print</span>
-        </button>
+
         <button type="button" onClick={saveDraft} className="text-gray-600 dark:text-gray-300 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
           <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
           <span className="hidden sm:inline">Save</span><span> Draft</span>
@@ -1106,12 +947,12 @@ function NewPrescriptionForm() {
         </button>
         <button
           type="submit"
-          disabled={create.isPending || !profileStatus.isVerified || !profileStatus.isProfileComplete}
+          disabled={create.isPending || !profileStatus.isVerified || !profileStatus.isProfileComplete || (subscription ? rxCount >= subscription.prescriptionLimit : false)}
           onClick={handleSubmit(onSubmit)}
           className="bg-teal-600 text-white rounded-full px-8 py-3 flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider shadow-lg shadow-teal-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-          {create.isPending ? 'Creating...' : 'Finalize & Send'}
+          {create.isPending ? 'Creating...' : subscription && rxCount >= subscription.prescriptionLimit ? 'Limit Reached' : 'Finalize & Send'}
         </button>
       </div>
     </div>

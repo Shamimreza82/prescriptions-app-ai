@@ -95,7 +95,7 @@ export default function AdminMedicalRepsPage() {
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label>Full Name</Label>
+                <Label>Full Name <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-10" placeholder="Md. Rahim" {...register('fullName')} />
@@ -103,7 +103,7 @@ export default function AdminMedicalRepsPage() {
                 {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>Email <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-10" type="email" placeholder="mr@example.com" {...register('email')} />
@@ -112,12 +112,12 @@ export default function AdminMedicalRepsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Password</Label>
+                  <Label>Password <span className="text-red-500">*</span></Label>
                   <Input type="password" placeholder="Min 6 chars" {...register('password')} />
                   {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Phone</Label>
+                  <Label>Phone <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input className="pl-10" placeholder="+88017..." {...register('phone')} />

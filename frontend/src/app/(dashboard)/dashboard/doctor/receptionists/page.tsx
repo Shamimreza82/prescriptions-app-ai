@@ -76,7 +76,7 @@ export default function DoctorReceptionistsPage() {
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label>Full Name</Label>
+                <Label>Full Name <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-10" placeholder="Receptionist name" {...register('fullName')} />
@@ -84,7 +84,7 @@ export default function DoctorReceptionistsPage() {
                 {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
+                <Label>Email <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input className="pl-10" type="email" placeholder="rec@clinic.com" {...register('email')} />
@@ -93,12 +93,12 @@ export default function DoctorReceptionistsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Password</Label>
+                  <Label>Password <span className="text-red-500">*</span></Label>
                   <Input type="password" placeholder="Min 6 chars" {...register('password')} />
                   {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Phone</Label>
+                  <Label>Phone <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input className="pl-10" placeholder="+88017..." {...register('phone')} />
@@ -247,7 +247,7 @@ export default function DoctorReceptionistsPage() {
           {editTarget && (
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <Label>Full Name</Label>
+                <Label>Full Name <span className="text-red-500">*</span></Label>
                 <Input
                   value={editTarget.fullName}
                   onChange={(e) => setEditTarget({ ...editTarget, fullName: e.target.value })}
@@ -255,7 +255,7 @@ export default function DoctorReceptionistsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
+                <Label>Phone <span className="text-red-500">*</span></Label>
                 <Input
                   value={editTarget.phone}
                   onChange={(e) => setEditTarget({ ...editTarget, phone: e.target.value })}
@@ -285,7 +285,7 @@ export default function DoctorReceptionistsPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="block text-sm font-medium mb-1.5">New Password</label>
+              <label className="block text-sm font-medium mb-1.5">New Password <span className="text-red-500">*</span></label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
@@ -307,7 +307,7 @@ export default function DoctorReceptionistsPage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1.5">Confirm Password</label>
+              <label className="block text-sm font-medium mb-1.5">Confirm Password <span className="text-red-500">*</span></label>
               <Input
                 type="password"
                 value={confirmPassword}

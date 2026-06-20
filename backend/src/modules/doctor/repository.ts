@@ -4,7 +4,10 @@ import { PaginationParams } from '../../utils/pagination';
 export const findDoctorById = (doctorId: string) =>
   db.doctor.findUnique({
     where: { id: doctorId },
-    include: { user: { select: { email: true, role: true, isVerified: true } } },
+    include: {
+      user: { select: { email: true, role: true, isVerified: true } },
+      _count: { select: { prescriptions: true } },
+    },
   });
 
 export const updateDoctor = (doctorId: string, data: any) =>
@@ -15,6 +18,12 @@ export const updateSignature = (doctorId: string, filename: string) =>
 
 export const updateLogo = (doctorId: string, filename: string) =>
   db.doctor.update({ where: { id: doctorId }, data: { clinicLogo: filename } });
+
+export const removeSignature = (doctorId: string) =>
+  db.doctor.update({ where: { id: doctorId }, data: { signatureImg: null } });
+
+export const removeLogo = (doctorId: string) =>
+  db.doctor.update({ where: { id: doctorId }, data: { clinicLogo: null } });
 
 export const findAllDoctors = (pagination: PaginationParams) => {
   const where: any = {};

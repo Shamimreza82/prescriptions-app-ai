@@ -79,11 +79,11 @@ export default function AdminDoctorsPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>BMDC No</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Clinic</TableHead>
                   <TableHead>Verified</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>MRs</TableHead>
                   <TableHead>Patients</TableHead>
+                  <TableHead>Prescriptions</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -102,7 +102,6 @@ export default function AdminDoctorsPage() {
                         </TableCell>
                         <TableCell className="font-mono text-xs">{doc.bmdcRegNo || '—'}</TableCell>
                         <TableCell>{doc.user?.email}</TableCell>
-                        <TableCell className="max-w-[140px] truncate">{doc.clinicName || '—'}</TableCell>
                         <TableCell>
                           {doc.user?.isVerified ? (
                             <Badge variant="success" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
@@ -123,6 +122,7 @@ export default function AdminDoctorsPage() {
                           <span className="badge-gradient-blue">{(doc.mrAssignments || []).length} MR{(doc.mrAssignments || []).length !== 1 ? 's' : ''}</span>
                         </TableCell>
                         <TableCell>{doc._count?.patients || 0}</TableCell>
+                        <TableCell>{doc._count?.prescriptions || 0}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"

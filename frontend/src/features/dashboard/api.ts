@@ -25,6 +25,12 @@ export const getAdminLogs = (params?: { page?: number; limit?: number; search?: 
 export const deleteAdminLogs = (startDate: string, endDate: string) =>
   api.delete('/stats/logs', { params: { startDate, endDate } }).then((r) => r.data);
 
+export const deleteAdminLog = (id: string) =>
+  api.delete(`/stats/logs/${id}`).then((r) => r.data);
+
+export const deleteAdminLogsBulk = (ids: string[]) =>
+  api.delete('/stats/logs/bulk', { data: { ids } }).then((r) => r.data);
+
 export const getAdminUser = (userId: string) =>
   api.get<{ success: boolean; data: any }>(`/admin/users/${userId}`).then((r) => r.data.data);
 

@@ -119,7 +119,7 @@ export default function AppointmentsPage() {
             </DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label>Patient</Label>
+                <Label>Patient <span className="text-red-500">*</span></Label>
                 <Select value={newApt.patientId} onValueChange={(v) => setNewApt({ ...newApt, patientId: v })}>
                   <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select patient" /></SelectTrigger>
                   <SelectContent>
@@ -131,11 +131,11 @@ export default function AppointmentsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Date</Label>
+                  <Label>Date <span className="text-red-500">*</span></Label>
                   <Input type="date" value={newApt.date} onChange={(e) => setNewApt({ ...newApt, date: e.target.value })} required className="rounded-xl" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Time</Label>
+                  <Label>Time <span className="text-red-500">*</span></Label>
                   <Input type="time" value={newApt.time} onChange={(e) => setNewApt({ ...newApt, time: e.target.value })} required className="rounded-xl" />
                 </div>
               </div>

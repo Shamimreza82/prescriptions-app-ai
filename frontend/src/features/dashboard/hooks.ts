@@ -68,6 +68,34 @@ export const useDeleteAdminLogs = () => {
   });
 };
 
+export const useDeleteAdminLog = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => dashboardApi.deleteAdminLog(id),
+    onSuccess: () => {
+      toast.success('Log deleted');
+      queryClient.invalidateQueries({ queryKey: [...dashboardKeys.admin, 'logs'] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to delete log');
+    },
+  });
+};
+
+export const useDeleteAdminLogsBulk = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => dashboardApi.deleteAdminLogsBulk(ids),
+    onSuccess: (data) => {
+      toast.success(`${data.data.deleted} log(s) deleted`);
+      queryClient.invalidateQueries({ queryKey: [...dashboardKeys.admin, 'logs'] });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Failed to delete logs');
+    },
+  });
+};
+
 export const useAdminUser = (userId: string) =>
   useQuery({
     queryKey: dashboardKeys.adminUser(userId),

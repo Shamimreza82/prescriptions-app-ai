@@ -53,7 +53,7 @@ export default function RegisterPage() {
           <div className="glass-strong rounded-2xl p-8 space-y-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Full Name</Label>
+                <Label className="text-sm font-medium">Full Name <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Dr. John Doe" className="pl-10 h-11 premium-input" {...reg('fullName')} />
@@ -62,7 +62,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Email</Label>
+                <Label className="text-sm font-medium">Email <span className="text-red-500">*</span></Label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input type="email" placeholder="doctor@example.com" className="pl-10 h-11 premium-input" {...reg('email')} />
@@ -72,7 +72,7 @@ export default function RegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Password</Label>
+                  <Label className="text-sm font-medium">Password <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input type={showPassword ? 'text' : 'password'} placeholder="Min 6 chars" className="pl-10 pr-11 h-11 premium-input" {...reg('password')} />
@@ -83,7 +83,7 @@ export default function RegisterPage() {
                   {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Confirm</Label>
+                  <Label className="text-sm font-medium">Confirm <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input type={showConfirm ? 'text' : 'password'} placeholder="Confirm" className="pl-10 pr-11 h-11 premium-input" {...reg('confirmPassword')} />

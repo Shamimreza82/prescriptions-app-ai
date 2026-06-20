@@ -85,7 +85,7 @@ function PlanDialog({
             <Textarea id="description" {...register('description')} placeholder="Plan description..." />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="price">Price ($)</Label>
+            <Label htmlFor="price">Price</Label>
             <Input id="price" type="number" min="0" step="0.01" {...register('price')} />
             {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
           </div>
@@ -251,7 +251,7 @@ export default function PlansPage() {
                   </TableCell>
                   <TableCell>
                     <span className="font-semibold">
-                      {plan.price === 0 ? 'Free' : `$${plan.price.toFixed(2)}`}
+                      {plan.price === 0 ? 'Free' : `${plan.price.toFixed(2)}`}
                     </span>
                   </TableCell>
                   <TableCell>{plan.patientLimit.toLocaleString()}</TableCell>

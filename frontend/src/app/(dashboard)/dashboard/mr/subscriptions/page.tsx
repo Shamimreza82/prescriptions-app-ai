@@ -111,7 +111,7 @@ export default function MrSubscriptionsPage() {
                 </div>
                 {plan.description && <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>}
                 <div className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  ${plan.price}
+                  {plan.price}
                   <span className="text-sm font-normal text-muted-foreground"> / {plan.duration} days</span>
                 </div>
                 <div className="space-y-2 text-sm">
@@ -136,7 +136,7 @@ export default function MrSubscriptionsPage() {
               <CreditCard className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedPlan?.name} Plan</p>
-                <p className="text-xs text-muted-foreground">${selectedPlan?.price} for {selectedPlan?.duration} days</p>
+                <p className="text-xs text-muted-foreground">{selectedPlan?.price} for {selectedPlan?.duration} days</p>
               </div>
             </div>
             <div>

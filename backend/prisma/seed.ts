@@ -23,7 +23,13 @@ async function main() {
   // Seed default plans
   const freePlan = await prisma.plan.upsert({
     where: { name: 'Free' },
-    update: {},
+    update: {
+      description: 'Basic plan for getting started',
+      price: 0,
+      patientLimit: 50,
+      prescriptionLimit: 100,
+      duration: 0,
+    },
     create: {
       name: 'Free',
       description: 'Basic plan for getting started',
@@ -36,11 +42,17 @@ async function main() {
 
   const basicPlan = await prisma.plan.upsert({
     where: { name: 'Basic' },
-    update: {},
+    update: {
+      description: 'Essential features for small clinics',
+      price: 1500,
+      patientLimit: 200,
+      prescriptionLimit: 500,
+      duration: 30,
+    },
     create: {
       name: 'Basic',
       description: 'Essential features for small clinics',
-      price: 29,
+      price: 1500,
       patientLimit: 200,
       prescriptionLimit: 500,
       duration: 30,
@@ -49,11 +61,17 @@ async function main() {
 
   const premiumPlan = await prisma.plan.upsert({
     where: { name: 'Premium' },
-    update: {},
+    update: {
+      description: 'Full access for busy practices',
+      price: 2000,
+      patientLimit: 1000,
+      prescriptionLimit: 5000,
+      duration: 30,
+    },
     create: {
       name: 'Premium',
       description: 'Full access for busy practices',
-      price: 99,
+      price: 2000,
       patientLimit: 1000,
       prescriptionLimit: 5000,
       duration: 30,
@@ -62,11 +80,17 @@ async function main() {
 
   const yearlyPlan = await prisma.plan.upsert({
     where: { name: 'Yearly' },
-    update: {},
+    update: {
+      description: 'Best value — full year of premium features',
+      price: 3000,
+      patientLimit: 999999,
+      prescriptionLimit: 999999,
+      duration: 365,
+    },
     create: {
       name: 'Yearly',
       description: 'Best value — full year of premium features',
-      price: 999,
+      price: 3000,
       patientLimit: 999999,
       prescriptionLimit: 999999,
       duration: 365,

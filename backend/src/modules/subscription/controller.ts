@@ -97,6 +97,25 @@ export const activate = async (req: AuthRequest, res: Response, next: NextFuncti
   }
 };
 
+export const deleteLog = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    await subscriptionService.deleteActivityLog(req.params.id);
+    sendSuccess(res, { message: 'Log deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteLogsBulk = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { ids } = req.body as { ids: string[] };
+    const result = await subscriptionService.deleteActivityLogsBulk(ids);
+    sendSuccess(res, { deleted: result.count });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getAdminPatients = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const [patients, total] = await subscriptionService.getAdminPatients(req.query);

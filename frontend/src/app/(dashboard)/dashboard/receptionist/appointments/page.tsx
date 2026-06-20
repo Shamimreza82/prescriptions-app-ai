@@ -226,14 +226,14 @@ export default function RecAppointmentsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-date">Date</Label>
+                  <Label htmlFor="edit-date">Date <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input id="edit-date" type="date" value={editApt.date} onChange={(e) => setEditApt({ ...editApt, date: e.target.value })} className="pl-10 h-11 rounded-xl cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-time">Time</Label>
+                  <Label htmlFor="edit-time">Time <span className="text-red-500">*</span></Label>
                   <div className="relative">
                     <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input id="edit-time" type="time" value={editApt.time} onChange={(e) => setEditApt({ ...editApt, time: e.target.value })} className="pl-10 h-11 rounded-xl cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:left-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:top-0 [&::-webkit-calendar-picker-indicator]:bottom-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer" />
@@ -429,7 +429,7 @@ export default function RecAppointmentsPage() {
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
                               : 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
                           }`}>
-                            {apt.paymentStatus === 'PAID' ? `$${apt.fee?.toFixed(2) || 'Paid'}` : 'Unpaid'}
+                            {apt.paymentStatus === 'PAID' ? `${apt.fee?.toFixed(2) || 'Paid'}` : 'Unpaid'}
                           </span>
                         </td>
                         <td className="text-muted-foreground max-w-[120px] truncate">{apt.notes || '-'}</td>

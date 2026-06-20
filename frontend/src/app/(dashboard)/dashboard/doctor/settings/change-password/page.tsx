@@ -50,7 +50,7 @@ export default function ChangePasswordPage() {
     const showKey = field === 'current' ? 'current' as const : field === 'new' ? 'new' as const : 'confirm' as const;
     return (
       <div>
-        <label className="block text-sm font-medium mb-1.5">{label}</label>
+        <label className="block text-sm font-medium mb-1.5">{label} <span className="text-red-500">*</span></label>
         <div className="relative">
           <input
             type={showFields[showKey] ? 'text' : 'password'}

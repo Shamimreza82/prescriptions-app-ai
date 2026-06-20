@@ -75,6 +75,12 @@ export const deleteAuditLogs = (startDate: string, endDate: string) => {
   });
 };
 
+export const deleteAuditLogById = (id: string) =>
+  db.auditLog.delete({ where: { id } });
+
+export const deleteAuditLogsByIds = (ids: string[]) =>
+  db.auditLog.deleteMany({ where: { id: { in: ids } } });
+
 export const getAuditLogs = (pagination: { skip: number; limit: number; search: string; dateFrom?: string; dateTo?: string }) => {
   const where: any = {};
   if (pagination.search) {
