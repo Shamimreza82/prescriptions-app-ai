@@ -2,7 +2,7 @@
 set -e
 
 REPO_URL="https://github.com/Shamimreza82/prescriptions-app-ai.git"
-APP_DIR="/media/algorify/Server/projects/medicine-projects/prescriptions-app-ai"
+APP_DIR="/media/algorify/Server/projects/production-current/prescriptions-app-ai"
 BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_DIR="$APP_DIR/frontend"
 PM2_BACKEND="pres-backend"
@@ -64,8 +64,8 @@ setup_env() {
         read -rp "  JWT Refresh Secret [randomly generated]: " jwt_refresh
         jwt_refresh="${jwt_refresh:-$(openssl rand -hex 32)}"
 
-        read -rp "  Frontend URL [http://your-domain.com]: " frontend_url
-        frontend_url="${frontend_url:-http://your-domain.com}"
+        read -rp "  Frontend URL [http://123.136.30.206]: " frontend_url
+        frontend_url="${frontend_url:-http://123.136.30.206}"
 
         read -rp "  Server port [5000]: " port
         port="${port:-5000}"
@@ -94,8 +94,8 @@ EOF
     if [ ! -f "$FRONTEND_DIR/.env.local" ]; then
         warn "frontend/.env.local not found — creating interactively"
 
-        read -rp "  Next.js public API URL [http://your-domain.com/api]: " api_url
-        api_url="${api_url:-http://your-domain.com/api}"
+        read -rp "  Next.js public API URL [http://123.136.30.206/api]: " api_url
+        api_url="${api_url:-http://123.136.30.206/api}"
 
         cat > "$FRONTEND_DIR/.env.local" <<EOF
 NEXT_PUBLIC_API_URL=${api_url}
@@ -161,8 +161,8 @@ start_pm2() {
 setup_nginx() {
     info "Nginx configuration..."
 
-    read -rp "  Server domain or IP [your-domain.com]: " server_name
-    server_name="${server_name:-your-domain.com}"
+    read -rp "  Server domain or IP [123.136.30.206]: " server_name
+    server_name="${server_name:-123.136.30.206}"
 
     read -rp "  Backend port [5000]: " backend_port
     backend_port="${backend_port:-5000}"
