@@ -70,8 +70,8 @@ setup_env() {
         read -rp "  JWT Refresh Secret [randomly generated]: " jwt_refresh
         jwt_refresh="${jwt_refresh:-$(openssl rand -hex 32)}"
 
-        read -rp "  Frontend URL [http://123.136.30.206]: " frontend_url
-        frontend_url="${frontend_url:-http://123.136.30.206}"
+        read -rp "  Frontend URL [http://123.136.30.206:3030]: " frontend_url
+        frontend_url="${frontend_url:-http://123.136.30.206:3030}"
 
         read -rp "  Server port [5000]: " port
         port="${port:-5000}"
@@ -106,8 +106,8 @@ EOF
     if [ ! -f "$FRONTEND_DIR/.env.local" ] || [ "$recreate_frontend" = true ]; then
         [ "$recreate_frontend" = true ] && warn "Re-creating frontend/.env.local"
 
-        read -rp "  Next.js public API URL [http://123.136.30.206/api]: " api_url
-        api_url="${api_url:-http://123.136.30.206/api}"
+        read -rp "  Next.js public API URL [http://123.136.30.206:5000/api]: " api_url
+        api_url="${api_url:-http://123.136.30.206:5000/api}"
 
         cat > "$FRONTEND_DIR/.env.local" <<EOF
 NEXT_PUBLIC_API_URL=${api_url}
