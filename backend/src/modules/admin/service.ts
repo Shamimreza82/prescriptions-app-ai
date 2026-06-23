@@ -22,9 +22,10 @@ export const approveDoctor = async (userId: string) => {
 };
 
 export const toggleDoctorVerification = async (userId: string) => {
-  const user = await repo.findUserById(userId);
-  if (!user || user.role !== 'DOCTOR') throw notFound('Doctor not found');
-  return repo.updateUserVerification(userId, !user.isVerified);
+  const doctor = await repo.findDoctorByUserId(userId);
+  if (!doctor) throw notFound('Doctor not found');
+  const updated = await repo.updateDoctorProfileComplete(doctor.id, !doctor.isProfileComplete);
+  return { ...updated, isProfileComplete: !doctor.isProfileComplete };
 };
 
 export const toggleDoctorStatus = async (userId: string) => {

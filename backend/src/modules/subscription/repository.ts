@@ -123,8 +123,8 @@ export const getAllDoctorsForAdmin = (pagination: { skip: number; limit: number;
       { user: { email: { contains: pagination.search, mode: 'insensitive' } } },
     ];
   }
-  if (filters.verified === 'verified') userFilter.isVerified = true;
-  if (filters.verified === 'unverified') userFilter.isVerified = false;
+  if (filters.verified === 'verified') where.isProfileComplete = true;
+  if (filters.verified === 'unverified') where.isProfileComplete = false;
   if (filters.status === 'active') userFilter.isActive = true;
   if (filters.status === 'inactive') userFilter.isActive = false;
   if (Object.keys(userFilter).length > 0) where.user = userFilter;

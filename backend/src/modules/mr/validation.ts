@@ -25,7 +25,7 @@ export const updateMrSchema = z.object({
 });
 
 export const assignDoctorsSchema = z.object({
-  doctorIds: z.array(z.string().uuid()).min(1, 'At least one doctor must be selected'),
+  doctorIds: z.array(z.string().uuid()),
 });
 
 export const subscribeDoctorSchema = z.object({

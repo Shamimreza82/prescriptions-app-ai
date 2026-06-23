@@ -31,6 +31,7 @@ export default function DoctorProfilePage() {
   useEffect(() => {
     api.get('/doctors/profile').then((r) => {
       const p = r.data.data;
+
       let schedule = p.chamberSchedule;
       if (!schedule || typeof schedule === 'string') {
         try { schedule = JSON.parse(schedule || '[]'); } catch { schedule = []; }
@@ -340,8 +341,8 @@ export default function DoctorProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">BMDC Reg No</Label>
-                  <Input value={form.bmdcRegNo} onChange={(e) => setForm({ ...form, bmdcRegNo: e.target.value })} disabled={!!profile?.bmdcRegNo} className="h-11 premium-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="A-12345" />
-                  {profile?.bmdcRegNo && <p className="text-xs text-muted-foreground">BMDC number can only be set once</p>}
+                  <Input value={form.bmdcRegNo} onChange={(e) => setForm({ ...form, bmdcRegNo: e.target.value })} disabled={!!profile?.isProfileComplete} className="h-11 premium-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="A-12345" />
+                  {!!profile?.isProfileComplete && <p className="text-xs text-muted-foreground">BMDC number cannot be changed after profile completion</p>}
                 </div>
               </div>
             )}

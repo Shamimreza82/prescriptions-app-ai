@@ -165,6 +165,12 @@ export const deleteUser = (userId: string) =>
 export const updateUserPassword = (userId: string, hashed: string) =>
   db.user.update({ where: { id: userId }, data: { password: hashed } });
 
+export const findDoctorByUserId = (userId: string) =>
+  db.doctor.findUnique({ where: { userId } });
+
+export const updateDoctorProfileComplete = (doctorId: string, isProfileComplete: boolean) =>
+  db.doctor.update({ where: { id: doctorId }, data: { isProfileComplete } });
+
 export const getAllSubscriptions = (pagination: PaginationParams) => {
   const where: any = {};
   if (pagination.search) {
