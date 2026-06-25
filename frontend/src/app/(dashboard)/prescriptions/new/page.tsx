@@ -50,6 +50,7 @@ function NewPrescriptionForm() {
   const [ccQuery, setCcQuery] = useState('');
   const [debouncedCcQuery, setDebouncedCcQuery] = useState('');
   const [showCcDropdown, setShowCcDropdown] = useState(false);
+  const [ccItems, setCcItems] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [followUpPreset, setFollowUpPreset] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -155,18 +156,40 @@ function NewPrescriptionForm() {
 
   const handleCcInputChange = useCallback((value: string) => {
     setCcQuery(value);
-    setValue('chiefComplaint', value, { shouldValidate: true });
     setShowCcDropdown(true);
     if (ccDebounce.current) clearTimeout(ccDebounce.current);
     ccDebounce.current = setTimeout(() => setDebouncedCcQuery(value), 300);
-  }, [setValue]);
+  }, []);
 
   const selectIndication = useCallback((name: string) => {
-    setValue('chiefComplaint', name, { shouldValidate: true });
+    if (ccItems.includes(name)) return;
+    const newItems = [...ccItems, name];
+    setCcItems(newItems);
+    setValue('chiefComplaint', newItems.join('\n'), { shouldValidate: true });
     setShowCcDropdown(false);
     setCcQuery('');
     setDebouncedCcQuery('');
-  }, [setValue]);
+  }, [ccItems, setValue]);
+
+  const removeCcItem = useCallback((index: number) => {
+    const newItems = ccItems.filter((_, i) => i !== index);
+    setCcItems(newItems);
+    setValue('chiefComplaint', newItems.join('\n'), { shouldValidate: true });
+  }, [ccItems, setValue]);
+
+  const handleCcKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && ccQuery.trim()) {
+      e.preventDefault();
+      const name = ccQuery.trim();
+      if (ccItems.includes(name)) return;
+      const newItems = [...ccItems, name];
+      setCcItems(newItems);
+      setValue('chiefComplaint', newItems.join('\n'), { shouldValidate: true });
+      setCcQuery('');
+      setDebouncedCcQuery('');
+      setShowCcDropdown(false);
+    }
+  }, [ccItems, ccQuery, setValue]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -406,29 +429,48 @@ function NewPrescriptionForm() {
                 </label>
               </div>
               <div className="relative" ref={ccDropdownRef}>
-                <textarea
-                  value={watch('chiefComplaint')}
-                  onChange={(e) => handleCcInputChange(e.target.value)}
-                  onFocus={() => debouncedCcQuery.length >= 2 && setShowCcDropdown(true)}
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[100px] shadow-sm resize-none"
-                  placeholder="e.g. Occasional chest pain, SOB for 2 days..."
-                />
-                {showCcDropdown && ccSearch.data && ccSearch.data.length > 0 && (
-                  <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
-                    {ccSearch.data.map((ind) => (
-                      <button
-                        key={ind.id}
-                        type="button"
-                        onClick={() => selectIndication(ind.name)}
-                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
-                      >
-                        <Activity className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{ind.name}</p>
-                          <p className="text-xs text-gray-400">Indication</p>
-                        </div>
-                      </button>
+                {ccItems.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {ccItems.map((item, i) => (
+                      <span key={i} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-lg text-xs font-bold border border-teal-100 dark:border-teal-800 flex items-center gap-1">
+                        {item}
+                        <button type="button" onClick={() => removeCcItem(i)} className="hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
                     ))}
+                  </div>
+                )}
+                <input
+                  value={ccQuery}
+                  onChange={(e) => handleCcInputChange(e.target.value)}
+                  onFocus={() => ccQuery.length >= 2 && setShowCcDropdown(true)}
+                  onKeyDown={handleCcKeyDown}
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                  placeholder="Type a chief complaint and press Enter or select from suggestions..."
+                />
+                {showCcDropdown && ccQuery.length >= 2 && (
+                  <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
+                    {ccSearch.isLoading ? (
+                      <p className="text-sm text-gray-400 text-center py-4">Searching...</p>
+                    ) : !ccSearch.data || ccSearch.data.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-4">No results found</p>
+                    ) : (
+                      ccSearch.data.map((ind) => (
+                        <button
+                          key={ind.id}
+                          type="button"
+                          onClick={() => selectIndication(ind.name)}
+                          className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                        >
+                          <Activity className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{ind.name}</p>
+                            <p className="text-xs text-gray-400">Indication</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
