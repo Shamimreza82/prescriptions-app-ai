@@ -9,8 +9,8 @@ import { prescriptionSchema } from '@/features/prescriptions/schema';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { api } from '@/lib/axios';
-import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical } from 'lucide-react';
-import { useMedicineSearch, useLabTestSearch } from '@/features/medicine/hooks';
+import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical, Activity } from 'lucide-react';
+import { useMedicineSearch, useLabTestSearch, useIndicationSearch } from '@/features/medicine/hooks';
 import { formatFollowUp } from '@/lib/utils';
 
 type FormData = z.infer<typeof prescriptionSchema>;
@@ -37,12 +37,16 @@ function EditPrescriptionForm() {
   const [showPatientResults, setShowPatientResults] = useState(false);
 
   const [activeMedIndex, setActiveMedIndex] = useState<number | null>(null);
-  const [activeInvIndex, setActiveInvIndex] = useState<number | null>(null);
+  const [showInvDropdown, setShowInvDropdown] = useState(false);
   const [medQuery, setMedQuery] = useState('');
   const [invQuery, setInvQuery] = useState('');
   const [debouncedMedQuery, setDebouncedMedQuery] = useState('');
   const [debouncedInvQuery, setDebouncedInvQuery] = useState('');
   const [followUpPreset, setFollowUpPreset] = useState('');
+  const [ccQuery, setCcQuery] = useState('');
+  const [debouncedCcQuery, setDebouncedCcQuery] = useState('');
+  const [showCcDropdown, setShowCcDropdown] = useState(false);
+  const [ccItems, setCcItems] = useState<string[]>([]);
 
   const handleFollowUpPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -56,6 +60,7 @@ function EditPrescriptionForm() {
 
   const medSearch = useMedicineSearch(debouncedMedQuery);
   const invSearch = useLabTestSearch(debouncedInvQuery);
+  const ccSearch = useIndicationSearch(debouncedCcQuery);
 
   const {
     register,
@@ -80,19 +85,19 @@ function EditPrescriptionForm() {
   const { fields: invFields, append: addInv, remove: removeInv, replace: replaceInvs } = useFieldArray({ control, name: 'investigations' });
 
   const addInvestigation = useCallback(() => {
-    const newIndex = invFields.length;
-    addInv({ name: '', notes: '' });
-    setActiveInvIndex(newIndex);
+    setShowInvDropdown(true);
     setInvQuery('');
     requestAnimationFrame(() => {
-      document.querySelector<HTMLInputElement>(`[data-inv-index="${newIndex}"]`)?.focus();
+      document.getElementById('inv-input')?.focus();
     });
-  }, [addInv, invFields.length]);
+  }, []);
 
   const medDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const invDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const ccDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
   const medDropdownRef = useRef<HTMLDivElement>(null);
   const invDropdownRef = useRef<HTMLDivElement>(null);
+  const ccDropdownRef = useRef<HTMLDivElement>(null);
 
   const handleMedInputChange = useCallback((i: number, value: string) => {
     setActiveMedIndex(i);
@@ -102,13 +107,12 @@ function EditPrescriptionForm() {
     medDebounce.current = setTimeout(() => setDebouncedMedQuery(value), 300);
   }, [setValue]);
 
-  const handleInvInputChange = useCallback((i: number, value: string) => {
-    setActiveInvIndex(i);
+  const handleInvInputChange = useCallback((value: string) => {
     setInvQuery(value);
-    setValue(`investigations.${i}.name`, value, { shouldValidate: true });
+    setShowInvDropdown(true);
     if (invDebounce.current) clearTimeout(invDebounce.current);
     invDebounce.current = setTimeout(() => setDebouncedInvQuery(value), 300);
-  }, [setValue]);
+  }, []);
 
   const selectMedicine = useCallback((i: number, name: string, strength?: string, form?: string) => {
     setValue(`medicines.${i}.name`, name, { shouldValidate: true });
@@ -119,17 +123,70 @@ function EditPrescriptionForm() {
     setDebouncedMedQuery('');
   }, [setValue]);
 
-  const selectLabTest = useCallback((i: number, name: string) => {
-    setValue(`investigations.${i}.name`, name, { shouldValidate: true });
-    setActiveInvIndex(null);
+  const selectLabTest = useCallback((name: string) => {
+    const current = watch('investigations') || [];
+    if (current.some(i => i.name === name)) return;
+    addInv({ name, notes: '' });
+    setShowInvDropdown(false);
     setInvQuery('');
     setDebouncedInvQuery('');
-  }, [setValue]);
+  }, [addInv, watch]);
+
+  const handleInvKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && invQuery.trim()) {
+      e.preventDefault();
+      const name = invQuery.trim();
+      const current = watch('investigations') || [];
+      if (current.some(i => i.name === name)) return;
+      addInv({ name, notes: '' });
+      setInvQuery('');
+      setDebouncedInvQuery('');
+      setShowInvDropdown(false);
+    }
+  }, [invQuery, watch, addInv]);
+
+  const handleCcInputChange = useCallback((value: string) => {
+    setCcQuery(value);
+    setShowCcDropdown(true);
+    if (ccDebounce.current) clearTimeout(ccDebounce.current);
+    ccDebounce.current = setTimeout(() => setDebouncedCcQuery(value), 300);
+  }, []);
+
+  const selectIndication = useCallback((name: string) => {
+    if (ccItems.includes(name)) return;
+    const newItems = [...ccItems, name];
+    setCcItems(newItems);
+    setValue('chiefComplaint', newItems.join('\n'), { shouldValidate: true });
+    setShowCcDropdown(false);
+    setCcQuery('');
+    setDebouncedCcQuery('');
+  }, [ccItems, setValue]);
+
+  const removeCcItem = useCallback((index: number) => {
+    const newItems = ccItems.filter((_, i) => i !== index);
+    setCcItems(newItems);
+    setValue('chiefComplaint', newItems.join('\n'), { shouldValidate: true });
+  }, [ccItems, setValue]);
+
+  const handleCcKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && ccQuery.trim()) {
+      e.preventDefault();
+      const name = ccQuery.trim();
+      if (ccItems.includes(name)) return;
+      const newItems = [...ccItems, name];
+      setCcItems(newItems);
+      setValue('chiefComplaint', newItems.join('\n'), { shouldValidate: true });
+      setCcQuery('');
+      setDebouncedCcQuery('');
+      setShowCcDropdown(false);
+    }
+  }, [ccItems, ccQuery, setValue]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (medDropdownRef.current && !medDropdownRef.current.contains(e.target as Node)) setActiveMedIndex(null);
-      if (invDropdownRef.current && !invDropdownRef.current.contains(e.target as Node)) setActiveInvIndex(null);
+      if (invDropdownRef.current && !invDropdownRef.current.contains(e.target as Node)) setShowInvDropdown(false);
+      if (ccDropdownRef.current && !ccDropdownRef.current.contains(e.target as Node)) setShowCcDropdown(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -144,6 +201,7 @@ function EditPrescriptionForm() {
     setValue('patientId', rx.patientId || '');
     setValue('symptoms', rx.symptoms || '');
     setValue('chiefComplaint', rx.chiefComplaint || '');
+    setCcItems(rx.chiefComplaint ? rx.chiefComplaint.split('\n').filter(Boolean) : []);
     setValue('diagnosis', rx.diagnosis || '');
     setValue('diagnosisNotes', rx.diagnosisNotes || '');
     setValue('bloodPressure', rx.bloodPressure || '');
@@ -278,9 +336,55 @@ function EditPrescriptionForm() {
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                Chief Complaint / প্রধান সমস্যা <span className="text-[10px] text-gray-400 font-normal">CC</span>
+                Chief Complaint / প্রধান সমস্যা
+                <span className="text-[10px] text-gray-400 font-normal">CC</span>
               </label>
-              <textarea {...register('chiefComplaint')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[100px] shadow-sm resize-none" placeholder="e.g. Occasional chest pain, SOB for 2 days..." />
+              <div className="relative" ref={ccDropdownRef}>
+                {ccItems.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {ccItems.map((item, i) => (
+                      <span key={i} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-lg text-xs font-bold border border-teal-100 dark:border-teal-800 flex items-center gap-1">
+                        {item}
+                        <button type="button" onClick={() => removeCcItem(i)} className="hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  value={ccQuery}
+                  onChange={(e) => handleCcInputChange(e.target.value)}
+                  onFocus={() => ccQuery.length >= 2 && setShowCcDropdown(true)}
+                  onKeyDown={handleCcKeyDown}
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                  placeholder="Type a chief complaint and press Enter or select from suggestions..."
+                />
+                {showCcDropdown && ccQuery.length >= 2 && (
+                  <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
+                    {ccSearch.isLoading ? (
+                      <p className="text-sm text-gray-400 text-center py-4">Searching...</p>
+                    ) : !ccSearch.data || ccSearch.data.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-4">No results found</p>
+                    ) : (
+                      ccSearch.data.map((ind: any) => (
+                        <button
+                          key={ind.id}
+                          type="button"
+                          onClick={() => selectIndication(ind.name)}
+                          className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                        >
+                          <Activity className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{ind.name}</p>
+                            <p className="text-xs text-gray-400">Indication</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Vitals / ভাইটালস</label>
@@ -375,7 +479,7 @@ function EditPrescriptionForm() {
                     {errors.medicines?.[i]?.name && <p className="text-xs text-red-500">{errors.medicines[i]?.name?.message}</p>}
                   </div>
                   <div className="col-span-6 md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength</label>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength <span className="text-red-500">*</span></label>
                     <input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
                   </div>
                   <div className="col-span-6 md:col-span-2 space-y-1.5">
@@ -390,7 +494,7 @@ function EditPrescriptionForm() {
                     {errors.medicines?.[i]?.dosage && <p className="text-xs text-red-500">{errors.medicines[i]?.dosage?.message}</p>}
                   </div>
                   <div className="col-span-6 md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq <span className="text-red-500">*</span></label>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq</label>
                     <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
                     <datalist id={`freq-suggestions-${i}`}>
                       <option value="সকাল" /><option value="দুপুর" /><option value="রাত" />
@@ -402,7 +506,7 @@ function EditPrescriptionForm() {
                     {errors.medicines?.[i]?.frequency && <p className="text-xs text-red-500">{errors.medicines[i]?.frequency?.message}</p>}
                   </div>
                   <div className="col-span-6 md:col-span-1 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days</label>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days <span className="text-red-500">*</span></label>
                     <input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
                     <datalist id={`duration-suggestions-${i}`}>
                       <option value="3 Days" /><option value="5 Days" /><option value="7 Days" /><option value="10 Days" />
@@ -434,73 +538,60 @@ function EditPrescriptionForm() {
           </section>
 
           {/* Investigations */}
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Investigations / ল্যাব টেস্ট</label>
-              <button type="button" onClick={addInvestigation} className="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1">
-                <Plus className="w-3.5 h-3.5" /> Add Test
-              </button>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                Investigations / ল্যাব টেস্ট
+                <span className="text-[10px] text-gray-400 font-normal">Lab</span>
+              </label>
             </div>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 shadow-sm">
-              {invFields.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
+            <div className="relative" ref={invDropdownRef}>
+              {invFields.filter((_, i) => watch(`investigations.${i}.name`)).length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
                   {invFields.map((field, i) => {
-                    const inv = watch(`investigations.${i}`);
-                    if (!inv?.name) return null;
+                    const name = watch(`investigations.${i}.name`);
+                    if (!name) return null;
                     return (
                       <span key={field.id} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-lg text-xs font-bold border border-teal-100 dark:border-teal-800 flex items-center gap-1">
-                        {inv.name}
+                        {name}
                         <button type="button" onClick={() => removeInv(i)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
                       </span>
                     );
                   })}
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                {invFields.map((field, i) => (
-                  <div key={field.id} className="flex items-center gap-2 flex-1 relative" ref={activeInvIndex === i ? invDropdownRef : undefined}>
-                    <input
-                      data-inv-index={i}
-                      value={activeInvIndex === i ? invQuery : watch(`investigations.${i}.name`)}
-                      onChange={(e) => handleInvInputChange(i, e.target.value)}
-                      onFocus={() => { setActiveInvIndex(i); setInvQuery(watch(`investigations.${i}.name`) || ''); }}
-                      placeholder="Search test..."
-                      className="w-full bg-transparent border border-gray-200/60 dark:border-gray-700/60 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none"
-                    />
-                    {activeInvIndex === i && invQuery.length >= 2 && (
-                      <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
-                        {invSearch.isLoading ? (
-                          <p className="text-sm text-gray-400 text-center py-4">Searching...</p>
-                        ) : invSearch.data?.length === 0 ? (
-                          <p className="text-sm text-gray-400 text-center py-4">No tests found</p>
-                        ) : (
-                          invSearch.data?.map((t: any) => (
-                            <button key={t.id} type="button" onClick={() => selectLabTest(i, t.name)}
-                              className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
-                            >
-                              <FlaskConical className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">{t.name}</p>
-                                <p className="text-xs text-gray-400 truncate">{t.shortName && `${t.shortName} · `}{t.category}</p>
-                              </div>
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                    {invFields.length > 1 && (
-                      <button type="button" onClick={() => removeInv(i)} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
-                    )}
-                  </div>
-                ))}
-                {invFields.length === 0 && (
-                  <button type="button" onClick={addInvestigation} className="flex-1 text-left">
-                    <input placeholder="Search tests..." className="w-full bg-transparent border-none p-0 text-sm focus:ring-0 placeholder:text-gray-300 cursor-pointer" readOnly />
-                  </button>
-                )}
-              </div>
+              <input
+                id="inv-input"
+                value={invQuery}
+                onChange={(e) => handleInvInputChange(e.target.value)}
+                onFocus={() => invQuery.length >= 2 && setShowInvDropdown(true)}
+                onKeyDown={handleInvKeyDown}
+                className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                placeholder="Type a test name and press Enter or select from suggestions..."
+              />
+              {showInvDropdown && invQuery.length >= 2 && (
+                <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
+                  {invSearch.isLoading ? (
+                    <p className="text-sm text-gray-400 text-center py-4">Searching...</p>
+                  ) : invSearch.data?.length === 0 ? (
+                    <p className="text-sm text-gray-400 text-center py-4">No tests found</p>
+                  ) : (
+                    invSearch.data?.map((t: any) => (
+                      <button key={t.id} type="button" onClick={() => selectLabTest(t.name)}
+                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                      >
+                        <FlaskConical className="h-4 w-4 text-teal-500 shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{t.name}</p>
+                          <p className="text-xs text-gray-400 truncate">{t.shortName && `${t.shortName} · `}{t.category}</p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
-          </section>
+          </div>
 
           {/* Medicine Table */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
@@ -609,14 +700,25 @@ function EditPrescriptionForm() {
                     </div>
                   )}
                   <div>
-                    <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[10px] mb-2">Symptoms</h4>
-                    <p className="text-gray-600 dark:text-gray-400">{watch('symptoms') || '—'}</p>
+                    <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[10px] mb-2">Chief Complaint</h4>
+                    {(watch('chiefComplaint') || '').split('\n').filter(Boolean).map((item, i) => (
+                      <p key={i} className="text-gray-600 dark:text-gray-400">• {item}</p>
+                    ))}
+                    {!watch('chiefComplaint') && <p className="text-gray-600 dark:text-gray-400">—</p>}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[10px] mb-2">Vitals</h4>
-                    <p className="text-gray-600 dark:text-gray-400">BP: {watch('bloodPressure') || '—'} mmHg</p>
-                    <p className="text-gray-600 dark:text-gray-400">HR: {watch('pulseRate') || '—'} bpm</p>
-                  </div>
+                  {watch('symptoms') && (
+                    <div>
+                      <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[10px] mb-2">Symptoms</h4>
+                      <p className="text-gray-600 dark:text-gray-400">{watch('symptoms')}</p>
+                    </div>
+                  )}
+                  {(watch('bloodPressure') || watch('pulseRate')) && (
+                    <div>
+                      <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[10px] mb-2">Vitals</h4>
+                      <p className="text-gray-600 dark:text-gray-400">BP: {watch('bloodPressure') || '—'} mmHg</p>
+                      <p className="text-gray-600 dark:text-gray-400">HR: {watch('pulseRate') || '—'} bpm</p>
+                    </div>
+                  )}
                   {watch('diagnosis') && (
                     <div>
                       <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[10px] mb-2">Diagnosis</h4>
@@ -639,7 +741,7 @@ function EditPrescriptionForm() {
                         return (
                           <div key={field.id} className="relative pl-2 border-l-2 border-teal-300/50">
                             <p className="font-bold text-sm text-gray-900 dark:text-white">{getForm(m.form)} {m.name}{m.strength ? ` ${m.strength}` : ''}</p>
-                            <p className="text-gray-500 text-[11px]">{m.dosage} · {m.frequency} · {fmtDur(m.duration)}</p>
+                            <p className="text-gray-500 text-[11px]">{m.dosage} · {m.frequency || '—'} · {fmtDur(m.duration)}</p>
                           </div>
                         );
                       })
@@ -648,7 +750,9 @@ function EditPrescriptionForm() {
                   {invs && invs.filter((_, i) => watch(`investigations.${i}.name`)).length > 0 && (
                     <div className="mt-10">
                       <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[11px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Investigations</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{invs.filter((_, i) => watch(`investigations.${i}.name`)).map((_, i) => watch(`investigations.${i}.name`)).join(', ')}</p>
+                      {invs.filter((_, i) => watch(`investigations.${i}.name`)).map((_, i) => (
+                        <p key={i} className="text-gray-600 dark:text-gray-400">• {watch(`investigations.${i}.name`)}</p>
+                      ))}
                     </div>
                   )}
                   {watch('advice') && (
@@ -665,7 +769,7 @@ function EditPrescriptionForm() {
                   )}
                   {watch('followUpDate') && (
                     <div className="mt-6">
-                      <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Follow-up: {formatFollowUp(watch('followUpDate')!)}</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm font-medium"><span className="font-bold">Follow-up:</span> {formatFollowUp(watch('followUpDate')!)}</p>
                     </div>
                   )}
                 </div>
@@ -675,6 +779,29 @@ function EditPrescriptionForm() {
         </aside>
       </div>
       </div>
+
+      {/* Validation Error Summary */}
+      {Object.keys(errors).length > 0 && (
+        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 flex items-start gap-3 mb-6">
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-800 dark:text-red-300">Please fix the following errors:</p>
+            <ul className="mt-1 text-sm text-red-700 dark:text-red-400 list-disc list-inside space-y-0.5">
+              {(() => {
+                const flat: string[] = [];
+                const walk = (obj: any, prefix = '') => {
+                  for (const [k, v] of Object.entries(obj || {})) {
+                    if (v && typeof v === 'object' && 'message' in v) flat.push(v.message as string);
+                    else if (v && typeof v === 'object') walk(v, `${prefix}${k}.`);
+                  }
+                };
+                walk(errors);
+                return flat.map((msg, i) => <li key={i}>{msg}</li>);
+              })()}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800">

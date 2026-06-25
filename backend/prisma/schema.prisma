@@ -226,7 +226,7 @@ model Medicine {
   strength      String?
   form          String?
   dosage        String
-  frequency     String
+  frequency     String?
   duration      String
   instructions  String?
   createdAt     DateTime     @default(now())               @map("created_at")

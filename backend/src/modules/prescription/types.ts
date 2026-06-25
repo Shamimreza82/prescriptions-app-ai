@@ -1,8 +1,8 @@
 export interface MedicineInput {
   name: string;
-  strength?: string;
+  strength: string;
   dosage: string;
-  frequency: string;
+  frequency?: string;
   duration: string;
   instructions?: string;
 }

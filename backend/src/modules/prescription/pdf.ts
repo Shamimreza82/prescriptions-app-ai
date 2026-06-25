@@ -117,7 +117,6 @@ export const generatePrescriptionPDF = async (data: {
     if (data.doctor.clinicName) LH_ITEMS.push({ text: data.doctor.clinicName, size: PX(10), bold: false });
     if (data.doctor.clinicAddress) LH_ITEMS.push({ text: data.doctor.clinicAddress, size: PX(10), bold: false });
     if (data.doctor.bmdcRegNo) LH_ITEMS.push({ text: `BMDC: ${data.doctor.bmdcRegNo}`, size: PX(10), bold: false });
-    if (data.doctor.phone) LH_ITEMS.push({ text: data.doctor.phone, size: PX(10), bold: false });
 
     let ly = 0;
     LH_ITEMS.forEach((item) => {
@@ -241,19 +240,37 @@ export const generatePrescriptionPDF = async (data: {
       ly2 += PX(16);
     }
 
-    // Symptoms
-    doc.fontSize(PX(10)).font(FONT_BOLD).fillColor('#000').text('SYMPTOMS', lx, ly2, { width: LEFT_W });
+    // Chief Complaint
+    doc.fontSize(PX(10)).font(FONT_BOLD).fillColor('#000').text('CHIEF COMPLAINT', lx, ly2, { width: LEFT_W });
     ly2 += PX(14);
-    doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(data.symptoms || '—', lx, ly2, { width: LEFT_W });
-    ly2 += PX(18);
+    if (data.chiefComplaint) {
+      const ccLines = data.chiefComplaint.split('\n').filter(Boolean);
+      ccLines.forEach((line: string) => {
+        doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(`• ${line}`, lx, ly2, { width: LEFT_W });
+        ly2 += PX(16);
+      });
+    } else {
+      doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text('—', lx, ly2, { width: LEFT_W });
+      ly2 += PX(18);
+    }
+
+    // Symptoms
+    if (data.symptoms) {
+      doc.fontSize(PX(10)).font(FONT_BOLD).fillColor('#000').text('SYMPTOMS', lx, ly2, { width: LEFT_W });
+      ly2 += PX(14);
+      doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(data.symptoms, lx, ly2, { width: LEFT_W });
+      ly2 += PX(18);
+    }
 
     // Vitals
-    doc.fontSize(PX(10)).font(FONT_BOLD).fillColor('#000').text('VITALS', lx, ly2, { width: LEFT_W });
-    ly2 += PX(14);
-    doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(`BP: ${data.bloodPressure || '—'} mmHg`, lx, ly2, { width: LEFT_W });
-    ly2 += PX(14);
-    doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(`HR: ${data.pulseRate || '—'} bpm`, lx, ly2, { width: LEFT_W });
-    ly2 += PX(16);
+    if (data.bloodPressure || data.pulseRate) {
+      doc.fontSize(PX(10)).font(FONT_BOLD).fillColor('#000').text('VITALS', lx, ly2, { width: LEFT_W });
+      ly2 += PX(14);
+      doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(`BP: ${data.bloodPressure || '—'} mmHg`, lx, ly2, { width: LEFT_W });
+      ly2 += PX(14);
+      doc.fontSize(PX(12)).font(FONT_REG).fillColor('#000').text(`HR: ${data.pulseRate || '—'} bpm`, lx, ly2, { width: LEFT_W });
+      ly2 += PX(16);
+    }
 
     // Diagnosis
     if (data.diagnosis) {

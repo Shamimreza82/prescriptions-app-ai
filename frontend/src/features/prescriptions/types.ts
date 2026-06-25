@@ -1,9 +1,9 @@
 export interface Medicine {
   name: string;
-  strength?: string;
+  strength: string;
   form?: string;
   dosage: string;
-  frequency: string;
+  frequency?: string;
   duration: string;
 }
 

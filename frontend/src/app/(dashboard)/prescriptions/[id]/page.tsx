@@ -75,13 +75,12 @@ export default function PrescriptionDetailPage() {
         {/* Letterhead */}
         <div className="p-6 border-b-4 border-black flex justify-between items-start">
           <div>
-            <p className="text-lg font-extrabold text-black">{docName}</p>
+            <p className="text-xl font-extrabold text-black">{docName}</p>
             {(rx.doctor?.degree || []).length > 0 && <p className="text-xs font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
             {(rx.doctor?.specialization || []).length > 0 && <p className="text-[11px] font-semibold text-black uppercase tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
             {rx.doctor?.clinicName && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicName}</p>}
             {rx.doctor?.clinicAddress && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicAddress}</p>}
             {rx.doctor?.bmdcRegNo && <p className="text-[11px] font-semibold text-black">BMDC: {rx.doctor.bmdcRegNo}</p>}
-            {rx.doctor?.phone && <p className="text-[11px] font-semibold text-black">{rx.doctor.phone}</p>}
           </div>
           <div className="text-right">
             {docLogo ? (
@@ -103,23 +102,33 @@ export default function PrescriptionDetailPage() {
           {/* Left Column */}
           <div className="border-r border-black pr-5 space-y-5">
             <div>
-              <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">PATIENT DETAILS</p>
-              <p className="text-[12px] font-bold text-black">{rx.patient?.fullName || ''}</p>
-              <p className="text-[12px] font-semibold text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''} | Wt: {rx.patient?.weight || '—'}kg</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">PATIENT DETAILS</p>
+              <p className="text-[14px] font-bold text-black">{rx.patient?.fullName || ''}</p>
+              <p className="text-[14px] font-semibold text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''} | Wt: {rx.patient?.weight || '—'}kg</p>
             </div>
             <div>
-              <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">SYMPTOMS</p>
-              <p className="text-[12px] font-semibold text-black">{rx.symptoms || '—'}</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">CHIEF COMPLAINT</p>
+              {rx.chiefComplaint ? rx.chiefComplaint.split('\n').filter(Boolean).map((item, i) => (
+                <p key={i} className="text-[14px] font-semibold text-black">• {item}</p>
+              )) : <p className="text-[14px] font-semibold text-black">—</p>}
             </div>
-            <div>
-              <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">VITALS</p>
-              <p className="text-[12px] font-semibold text-black">BP: {rx.bloodPressure || '—'} mmHg</p>
-              <p className="text-[12px] font-semibold text-black">HR: {rx.pulseRate || '—'} bpm</p>
-            </div>
+            {rx.symptoms && (
+              <div>
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">SYMPTOMS</p>
+                <p className="text-[14px] font-semibold text-black">{rx.symptoms}</p>
+              </div>
+            )}
+            {(rx.bloodPressure || rx.pulseRate) && (
+              <div>
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">VITALS</p>
+                <p className="text-[14px] font-semibold text-black">BP: {rx.bloodPressure || '—'} mmHg</p>
+                <p className="text-[14px] font-semibold text-black">HR: {rx.pulseRate || '—'} bpm</p>
+              </div>
+            )}
             {rx.diagnosis && (
               <div>
-                <p className="text-[10px] font-extrabold text-black uppercase tracking-widest mb-1">DIAGNOSIS</p>
-                <p className="text-[12px] font-semibold text-black">{rx.diagnosis}</p>
+                <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">DIAGNOSIS</p>
+                <p className="text-[14px] font-semibold text-black">{rx.diagnosis}</p>
               </div>
             )}
             {qrDataUrl && (
@@ -157,7 +166,9 @@ export default function PrescriptionDetailPage() {
             {rx.investigations?.filter((i: any) => i.name).length > 0 && (
               <div className="mt-6">
                 <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">INVESTIGATIONS</p>
-                <p className="text-[12px] font-semibold text-black">{rx.investigations.filter((i: any) => i.name).map((i: any) => i.name).join(', ')}</p>
+                {rx.investigations.filter((i: any) => i.name).map((i: any, idx: number) => (
+                  <p key={idx} className="text-[14px] font-semibold text-black">• {i.name}</p>
+                ))}
               </div>
             )}
 
@@ -177,7 +188,7 @@ export default function PrescriptionDetailPage() {
 
             {rx.followUpDate && (
               <div className="mt-6">
-                <p className="text-[12px] font-semibold text-black">Follow-up: {formatFollowUp(rx.followUpDate)}</p>
+                <p className="text-[12px] font-semibold text-black"><span className="font-bold text-base">Follow-up:</span> {formatFollowUp(rx.followUpDate)}</p>
               </div>
             )}
           </div>
