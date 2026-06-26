@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMrs, useCreateMr, useDeleteMr, useAssignDoctors, useAvailableDoctors, mrKeys } from '@/features/mr/hooks';
+import { useMrs, useCreateMr, useUpdateMr, useDeleteMr, useAssignDoctors, useAvailableDoctors, mrKeys } from '@/features/mr/hooks';
 import { useToggleUserStatus } from '@/features/dashboard/hooks';
+import { useCompanySearch } from '@/features/medicine/hooks';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { SearchBar } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/ui/pagination';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Plus, Trash2, UserRound, Mail, Phone, Stethoscope, MoreHorizontal, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Trash2, UserRound, Mail, Phone, Building2, Stethoscope, MoreHorizontal, ToggleLeft, ToggleRight, Pencil } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,17 +39,41 @@ export default function AdminMedicalRepsPage() {
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
   const [searchAssign, setSearchAssign] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editMr, setEditMr] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [editCompanyQuery, setEditCompanyQuery] = useState('');
+  const [editCompanyOpen, setEditCompanyOpen] = useState(false);
+  const editCompanyRef = useRef<HTMLDivElement>(null);
+  const editCompanySearch = useCompanySearch(editCompanyQuery);
 
   const { data, isLoading, isFetching } = useMrs({ page, limit: 10, search, status });
   const createMr = useCreateMr();
+  const updateMr = useUpdateMr();
   const deleteMr = useDeleteMr();
   const assignDoctors = useAssignDoctors();
   const qc = useQueryClient();
   const toggleStatus = useToggleUserStatus();
   const { data: availableDoctors } = useAvailableDoctors();
   const [menuTarget, setMenuTarget] = useState<{ id: string; top: number; right: number } | null>(null);
+  const [companyQuery, setCompanyQuery] = useState('');
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const companyRef = useRef<HTMLDivElement>(null);
+  const companySearch = useCompanySearch(companyQuery);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateMrForm>({
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (companyRef.current && !companyRef.current.contains(e.target as Node)) {
+        setCompanyOpen(false);
+      }
+      if (editCompanyRef.current && !editCompanyRef.current.contains(e.target as Node)) {
+        setEditCompanyOpen(false);
+      }
+    };
+    document.addEventListener('mouseup', handle);
+    return () => document.removeEventListener('mouseup', handle);
+  }, []);
+
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateMrForm>({
     resolver: zodResolver(createMrSchema),
   });
 
@@ -56,6 +81,8 @@ export default function AdminMedicalRepsPage() {
     createMr.mutate(formData, {
       onSuccess: () => {
         setCreateOpen(false);
+        setCompanyQuery('');
+        setCompanyOpen(false);
         reset();
       },
     });
@@ -73,6 +100,27 @@ export default function AdminMedicalRepsPage() {
     setSelectedDoctors(mr.doctors?.map((d: any) => d.doctor.id) || []);
   };
 
+  const openEdit = (mr: any) => {
+    setEditMr(mr);
+    setEditForm({
+      fullName: mr.fullName || '',
+      phone: mr.phone || '',
+      company: mr.company || '',
+      department: mr.department || '',
+      designation: mr.designation || '',
+    });
+    setEditCompanyQuery(mr.company || '');
+    setEditCompanyOpen(false);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editMr) return;
+    updateMr.mutate(
+      { id: editMr.id, data: editForm },
+      { onSuccess: () => { setEditMr(null); setEditCompanyQuery(''); setEditCompanyOpen(false); } }
+    );
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -80,7 +128,7 @@ export default function AdminMedicalRepsPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Medical Representatives</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage MRs and their doctor assignments</p>
         </div>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <Dialog open={createOpen} onOpenChange={(v) => { setCreateOpen(v); setCompanyQuery(''); setCompanyOpen(false); }}>
           <DialogTrigger asChild>
             <Button className="rounded-xl gradient-primary text-white shadow-glow">
               <Plus className="h-4 w-4 mr-2" /> Add MR
@@ -124,7 +172,39 @@ export default function AdminMedicalRepsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Company <span className="text-red-500">*</span></Label>
-                <Input placeholder="Pharmaceutical company name" {...register('company')} />
+                <div className="relative" ref={companyRef}>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-10"
+                      placeholder="Type to search company..."
+                      value={companyQuery}
+                      onChange={(e) => { setCompanyQuery(e.target.value); setValue('company', e.target.value); setCompanyOpen(e.target.value.length >= 2); }}
+                      onFocus={() => { if (companyQuery.length >= 2) setCompanyOpen(true); }}
+                    />
+                  </div>
+                  {companyOpen && companyQuery.length >= 2 && (
+                    <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
+                      {companySearch.isLoading ? (
+                        <p className="text-sm text-gray-400 text-center py-3">Searching...</p>
+                      ) : companySearch.data?.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-3">No companies found</p>
+                      ) : (
+                        companySearch.data?.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { setValue('company', c.name); setCompanyQuery(c.name); setCompanyOpen(false); }}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                          >
+                            {c.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
                 {errors.company && <p className="text-xs text-red-500">{errors.company.message}</p>}
               </div>
               <Button type="submit" className="w-full gradient-primary text-white" disabled={createMr.isPending}>
@@ -145,6 +225,93 @@ export default function AdminMedicalRepsPage() {
         loading={deleteMr.isPending}
         onConfirm={() => deleteId && deleteMr.mutate(deleteId, { onSuccess: () => setDeleteId(null) })}
       />
+
+      <Dialog open={!!editMr} onOpenChange={(v) => { if (!v) { setEditMr(null); setEditCompanyQuery(''); setEditCompanyOpen(false); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Medical Representative</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit(); }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Full Name <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-10"
+                  value={editForm.fullName || ''}
+                  onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Phone <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-10"
+                  value={editForm.phone || ''}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Company <span className="text-red-500">*</span></Label>
+              <div className="relative" ref={editCompanyRef}>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    className="pl-10"
+                    placeholder="Type to search company..."
+                    value={editCompanyQuery}
+                    onChange={(e) => { setEditCompanyQuery(e.target.value); setEditForm({ ...editForm, company: e.target.value }); setEditCompanyOpen(e.target.value.length >= 2); }}
+                    onFocus={() => { if (editCompanyQuery.length >= 2) setEditCompanyOpen(true); }}
+                  />
+                </div>
+                {editCompanyOpen && editCompanyQuery.length >= 2 && (
+                  <div className="absolute top-full mt-1 left-0 right-0 z-30 max-h-48 overflow-y-auto rounded-xl bg-white dark:bg-gray-950 border border-gray-100 dark:border-gray-800 shadow-xl">
+                    {editCompanySearch.isLoading ? (
+                      <p className="text-sm text-gray-400 text-center py-3">Searching...</p>
+                    ) : editCompanySearch.data?.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-3">No companies found</p>
+                    ) : (
+                      editCompanySearch.data?.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { setEditForm({ ...editForm, company: c.name }); setEditCompanyQuery(c.name); setEditCompanyOpen(false); }}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-0"
+                        >
+                          {c.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Input
+                  value={editForm.department || ''}
+                  onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Designation</Label>
+                <Input
+                  value={editForm.designation || ''}
+                  onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full gradient-primary text-white" disabled={updateMr.isPending}>
+              {updateMr.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-[200px]">
@@ -176,6 +343,7 @@ export default function AdminMedicalRepsPage() {
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
+                <TableHead>Company</TableHead>
                 <TableHead>Assigned Doctors</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
@@ -184,7 +352,7 @@ export default function AdminMedicalRepsPage() {
             <TableBody>
               {data?.data?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     <UserRound className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     No medical representatives found
                   </TableCell>
@@ -195,6 +363,9 @@ export default function AdminMedicalRepsPage() {
                     <TableCell className="font-medium">{mr.fullName}</TableCell>
                     <TableCell>{mr.user?.email}</TableCell>
                     <TableCell>{mr.phone}</TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">{mr.company}</span>
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="text-xs">{mr.doctors?.length || 0} doctors</Badge>
                     </TableCell>
@@ -260,6 +431,12 @@ export default function AdminMedicalRepsPage() {
                       <ToggleRight className="h-4 w-4 text-emerald-500" /> Activate
                     </button>
                   )}
+                  <button
+                    onClick={() => { openEdit(mr); setMenuTarget(null); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    <Pencil className="h-4 w-4 text-blue-500" /> Edit
+                  </button>
                   <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
                   <button
                     onClick={() => { setDeleteId(mr.id); setMenuTarget(null); }}

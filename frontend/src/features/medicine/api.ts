@@ -68,3 +68,11 @@ export const searchLabTests = (q: string, limit = 10) =>
 
 export const searchIndications = (q: string) =>
   medicineApi.get<ApiResponse<MedicineSearchResult>>('/medicines/search', { params: { q, limit: 1 } }).then((r) => r.data.data.indications || []);
+
+export interface Company {
+  id: number;
+  name: string;
+}
+
+export const searchCompanies = (q: string) =>
+  medicineApi.get<ApiResponse<Company[]>>('/medicines/companies', { params: { q } }).then((r) => r.data.data);

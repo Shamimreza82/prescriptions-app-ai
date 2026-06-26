@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { searchMedicines, searchLabTests, searchIndications } from './api';
+import { searchMedicines, searchLabTests, searchIndications, searchCompanies } from './api';
 
 export const useMedicineSearch = (q: string) =>
   useQuery({
@@ -21,6 +21,14 @@ export const useIndicationSearch = (q: string) =>
   useQuery({
     queryKey: ['indications', 'search', q],
     queryFn: () => searchIndications(q),
+    enabled: q.length >= 2,
+    staleTime: 60_000,
+  });
+
+export const useCompanySearch = (q: string) =>
+  useQuery({
+    queryKey: ['companies', 'search', q],
+    queryFn: () => searchCompanies(q),
     enabled: q.length >= 2,
     staleTime: 60_000,
   });

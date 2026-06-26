@@ -84,6 +84,19 @@ export const useCreateMr = () => {
   });
 };
 
+export const useUpdateMr = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { fullName?: string; phone?: string; company?: string; department?: string; designation?: string } }) =>
+      mrApi.updateMr(id, data),
+    onSuccess: () => {
+      toast.success('MR updated successfully');
+      qc.invalidateQueries({ queryKey: mrKeys.mrs });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update MR'),
+  });
+};
+
 export const useDeleteMr = () => {
   const qc = useQueryClient();
   return useMutation({

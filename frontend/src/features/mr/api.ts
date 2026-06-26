@@ -27,6 +27,9 @@ export const getMrs = (params?: { page?: number; limit?: number; search?: string
 export const createMr = (data: { email: string; password: string; fullName: string; phone: string; company: string; department?: string; designation?: string }) =>
   api.post('/mr', data).then((r) => r.data.data);
 
+export const updateMr = (id: string, data: { fullName?: string; phone?: string; company?: string; department?: string; designation?: string }) =>
+  api.put(`/mr/${id}`, data).then((r) => r.data.data);
+
 export const deleteMr = (id: string) =>
   api.delete(`/mr/${id}`).then((r) => r.data.data);
 
