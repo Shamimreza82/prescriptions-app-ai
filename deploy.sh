@@ -52,31 +52,34 @@ clone_or_pull() {
 setup_env() {
     info "Environment configuration..."
 
-    local recreate_backend=false
-    if grep -q "your-domain.com" "$BACKEND_DIR/.env" 2>/dev/null; then
-        warn "backend/.env contains placeholder values — will re-create"
-        recreate_backend=true
-    fi
+    # Load current values from existing files as defaults
+    local curr_db_url=$(grep -oP '^DATABASE_URL="\K[^"]+' "$BACKEND_DIR/.env" 2>/dev/null || echo "")
+    local curr_jwt=$(grep -oP '^JWT_SECRET="\K[^"]+' "$BACKEND_DIR/.env" 2>/dev/null || echo "")
+    local curr_jwt_refresh=$(grep -oP '^JWT_REFRESH_SECRET="\K[^"]+' "$BACKEND_DIR/.env" 2>/dev/null || echo "")
+    local curr_frontend_url=$(grep -oP '^FRONTEND_URL="\K[^"]+' "$BACKEND_DIR/.env" 2>/dev/null || echo "")
+    local curr_port=$(grep -oP '^PORT=\K\d+' "$BACKEND_DIR/.env" 2>/dev/null || echo "")
+    local curr_sentry=$(grep -oP '^SENTRY_DSN="\K[^"]+' "$BACKEND_DIR/.env" 2>/dev/null || echo "")
 
-    if [ ! -f "$BACKEND_DIR/.env" ] || [ "$recreate_backend" = true ]; then
-        [ "$recreate_backend" = true ] && warn "Re-creating backend/.env"
+    info "Backend environment — press Enter to keep current values"
+    read -rp "  Database URL [${curr_db_url:-postgresql://user:pass@localhost:5432/pres_manage?schema=public}]: " db_url
+    db_url="${db_url:-${curr_db_url:-postgresql://user:pass@localhost:5432/pres_manage?schema=public}}"
 
-        read -rp "  Database URL [postgresql://user:pass@localhost:5432/pres_manage?schema=public]: " db_url
-        db_url="${db_url:-postgresql://user:pass@localhost:5432/pres_manage?schema=public}"
+    read -rp "  JWT Secret [${curr_jwt:-randomly generated}]: " jwt_secret
+    jwt_secret="${jwt_secret:-${curr_jwt:-$(openssl rand -hex 32)}}"
 
-        read -rp "  JWT Secret [randomly generated]: " jwt_secret
-        jwt_secret="${jwt_secret:-$(openssl rand -hex 32)}"
+    read -rp "  JWT Refresh Secret [${curr_jwt_refresh:-randomly generated}]: " jwt_refresh
+    jwt_refresh="${jwt_refresh:-${curr_jwt_refresh:-$(openssl rand -hex 32)}}"
 
-        read -rp "  JWT Refresh Secret [randomly generated]: " jwt_refresh
-        jwt_refresh="${jwt_refresh:-$(openssl rand -hex 32)}"
+    read -rp "  Frontend URL [${curr_frontend_url:-http://123.136.30.206:3030}]: " frontend_url
+    frontend_url="${frontend_url:-${curr_frontend_url:-http://123.136.30.206:3030}}"
 
-        read -rp "  Frontend URL [http://123.136.30.206:3030]: " frontend_url
-        frontend_url="${frontend_url:-http://123.136.30.206:3030}"
+    read -rp "  Server port [${curr_port:-5000}]: " port
+    port="${port:-${curr_port:-5000}}"
 
-        read -rp "  Server port [5000]: " port
-        port="${port:-5000}"
+    read -rp "  Sentry DSN [${curr_sentry:-leave empty to disable}]: " sentry_dsn
+    sentry_dsn="${sentry_dsn:-$curr_sentry}"
 
-        cat > "$BACKEND_DIR/.env" <<EOF
+    cat > "$BACKEND_DIR/.env" <<EOF
 DATABASE_URL="${db_url}"
 JWT_SECRET="${jwt_secret}"
 JWT_REFRESH_SECRET="${jwt_refresh}"
@@ -85,7 +88,7 @@ JWT_REFRESH_EXPIRES_IN="7d"
 PORT=${port}
 NODE_ENV=production
 FRONTEND_URL="${frontend_url}"
-SENTRY_DSN=""
+SENTRY_DSN="${sentry_dsn}"
 AWS_ACCESS_KEY_ID=""
 AWS_SECRET_ACCESS_KEY=""
 AWS_REGION="ap-southeast-1"
@@ -93,35 +96,25 @@ AWS_S3_BUCKET=""
 STRIPE_SECRET_KEY=""
 STRIPE_WEBHOOK_SECRET=""
 EOF
-        log "backend/.env created"
-    else
-        log "backend/.env already exists — skipping"
-    fi
+    log "backend/.env written"
 
-    local recreate_frontend=false
-    if grep -q "your-domain.com" "$FRONTEND_DIR/.env.local" 2>/dev/null; then
-        warn "frontend/.env.local contains placeholder values — will re-create"
-        recreate_frontend=true
-    fi
+    # Frontend
+    local curr_api_url=$(grep -oP '^NEXT_PUBLIC_API_URL=\K.+' "$FRONTEND_DIR/.env.local" 2>/dev/null || echo "")
+    local curr_fe_sentry=$(grep -oP '^NEXT_PUBLIC_SENTRY_DSN=\K.+' "$FRONTEND_DIR/.env.local" 2>/dev/null || echo "")
 
-    if [ ! -f "$FRONTEND_DIR/.env.local" ] || [ "$recreate_frontend" = true ]; then
-        [ "$recreate_frontend" = true ] && warn "Re-creating frontend/.env.local"
+    info "Frontend environment — press Enter to keep current values"
+    read -rp "  Next.js public API URL [${curr_api_url:-http://123.136.30.206:5000/api}]: " api_url
+    api_url="${api_url:-${curr_api_url:-http://123.136.30.206:5000/api}}"
 
-        read -rp "  Next.js public API URL [http://123.136.30.206:5000/api]: " api_url
-        api_url="${api_url:-http://123.136.30.206:5000/api}"
+    read -rp "  Sentry DSN [${curr_fe_sentry:-leave empty to disable}]: " fe_sentry_dsn
+    fe_sentry_dsn="${fe_sentry_dsn:-$curr_fe_sentry}"
 
-        read -rp "  Sentry DSN [leave empty to disable]: " sentry_dsn
-        sentry_dsn="${sentry_dsn:-}"
-
-        cat > "$FRONTEND_DIR/.env.local" <<EOF
+    cat > "$FRONTEND_DIR/.env.local" <<EOF
 NEXT_PUBLIC_API_URL=${api_url}
 NEXT_PUBLIC_MEDICINE_API_URL=https://medicine-backen.onrender.com/api/v1
-NEXT_PUBLIC_SENTRY_DSN=${sentry_dsn}
+NEXT_PUBLIC_SENTRY_DSN=${fe_sentry_dsn}
 EOF
-        log "frontend/.env.local created"
-    else
-        log "frontend/.env.local already exists — skipping"
-    fi
+    log "frontend/.env.local written"
 }
 
 install_deps() {
