@@ -80,6 +80,7 @@ export default function AdminDoctorsPage() {
                   <TableHead>BMDC No</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Verified</TableHead>
+                  <TableHead>Profile</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>MRs</TableHead>
                   <TableHead>Patients</TableHead>
@@ -88,8 +89,8 @@ export default function AdminDoctorsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.data?.length === 0 ? (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No doctors found</TableCell></TableRow>
+                  {data?.data?.length === 0 ? (
+                    <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No doctors found</TableCell></TableRow>
                 ) : (
                   data?.data?.map((doc: any) => {
                     const mrs = doc.mrAssignments || [];
@@ -103,7 +104,7 @@ export default function AdminDoctorsPage() {
                         <TableCell className="font-mono text-xs">{doc.bmdcRegNo || '—'}</TableCell>
                         <TableCell>{doc.user?.email}</TableCell>
                         <TableCell>
-                          {doc.isProfileComplete ? (
+                          {doc.user?.isVerified ? (
                             <Badge variant="success" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
                               <CheckCircle className="h-3 w-3 mr-1" /> Verified
                             </Badge>
@@ -112,6 +113,11 @@ export default function AdminDoctorsPage() {
                               <XCircle className="h-3 w-3 mr-1" /> Pending
                             </Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={doc.isProfileComplete ? 'success' : 'outline'} className={doc.isProfileComplete ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400' : ''}>
+                            {doc.isProfileComplete ? 'Complete' : 'Incomplete'}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={doc.user?.isActive ? 'success' : 'destructive'}>
@@ -167,8 +173,8 @@ export default function AdminDoctorsPage() {
               onClick={() => { toggleVerify.mutate(menuTarget.doc.user.id); setMenuTarget(null); }}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors disabled:opacity-50"
             >
-              <ShieldCheck className={`h-4 w-4 ${menuTarget.doc.isProfileComplete ? 'text-amber-500' : 'text-emerald-500'}`} />
-              {menuTarget.doc.isProfileComplete ? 'Unverify Doctor' : 'Approve Doctor'}
+              <ShieldCheck className={`h-4 w-4 ${menuTarget.doc.user?.isVerified ? 'text-amber-500' : 'text-emerald-500'}`} />
+              {menuTarget.doc.user?.isVerified ? 'Unverify Doctor' : 'Approve Doctor'}
             </button>
             <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
             <button
@@ -192,14 +198,17 @@ export default function AdminDoctorsPage() {
               </div>
               <div>
                 <p className="text-lg font-bold">{selectedDoctor?.fullName}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Badge variant={selectedDoctor?.isProfileComplete ? 'success' : 'secondary'}>
-                    {selectedDoctor?.isProfileComplete ? 'Verified' : 'Pending Approval'}
-                  </Badge>
-                  <Badge variant={selectedDoctor?.user?.isActive ? 'success' : 'destructive'}>
-                    {selectedDoctor?.user?.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <Badge variant={selectedDoctor?.user?.isVerified ? 'success' : 'secondary'}>
+                      {selectedDoctor?.user?.isVerified ? 'Verified' : 'Pending Approval'}
+                    </Badge>
+                    <Badge variant={selectedDoctor?.isProfileComplete ? 'outline' : 'secondary'} className={selectedDoctor?.isProfileComplete ? 'bg-sky-100 text-sky-700 dark:bg-sky-950/30 dark:text-sky-400' : ''}>
+                      Profile: {selectedDoctor?.isProfileComplete ? 'Complete' : 'Incomplete'}
+                    </Badge>
+                    <Badge variant={selectedDoctor?.user?.isActive ? 'success' : 'destructive'}>
+                      {selectedDoctor?.user?.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
               </div>
             </DialogTitle>
           </DialogHeader>
@@ -298,7 +307,7 @@ export default function AdminDoctorsPage() {
                   }}
                 >
                   <ShieldCheck className="h-4 w-4 mr-2" />
-                  {toggleVerify.isPending ? 'Updating...' : selectedDoctor.isProfileComplete ? 'Unverify Doctor' : 'Approve Doctor'}
+                  {toggleVerify.isPending ? 'Updating...' : selectedDoctor.user?.isVerified ? 'Unverify Doctor' : 'Approve Doctor'}
                 </Button>
                 <Button variant="outline" onClick={() => setSelectedDoctor(null)} className="flex-1">
                   Close

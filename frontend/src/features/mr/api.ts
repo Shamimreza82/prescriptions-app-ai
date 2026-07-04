@@ -41,3 +41,15 @@ export const getMrSubscriptions = (params?: { page?: number; limit?: number; sea
 
 export const subscribeDoctor = (doctorId: string, data: { planId: string; transactionId?: string; notes?: string }) =>
   api.post(`/mr/doctors/${doctorId}/subscribe`, data).then((r) => r.data.data);
+
+export const getReportsOverview = () =>
+  api.get('/mr/reports/overview').then((r) => r.data.data);
+
+export const getReportsPrescriptions = (params?: { page?: number; limit?: number; search?: string; dateFrom?: string; dateTo?: string; status?: string }) =>
+  api.get('/mr/reports/prescriptions', { params }).then((r) => r.data);
+
+export const getReportsMedicines = (params?: { page?: number; limit?: number }) =>
+  api.get('/mr/reports/medicines', { params }).then((r) => r.data.data);
+
+export const getReportsRevenue = () =>
+  api.get('/mr/reports/revenue').then((r) => r.data.data);

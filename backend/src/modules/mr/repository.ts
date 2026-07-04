@@ -194,8 +194,10 @@ export const getMrDoctorsPaginatedWithSubs = (mrId: string, pagination: Paginati
   };
   if (pagination.search) {
     where.OR = [
-      { fullName: { contains: pagination.search, mode: 'insensitive' } },
-      { clinicName: { contains: pagination.search, mode: 'insensitive' } },
+      { prescriptionNo: { contains: pagination.search, mode: 'insensitive' } },
+      { patient: { fullName: { contains: pagination.search, mode: 'insensitive' } } },
+      { doctor: { fullName: { contains: pagination.search, mode: 'insensitive' } } },
+      { medicines: { some: { name: { contains: pagination.search, mode: 'insensitive' } } } },
     ];
   }
   return Promise.all([
@@ -212,6 +214,139 @@ export const getMrDoctorsPaginatedWithSubs = (mrId: string, pagination: Paginati
     db.doctor.count({ where }),
   ] as const);
 };
+
+export const getTotalPrescriptionsByDoctors = (doctorIds: string[]) =>
+  db.prescription.count({ where: { doctorId: { in: doctorIds } } });
+
+export const getMonthlyPrescriptionTrends = (doctorIds: string[]) => {
+  const now = new Date();
+  return Promise.all(
+    Array.from({ length: 12 }, (_, i) => {
+      const ms = new Date(now.getFullYear(), i, 1);
+      const me = new Date(now.getFullYear(), i + 1, 1);
+      return db.prescription.count({
+        where: { doctorId: { in: doctorIds }, createdAt: { gte: ms, lt: me } },
+      });
+    })
+  );
+};
+
+export const getTodaysPrescriptionCount = (doctorIds: string[]) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return db.prescription.count({
+    where: { doctorId: { in: doctorIds }, createdAt: { gte: today, lt: tomorrow } },
+  });
+};
+
+export const getThisMonthPrescriptionCount = (doctorIds: string[]) => {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  return db.prescription.count({
+    where: { doctorId: { in: doctorIds }, createdAt: { gte: monthStart } },
+  });
+};
+
+export const getWeeklyPrescriptionCounts = (doctorIds: string[]) => {
+  const now = new Date();
+  return Promise.all(
+    Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(now);
+      day.setDate(day.getDate() - i);
+      day.setHours(0, 0, 0, 0);
+      const nextDay = new Date(day);
+      nextDay.setDate(nextDay.getDate() + 1);
+      return db.prescription.count({
+        where: { doctorId: { in: doctorIds }, createdAt: { gte: day, lt: nextDay } },
+      });
+    })
+  ).then((counts) => counts.reverse());
+};
+
+export const getTopMedicines = (doctorIds: string[], skip: number, take: number) => {
+  const where = { prescription: { doctorId: { in: doctorIds } } };
+  return Promise.all([
+    db.medicine.groupBy({
+      by: ['name', 'strength', 'form', 'genericName'],
+      where,
+      _count: { _all: true },
+      orderBy: { _count: { name: 'desc' } },
+      skip,
+      take,
+    }),
+    db.medicine.groupBy({
+      by: ['name', 'strength', 'form', 'genericName'],
+      where,
+    }).then(r => r.length),
+  ] as const);
+};
+
+export const getFilteredPrescriptionsForMr = (
+  doctorIds: string[],
+  pagination: PaginationParamsExtended
+) => {
+  const where: any = { doctorId: { in: doctorIds } };
+  if (pagination.search) {
+    where.OR = [
+      { prescriptionNo: { contains: pagination.search, mode: 'insensitive' } },
+      { patient: { fullName: { contains: pagination.search, mode: 'insensitive' } } },
+      { doctor: { fullName: { contains: pagination.search, mode: 'insensitive' } } },
+      { medicines: { some: { name: { contains: pagination.search, mode: 'insensitive' } } } },
+    ];
+  }
+  if (pagination.dateFrom) {
+    where.createdAt = { ...where.createdAt, gte: new Date(pagination.dateFrom) };
+  }
+  if (pagination.dateTo) {
+    const end = new Date(pagination.dateTo);
+    end.setHours(23, 59, 59, 999);
+    where.createdAt = { ...where.createdAt, lte: end };
+  }
+  if (pagination.status) {
+    const ids = pagination.status.split(',');
+    where.doctorId = { in: ids };
+  }
+  return Promise.all([
+    db.prescription.findMany({
+      where,
+      skip: pagination.skip,
+      take: pagination.limit,
+      include: {
+        patient: { select: { id: true, fullName: true, patientId: true, age: true, gender: true } },
+        doctor: { select: { id: true, fullName: true, clinicName: true } },
+        medicines: { select: { name: true, form: true } },
+        _count: { select: { medicines: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.prescription.count({ where }),
+  ] as const);
+};
+
+export const getMrRevenueReport = (mrId: string) => {
+  const now = new Date();
+  const monthlyRevenue = Promise.all(
+    Array.from({ length: 12 }, (_, i) => {
+      const ms = new Date(now.getFullYear(), i, 1);
+      const me = new Date(now.getFullYear(), i + 1, 1);
+      return db.payment.aggregate({
+        where: { paidByMrId: mrId, createdAt: { gte: ms, lt: me } },
+        _sum: { amount: true },
+      });
+    })
+  );
+  return monthlyRevenue.then((r) => r.map((x: { _sum: { amount: number | null } }) => x._sum.amount || 0));
+};
+
+export const getMrRevenueByDoctor = (mrId: string) =>
+  db.payment.groupBy({
+    by: ['subscriptionId'],
+    where: { paidByMrId: mrId },
+    _sum: { amount: true },
+    _count: true,
+  });
 
 export const findPrescriptionForMr = (id: string, doctorIds: string[]) =>
   db.prescription.findFirst({

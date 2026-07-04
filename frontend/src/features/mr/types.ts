@@ -53,6 +53,52 @@ export interface Plan {
   updatedAt: string;
 }
 
+export interface ReportsOverview {
+  totalDoctors: number;
+  totalPrescriptions: number;
+  todaysPrescriptions: number;
+  thisMonthPrescriptions: number;
+  monthlyPrescriptions: number[];
+  monthlyLabels: string[];
+}
+
+export interface TopMedicine {
+  name: string;
+  strength: string | null;
+  form: string | null;
+  genericName: string | null;
+  _count: { _all: number };
+}
+
+export interface ReportsMedicines {
+  medicines: TopMedicine[];
+  total: number;
+  totalPrescriptions: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ReportPayment {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  transactionId: string;
+  notes?: string;
+  createdAt: string;
+  subscription: {
+    doctor: { id: string; fullName: string; clinicName: string };
+    plan: { id: string; name: string };
+  };
+}
+
+export interface ReportsRevenue {
+  monthlyRevenue: number[];
+  monthlyLabels: string[];
+  payments: ReportPayment[];
+}
+
 export interface MrSubscription {
   doctor: {
     id: string;

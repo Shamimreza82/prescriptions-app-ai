@@ -9,6 +9,10 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/dashboard', authorize('MEDICAL_REPRESENTATIVE'), mrController.getDashboardStats);
+router.get('/reports/overview', authorize('MEDICAL_REPRESENTATIVE'), mrController.getReportsOverview);
+router.get('/reports/prescriptions', authorize('MEDICAL_REPRESENTATIVE'), mrController.getReportsPrescriptions);
+router.get('/reports/medicines', authorize('MEDICAL_REPRESENTATIVE'), mrController.getReportsMedicines);
+router.get('/reports/revenue', authorize('MEDICAL_REPRESENTATIVE'), mrController.getReportsRevenue);
 router.get('/doctors', authorize('MEDICAL_REPRESENTATIVE'), mrController.getMyDoctors);
 router.get('/doctors/:doctorId/patients', authorize('MEDICAL_REPRESENTATIVE'), mrController.getDoctorPatients);
 router.get('/doctors/:doctorId/prescriptions', authorize('MEDICAL_REPRESENTATIVE'), mrController.getDoctorPrescriptions);

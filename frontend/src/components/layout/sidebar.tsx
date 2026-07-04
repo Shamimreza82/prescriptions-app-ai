@@ -8,7 +8,7 @@ import { useLogout } from '@/features/auth/hooks';
 import {
   LayoutDashboard, Users, FileText, Calendar, Building2,
   LogOut, Sun, Moon, Stethoscope, ChevronLeft, ChevronRight,
-  Shield, UserCog, CreditCard, PersonStanding, ClipboardList, UserRound, Crown, Settings, ChevronDown,
+  Shield, UserCog, CreditCard, PersonStanding, ClipboardList, UserRound, Crown, Settings, ChevronDown, BarChart3,
 } from 'lucide-react';
 import { useThemeContext } from '@/providers/theme-provider';
 
@@ -51,6 +51,7 @@ const adminMenu = [
 const mrMenu = [
   { href: '/dashboard/mr', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/mr/doctors', label: 'Doctors', icon: Stethoscope },
+  { href: '/dashboard/mr/reports', label: 'Reports', icon: BarChart3 },
   { href: '/dashboard/mr/subscriptions', label: 'Subscriptions', icon: Crown },
   { href: '/dashboard/mr/profile', label: 'My Profile', icon: UserRound },
 ];

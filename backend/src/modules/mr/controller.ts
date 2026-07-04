@@ -146,6 +146,42 @@ export const downloadDoctorPrescriptionPdf = async (req: AuthRequest, res: Respo
   }
 };
 
+export const getReportsOverview = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await mrService.getReportsOverview(req.user!.userId);
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReportsPrescriptions = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await mrService.getReportsPrescriptions(req.user!.userId, req.query);
+    res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReportsMedicines = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await mrService.getReportsMedicines(req.user!.userId, req.query);
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReportsRevenue = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await mrService.getReportsRevenue(req.user!.userId);
+    sendSuccess(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMrSubscriptions = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await mrService.getMrSubscriptionsPaginated(req.user!.userId, req.query);

@@ -23,9 +23,9 @@ export const approveDoctor = catchAsync(async (req: AuthRequest, res) => {
 });
 
 export const toggleDoctorVerification = catchAsync(async (req: AuthRequest, res) => {
-  const doctor = await adminService.toggleDoctorVerification(req.params.userId as string);
-  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.userId as string, details: { isProfileComplete: doctor.isProfileComplete } });
-  sendSuccess(res, { message: `Doctor ${doctor.isProfileComplete ? 'verified' : 'unverified'} successfully` });
+  const result = await adminService.toggleDoctorVerification(req.params.userId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.userId as string, details: { isVerified: result.isVerified } });
+  sendSuccess(res, { message: `Doctor ${result.isVerified ? 'verified' : 'unverified'} successfully` });
 });
 
 export const toggleDoctorStatus = catchAsync(async (req: AuthRequest, res) => {

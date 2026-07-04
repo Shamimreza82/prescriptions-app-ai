@@ -122,6 +122,30 @@ export const useAssignDoctors = () => {
   });
 };
 
+export const useReportsOverview = () =>
+  useQuery({
+    queryKey: ['mr', 'reports', 'overview'],
+    queryFn: mrApi.getReportsOverview,
+  });
+
+export const useReportsPrescriptions = (params?: { page?: number; limit?: number; search?: string; dateFrom?: string; dateTo?: string; status?: string }) =>
+  useQuery({
+    queryKey: ['mr', 'reports', 'prescriptions', params],
+    queryFn: () => mrApi.getReportsPrescriptions(params),
+  });
+
+export const useReportsMedicines = (params?: { page?: number; limit?: number }) =>
+  useQuery({
+    queryKey: ['mr', 'reports', 'medicines', params],
+    queryFn: () => mrApi.getReportsMedicines(params),
+  });
+
+export const useReportsRevenue = () =>
+  useQuery({
+    queryKey: ['mr', 'reports', 'revenue'],
+    queryFn: mrApi.getReportsRevenue,
+  });
+
 export const useMrSubscriptions = (params?: { page?: number; limit?: number; search?: string }) =>
   useQuery({
     queryKey: [...mrKeys.subscriptions, params],
