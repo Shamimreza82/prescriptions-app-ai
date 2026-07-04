@@ -5,7 +5,7 @@ import { ToastProvider } from '@/providers/toast-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PresManage - Doctor Prescription Management',
+  title: 'Prescribe Pro - Doctor Prescription Management',
   description: 'Modern SaaS platform for doctors to manage patients and prescriptions',
 };
 

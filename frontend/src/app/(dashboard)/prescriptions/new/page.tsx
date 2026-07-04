@@ -487,6 +487,18 @@ function NewPrescriptionForm() {
                   </div>
                 )}
               </div>
+              <div className="space-y-4 pt-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                    Diagnosis / রোগ নির্ণয়
+                  </label>
+                </div>
+                <textarea
+                  {...register('diagnosis')}
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none"
+                  placeholder="Enter diagnosis..."
+                />
+              </div>
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">

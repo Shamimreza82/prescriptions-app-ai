@@ -1,4 +1,4 @@
-# API Documentation — PrescribePro
+# API Documentation — Prescribe Pro
 
 A RESTful JSON API for a prescription management application.
 
@@ -1411,7 +1411,7 @@ Get subscriptions managed by the MR (paginated).
   "limit": 20,
   "totalPages": 1,
   "mr": { "id": "uuid", "fullName": "MR Name", "company": "Pharma Ltd" },
-  "platform": "PrescribePro"
+  "platform": "Prescribe Pro"
 }
 ```
 

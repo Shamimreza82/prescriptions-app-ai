@@ -41,10 +41,8 @@ export const getPatientById = async (id: string, doctorId: string) => {
 export const updatePatientForDoctor = async (id: string, doctorId: string, input: UpdatePatientInput) => {
   const patient = await repo.findPatientById(id, doctorId);
   if (!patient) throw notFound('Patient not found');
-  const targetDoctorId = input.doctorId || doctorId;
-  await checkDuplicatePhone(input.phone, targetDoctorId, id);
-  const { doctorId: _unused, ...rest } = input;
-  return repo.updatePatient(id, { ...rest, doctorId: targetDoctorId });
+  await checkDuplicatePhone(input.phone, doctorId, id);
+  return repo.updatePatient(id, input);
 };
 
 export const deletePatientForDoctor = async (id: string, doctorId: string) => {

@@ -15,8 +15,6 @@ export const createPatientSchema = z.object({
   emergencyContact: z.string().optional(),
 });
 
-export const updatePatientSchema = createPatientSchema.partial().extend({
-  doctorId: z.string().uuid().optional(),
-});
+export const updatePatientSchema = createPatientSchema.partial();
 
 

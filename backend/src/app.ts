@@ -43,15 +43,15 @@ if (!fs.existsSync(uploadsDir)) {
 app.set('trust proxy', 1);
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: env.nodeEnv === 'test' ? 10000 : 100,
+  windowMs: env.rateLimit.windowMs,
+  max: env.nodeEnv === 'test' ? 10000 : env.rateLimit.apiMax,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: env.nodeEnv === 'test' ? 10000 : 10,
+  windowMs: env.rateLimit.windowMs,
+  max: env.nodeEnv === 'test' ? 10000 : env.rateLimit.authMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many attempts, please try again later' },

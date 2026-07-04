@@ -26,8 +26,13 @@ export const env = {
     dsn: process.env.SENTRY_DSN || '',
   },
   platform: {
-    companyName: process.env.PLATFORM_COMPANY_NAME || 'PrescribePro',
+    companyName: process.env.PLATFORM_COMPANY_NAME || 'Prescribe Pro',
     address: process.env.PLATFORM_ADDRESS || '',
     phone: process.env.PLATFORM_PHONE || '',
+  },
+  rateLimit: {
+    windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    apiMax: Number(process.env.API_RATE_LIMIT_MAX) || 200,
+    authMax: Number(process.env.AUTH_RATE_LIMIT_MAX) || 100,
   },
 } as const;

@@ -13,8 +13,6 @@ export interface CreatePatientInput {
   emergencyContact?: string;
 }
 
-export interface UpdatePatientInput extends Partial<CreatePatientInput> {
-  doctorId?: string;
-}
+export interface UpdatePatientInput extends Partial<CreatePatientInput> {}
 
 

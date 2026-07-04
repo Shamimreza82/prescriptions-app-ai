@@ -69,7 +69,7 @@ export const listSubscriptions = catchAsync(async (req: AuthRequest, res) => {
 
 export const updateSubscription = catchAsync(async (req: AuthRequest, res) => {
   const sub = await adminService.updateSubscriptionPlan(req.params.id as string, req.body);
-  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Subscription', entityId: req.params.id as string, details: req.body });
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Subscription', entityId: req.params.id as string, details: { plan: req.body.plan, status: req.body.status, patientLimit: req.body.patientLimit, prescriptionLimit: req.body.prescriptionLimit } });
   sendSuccess(res, sub);
 });
 
@@ -91,7 +91,7 @@ export const createPlan = catchAsync(async (req: AuthRequest, res) => {
 
 export const updatePlan = catchAsync(async (req: AuthRequest, res) => {
   const plan = await adminService.editPlan(req.params.id as string, req.body);
-  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Plan', entityId: req.params.id as string, details: req.body });
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Plan', entityId: req.params.id as string, details: { name: req.body.name, description: req.body.description, price: req.body.price, patientLimit: req.body.patientLimit, prescriptionLimit: req.body.prescriptionLimit, isActive: req.body.isActive } });
   sendSuccess(res, plan);
 });
 

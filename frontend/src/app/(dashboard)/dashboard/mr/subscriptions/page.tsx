@@ -344,7 +344,7 @@ export default function MrSubscriptionsPage() {
                   </head>
                   <body>
                     <div class="header">
-                      <h1>${platform?.name || 'PrescribePro'}</h1>
+                      <h1>${platform?.name || 'Prescribe Pro'}</h1>
                       <p>${platform?.address || ''}</p>
                       <p>${platform?.phone || ''}</p>
                     </div>
@@ -359,7 +359,7 @@ export default function MrSubscriptionsPage() {
                     <table><tr><th colspan="2">Issued By</th></tr><tr><td>MR Name</td><td style="font-weight:bold">${mrInfo?.fullName || '—'}</td></tr><tr><td>Company</td><td style="font-weight:bold">${mrInfo?.company || '—'}</td></tr><tr><td>Phone</td><td style="font-weight:bold">${mrInfo?.phone || '—'}</td></tr></table>
                     <div class="footer">
                       <div><p style="margin:0;font-size:11px;color:#999;">Authorized Signature</p><div class="sig"></div></div>
-                      <div style="text-align:right;"><p style="margin:0;font-size:11px;font-weight:bold;">${platform?.name || 'PrescribePro'}</p><p style="margin:0;font-size:11px;color:#999;">${platform?.address || ''}</p><p style="margin:0;font-size:11px;color:#999;">${platform?.phone || ''}</p></div>
+                      <div style="text-align:right;"><p style="margin:0;font-size:11px;font-weight:bold;">${platform?.name || 'Prescribe Pro'}</p><p style="margin:0;font-size:11px;color:#999;">${platform?.address || ''}</p><p style="margin:0;font-size:11px;color:#999;">${platform?.phone || ''}</p></div>
                     </div>
                     <div class="disclaimer">This is a computer-generated voucher. No signature required.</div>
                     <script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script>
