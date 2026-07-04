@@ -9,6 +9,7 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 import { env } from './config/env';
+import { db } from './config/database';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 
 Sentry.init({
@@ -73,8 +74,13 @@ app.use(hpp());
 app.use('/api', limiter);
 app.use('/uploads', express.static(uploadsDir));
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (_req, res) => {
+  try {
+    await db.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', db: 'disconnected', timestamp: new Date().toISOString() });
+  }
 });
 
 app.use('/api/auth', authLimiter, authRoutes);
