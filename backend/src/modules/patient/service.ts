@@ -2,6 +2,7 @@ import { badRequest, notFound } from '../../utils/errors';
 import { getPaginationParams } from '../../utils/pagination';
 import { db } from '../../config/database';
 import * as repo from './repository';
+import * as subService from '../subscription/service';
 import { CreatePatientInput, UpdatePatientInput } from './types';
 import { Request } from 'express';
 
@@ -15,12 +16,12 @@ const checkDuplicatePhone = async (phone: string | undefined, doctorId: string, 
 
 export const createPatientForDoctor = async (doctorId: string, input: CreatePatientInput) => {
   await checkDuplicatePhone(input.phone, doctorId);
-  const subscription = await repo.getSubscriptionByDoctor(doctorId);
+  const subscription = await subService.autoDowngradeExpiredIfNeeded(doctorId);
   if (!subscription) throw badRequest('No subscription found');
   if (subscription.status !== 'ACTIVE') throw badRequest('Your subscription is not active');
 
   const count = await repo.countPatientsByDoctor(doctorId);
-  if (count >= subscription.patientLimit) {
+  if (count >= subscription!.patientLimit) {
     throw badRequest('Patient limit reached. Upgrade your subscription.');
   }
 

@@ -116,7 +116,7 @@ export const useRejectSubscription = () => {
 export const useUpdateAdminSubscription = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { patientLimit?: number; prescriptionLimit?: number; status?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { plan?: string; patientLimit?: number; prescriptionLimit?: number; status?: string } }) =>
       plansApi.updateAdminSubscription(id, data),
     onSuccess: () => {
       toast.success('Subscription updated');

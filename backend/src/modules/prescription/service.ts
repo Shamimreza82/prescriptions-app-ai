@@ -2,6 +2,7 @@ import { badRequest, notFound, forbidden } from '../../utils/errors';
 import { getPaginationParams } from '../../utils/pagination';
 import { db } from '../../config/database';
 import * as repo from './repository';
+import * as subService from '../subscription/service';
 import { CreatePrescriptionInput, UpdatePrescriptionInput } from './types';
 import { Request } from 'express';
 
@@ -15,12 +16,12 @@ export const createPrescriptionForDoctor = async (doctorId: string, input: Creat
   if (!doctor.isProfileComplete) throw forbidden('Complete your profile before creating prescriptions');
   if (!doctor.user.isVerified) throw forbidden('Your account is pending admin approval. You cannot create prescriptions yet.');
 
-  const subscription = await repo.getSubscriptionByDoctor(doctorId);
+  const subscription = await subService.autoDowngradeExpiredIfNeeded(doctorId);
   if (!subscription) throw badRequest('No subscription found');
   if (subscription.status !== 'ACTIVE') throw badRequest('Your subscription is not active');
 
   const count = await repo.countPrescriptionsByDoctor(doctorId);
-  if (count >= subscription.prescriptionLimit) {
+  if (count >= subscription!.prescriptionLimit) {
     throw badRequest('Prescription limit reached. Upgrade your subscription.');
   }
 

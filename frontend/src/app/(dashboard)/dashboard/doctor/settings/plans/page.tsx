@@ -17,8 +17,9 @@ export default function DoctorPlansPage() {
   const { data: subscription, isLoading: loadingSub } = useMySubscription();
   const activatePlan = useActivatePlan();
 
-  const isCurrentPlanActive = subscription?.planId && subscription?.status === 'ACTIVE';
-  const isCurrentPlanPending = subscription?.planId && subscription?.status === 'PENDING';
+  const isCurrentPlanActive = !!(subscription?.planId && subscription?.status === 'ACTIVE');
+  const isCurrentPlanPending = !!(subscription?.planId && subscription?.status === 'PENDING');
+  const hasActiveOrPendingSub = isCurrentPlanActive || isCurrentPlanPending;
 
   const handleSubscribe = (plan: Plan) => {
     if (plan.price > 0) {
@@ -188,10 +189,22 @@ export default function DoctorPlansPage() {
               <Button
                 className="w-full"
                 variant={status === 'active' ? 'outline' : status === 'pending' ? 'outline' : plan.price === 0 ? 'secondary' : 'default'}
-                disabled={status === 'active' || status === 'pending' || (activatePlan.isPending && selectedPlan?.id === plan.id)}
+                disabled={status === 'active' || status === 'pending' || hasActiveOrPendingSub || (activatePlan.isPending && selectedPlan?.id === plan.id)}
                 onClick={() => handleSubscribe(plan)}
               >
-                {status === 'active' ? 'Current Plan' : status === 'pending' ? 'Awaiting Approval' : plan.price === 0 ? 'Activate Free' : 'Subscribe'}
+                {status === 'active'
+                  ? 'Current Plan'
+                  : status === 'pending'
+                  ? 'Awaiting Approval'
+                  : isCurrentPlanActive
+                  ? subscription?.endDate
+                    ? `Expires ${new Date(subscription.endDate).toLocaleDateString()}`
+                    : 'Plan Active'
+                  : isCurrentPlanPending
+                  ? 'Approval Pending'
+                  : plan.price === 0
+                  ? 'Activate Free'
+                  : 'Subscribe'}
               </Button>
             </Card>
           );

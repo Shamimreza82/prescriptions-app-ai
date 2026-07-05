@@ -412,3 +412,23 @@ export const findPrescriptionForMr = (id: string, doctorIds: string[]) =>
       },
     },
   });
+
+export const downgradeExpiredSubscriptions = async (doctorIds: string[]) => {
+  const now = new Date();
+  const freePlan = await db.plan.findFirst({ where: { price: 0, isActive: true } });
+  if (!freePlan) return 0;
+  const result = await db.subscription.updateMany({
+    where: {
+      doctorId: { in: doctorIds },
+      status: 'ACTIVE',
+      endDate: { not: null, lt: now },
+    },
+    data: {
+      planId: freePlan.id,
+      status: 'ACTIVE',
+      patientLimit: freePlan.patientLimit,
+      prescriptionLimit: freePlan.prescriptionLimit,
+    },
+  });
+  return result.count;
+};

@@ -31,5 +31,5 @@ export const cancelSubscription = (subscriptionId: string) =>
 export const getMySubscription = () =>
   api.get<{ success: boolean; data: any }>('/doctors/subscription').then((r) => r.data.data);
 
-export const updateAdminSubscription = (id: string, data: { patientLimit?: number; prescriptionLimit?: number; status?: string }) =>
+export const updateAdminSubscription = (id: string, data: { plan?: string; patientLimit?: number; prescriptionLimit?: number; status?: string }) =>
   api.patch(`/admin/subscriptions/${id}`, data).then((r) => r.data);

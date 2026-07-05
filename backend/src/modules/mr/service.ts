@@ -237,6 +237,9 @@ export const getMrSubscriptionsPaginated = async (userId: string, query: Request
   const mr = await repo.findMrByUserId(userId);
   if (!mr) throw notFound('MR profile not found');
 
+  const allDoctorIds = mr.doctors.map((d: { doctorId: string }) => d.doctorId);
+  await repo.downgradeExpiredSubscriptions(allDoctorIds);
+
   const pagination = getPaginationParams(query);
   const [doctors, total] = await repo.getMrDoctorsPaginatedWithSubs(mr.id, pagination);
 
@@ -362,9 +365,23 @@ export const subscribeDoctor = async (mrUserId: string, doctorId: string, input:
   const assigned = mr.doctors.some((d: { doctorId: string }) => d.doctorId === doctorId);
   if (!assigned) throw badRequest('Doctor is not assigned to you');
 
+  await repo.downgradeExpiredSubscriptions([doctorId]);
+
   const plan = await db.plan.findUnique({ where: { id: input.planId } });
   if (!plan) throw badRequest('Plan not found');
   if (!plan.isActive) throw badRequest('Plan is not available');
+
+  const existingSub = await db.subscription.findUnique({
+    where: { doctorId },
+    include: { plan: true },
+  });
+  if (existingSub && ['ACTIVE', 'PENDING'].includes(existingSub.status)) {
+    if (plan.duration < existingSub.plan.duration) {
+      throw badRequest(
+        `Cannot downgrade to a shorter plan. Your current plan (${existingSub.plan.name}) is ${existingSub.plan.duration} days.`
+      );
+    }
+  }
 
   const endDate = plan.duration ? new Date(Date.now() + plan.duration * 24 * 60 * 60 * 1000) : null;
   const isPaid = plan.price > 0;

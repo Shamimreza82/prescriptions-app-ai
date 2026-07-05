@@ -119,23 +119,47 @@ export default function MrSubscriptionsPage() {
             {!(plans ?? []).length ? (
               <p className="text-sm text-muted-foreground col-span-full text-center py-8">No plans available.</p>
             ) : (
-              (plans ?? []).map((plan: Plan) => (
-              <Card key={plan.id} className={`p-5 cursor-pointer border-2 transition-all hover:border-teal-400 ${selectedPlan?.id === plan.id ? 'border-teal-500 shadow-glow' : 'border-gray-100 dark:border-gray-800/50'}`} onClick={() => handlePlanSelect(plan)}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">{plan.name}</h3>
-                  {plan.price === 0 && <Badge variant="success">Free</Badge>}
-                </div>
-                {plan.description && <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>}
-                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  {plan.price}
-                  <span className="text-sm font-normal text-muted-foreground"> / {plan.duration} days</span>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2"><Check className="h-4 w-4 text-teal-500 shrink-0" /><span>{plan.patientLimit} patients</span></div>
-                  <div className="flex items-center gap-2"><Check className="h-4 w-4 text-teal-500 shrink-0" /><span>{plan.prescriptionLimit} prescriptions</span></div>
-                </div>
-              </Card>
-            ))
+              (plans ?? []).map((plan: Plan) => {
+                const selectedSub = subscriptions.find(s => s.doctor.id === selectedDoctorId)?.subscription;
+                const hasActiveSub = selectedSub && ['ACTIVE', 'PENDING'].includes(selectedSub.status);
+                const currentDuration = selectedSub?.plan?.duration ?? 0;
+                const isBlocked = hasActiveSub && plan.duration < currentDuration;
+
+                return isBlocked ? (
+                  <Card key={plan.id} className="p-5 border-2 border-gray-200 dark:border-gray-700 opacity-60 cursor-not-allowed">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                      {plan.price === 0 && <Badge variant="success">Free</Badge>}
+                    </div>
+                    {plan.description && <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>}
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      {plan.price}
+                      <span className="text-sm font-normal text-muted-foreground"> / {plan.duration} days</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <p className="text-xs text-muted-foreground italic">This plan is shorter than the current subscription. Wait for it to expire or choose a longer plan.</p>
+                      <div className="flex items-center gap-2"><Check className="h-4 w-4 text-teal-500 shrink-0" /><span>{plan.patientLimit} patients</span></div>
+                      <div className="flex items-center gap-2"><Check className="h-4 w-4 text-teal-500 shrink-0" /><span>{plan.prescriptionLimit} prescriptions</span></div>
+                    </div>
+                  </Card>
+                ) : (
+                  <Card key={plan.id} className={`p-5 cursor-pointer border-2 transition-all hover:border-teal-400 ${selectedPlan?.id === plan.id ? 'border-teal-500 shadow-glow' : 'border-gray-100 dark:border-gray-800/50'}`} onClick={() => handlePlanSelect(plan)}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                      {plan.price === 0 && <Badge variant="success">Free</Badge>}
+                    </div>
+                    {plan.description && <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>}
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                      {plan.price}
+                      <span className="text-sm font-normal text-muted-foreground"> / {plan.duration} days</span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2"><Check className="h-4 w-4 text-teal-500 shrink-0" /><span>{plan.patientLimit} patients</span></div>
+                      <div className="flex items-center gap-2"><Check className="h-4 w-4 text-teal-500 shrink-0" /><span>{plan.prescriptionLimit} prescriptions</span></div>
+                    </div>
+                  </Card>
+                );
+              })
             )}
           </div>
         </DialogContent>

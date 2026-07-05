@@ -2,6 +2,7 @@ import { badRequest, notFound } from '../../utils/errors';
 import { getPaginationParams } from '../../utils/pagination';
 import { db } from '../../config/database';
 import * as repo from './repository';
+import * as subService from '../subscription/service';
 import { Request } from 'express';
 import type { Prisma } from '@prisma/client';
 
@@ -67,12 +68,12 @@ const checkDuplicatePhone = async (phone: string | undefined, doctorId: string, 
 
 export const createPatientForDoctor = async (userId: string, input: any) => {
   const rec = await getReceptionistOrThrow(userId);
-  const subscription = await repo.getSubscriptionByDoctor(rec.doctorId);
+  const subscription = await subService.autoDowngradeExpiredIfNeeded(rec.doctorId);
   if (!subscription) throw badRequest('No subscription found');
   if (subscription.status !== 'ACTIVE') throw badRequest('Your subscription is not active');
 
   const count = await repo.countPatientsByDoctor(rec.doctorId);
-  if (count >= subscription.patientLimit) {
+  if (count >= subscription!.patientLimit) {
     throw badRequest('Patient limit reached. Upgrade your subscription.');
   }
 

@@ -30,6 +30,7 @@ export default function AdminSubscriptionsPage() {
   const [page, setPage] = useState(1);
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [activateSub, setActivateSub] = useState<any>(null);
+  const [activatePlanId, setActivatePlanId] = useState('');
   const [editSub, setEditSub] = useState<any>(null);
   const [editPatientLimit, setEditPatientLimit] = useState(0);
   const [editPrescriptionLimit, setEditPrescriptionLimit] = useState(0);
@@ -79,18 +80,51 @@ export default function AdminSubscriptionsPage() {
         onConfirm={() => cancelId && cancelSub.mutate(cancelId, { onSuccess: () => setCancelId(null) })}
       />
 
-      <ConfirmDialog
-        open={!!activateSub}
-        onOpenChange={(v) => !v && setActivateSub(null)}
-        title="Activate Subscription"
-        message={`Are you sure you want to activate the ${activateSub?.plan?.name || 'current'} plan for ${activateSub?.doctor?.fullName}?`}
-        confirmLabel="Activate"
-        loading={updateSub.isPending}
-        onConfirm={() => activateSub && updateSub.mutate(
-          { id: activateSub.id, data: { status: 'ACTIVE' } },
-          { onSuccess: () => setActivateSub(null) }
-        )}
-      />
+      {/* Activate Subscription Dialog */}
+      <Dialog open={!!activateSub} onOpenChange={(v) => { if (!v) { setActivateSub(null); setActivatePlanId(''); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Activate Subscription</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Assign a new plan for <strong>{activateSub?.doctor?.fullName}</strong>
+            </p>
+            <div className="space-y-2">
+              <Label>Select Plan</Label>
+              <select
+                value={activatePlanId}
+                onChange={(e) => setActivatePlanId(e.target.value)}
+                className="premium-input w-full h-11 px-4 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg text-sm"
+              >
+                <option value="">Choose a plan...</option>
+                {plans?.map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — ৳{p.price} ({p.duration} days, {p.patientLimit} patients)
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={() => { setActivateSub(null); setActivatePlanId(''); }} className="flex-1">
+                Cancel
+              </Button>
+              <Button
+                className="gradient-primary text-white flex-1"
+                disabled={!activatePlanId || updateSub.isPending}
+                onClick={() => {
+                  updateSub.mutate(
+                    { id: activateSub.id, data: { status: 'ACTIVE', plan: activatePlanId } },
+                    { onSuccess: () => { setActivateSub(null); setActivatePlanId(''); } }
+                  );
+                }}
+              >
+                {updateSub.isPending ? 'Activating...' : 'Activate'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedSub} onOpenChange={(v) => !v && setSelectedSub(null)}>

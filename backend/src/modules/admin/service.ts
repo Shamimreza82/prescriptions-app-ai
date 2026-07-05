@@ -2,6 +2,7 @@ import { hashPassword } from '../../utils/password';
 import { notFound, badRequest } from '../../utils/errors';
 import { getPaginationParams } from '../../utils/pagination';
 import * as repo from './repository';
+import * as subService from '../subscription/service';
 import { Request } from 'express';
 
 export const getDashboardStats = () => repo.getAdminStats();
@@ -60,9 +61,16 @@ export const listSubscriptions = (query: Request['query']) => {
 };
 
 export const updateSubscriptionPlan = async (id: string, data: { plan?: string; status?: string; patientLimit?: number; prescriptionLimit?: number }) => {
-  const sub = await repo.updateSubscription(id, data);
-  if (!sub) throw notFound('Subscription not found');
-  return sub;
+  if (data.plan) {
+    return subService.adminSetPlan(id, data.plan);
+  }
+  if (data.patientLimit !== undefined || data.prescriptionLimit !== undefined) {
+    return subService.adminUpdateLimits(id, data);
+  }
+  if (data.status) {
+    return repo.updateSubscription(id, { status: data.status });
+  }
+  throw badRequest('No valid update data provided');
 };
 
 export const listPlans = () => repo.findAllPlans();
