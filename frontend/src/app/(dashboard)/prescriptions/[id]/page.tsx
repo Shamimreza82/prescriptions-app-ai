@@ -52,8 +52,9 @@ export default function PrescriptionDetailPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <style>{`
         @page { size: A4; margin: 10mm; }
+        ${blankPrint ? '@page { margin-top: 200px; }' : ''}
         @media print { body * { visibility: hidden; } #print-content, #print-content * { visibility: visible; } #print-content { position: absolute; top: 0; left: 0; width: 100%; border: none !important; box-shadow: none !important; border-radius: 0 !important; } }
-        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .signature { display: none !important; } #print-content[data-blank-print="true"] { padding-top: 180px !important; } }
+        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .signature { display: none !important; } }
       `}</style>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -150,6 +151,13 @@ export default function PrescriptionDetailPage() {
               <div className="pt-4">
                 <img src={qrDataUrl} alt="QR" className="w-[72px] h-[72px] block mb-1" />
                 <p className="text-[10px] font-bold text-black">Scan for e-validation</p>
+                {blankPrint && (
+                  <div className="pt-2 border-t border-black space-y-0.5 text-[10px] font-semibold text-black">
+                    <p>Rx: {rx.prescriptionNo}</p>
+                    <p>{new Date(rx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
+                    {rx.doctor?.bmdcRegNo && <p>BMDC: {rx.doctor.bmdcRegNo}</p>}
+                  </div>
+                )}
               </div>
             )}
           </div>
