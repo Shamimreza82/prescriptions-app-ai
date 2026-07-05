@@ -340,8 +340,8 @@ function NewPrescriptionForm() {
           )}
 
           {/* A. Patient Selection */}
-          <section className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-transparent">
-            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Patient <span className="text-red-500">*</span></label>
+          <section className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border-l-4 border-l-blue-400 border border-blue-200/30 dark:border-blue-800/30">
+            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block flex items-center gap-2"><span className="w-1.5 h-5 bg-blue-500 rounded-full" />Patient <span className="text-red-500">*</span></label>
             {errors.patientId && <p className="text-xs text-red-500 mb-2">{errors.patientId.message as string}</p>}
             {watchPatientId && selectedPatient ? (
               <div className={cn("flex items-center gap-5", errors.patientId ? "p-3 rounded-xl ring-2 ring-red-500" : "")}>
@@ -413,33 +413,10 @@ function NewPrescriptionForm() {
                 )}
               </div>
             )}
-            {selectedPatient && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-3 border-t border-gray-200/60 dark:border-gray-700/60">
-                <div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Weight / ওজন</p>
-                  <p className="text-lg font-bold text-teal-800 dark:text-teal-300">{selectedPatient.weight || '—'} <span className="text-xs font-medium text-gray-400">kg</span></p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Blood Group / রক্ত</p>
-                  <p className="text-lg font-bold text-red-600">{selectedPatient.bloodGroup?.replace('_', '+') || '—'}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Last Visit / শেষ</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">{selectedPatient.lastVisit || '—'}</p>
-                </div>
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-2 text-teal-600 bg-teal-50 dark:bg-teal-900/30 px-3 py-1 rounded-full text-xs font-bold border border-teal-100 dark:border-teal-800">
-                    <span className="animate-pulse w-2 h-2 bg-teal-500 rounded-full" />
-                    Auto-saving draft
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-2">Draft mode</p>
-                </div>
-              </div>
-            )}
           </section>
 
           {/* B. Clinical Section */}
-          <Card>
+          <Card className="border-l-4 border-l-teal-400">
           <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
@@ -544,7 +521,7 @@ function NewPrescriptionForm() {
 
 
           {/* D. Medicine Entry */}
-          <section className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-teal-500/10 shadow-lg relative">
+          <section className="bg-white dark:bg-gray-900 rounded-2xl p-4 border-l-4 border-l-teal-500 border border-teal-200/50 dark:border-teal-800/50 shadow-lg relative">
             <div className="absolute top-0 right-0 p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-lg">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
@@ -711,9 +688,10 @@ function NewPrescriptionForm() {
           </section>
 
           {/* Investigations */}
-          <div className="space-y-4">
+          <div className="space-y-4 pl-3 border-l-4 border-l-purple-400">
             <div className="flex items-center justify-between">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <span className="w-1.5 h-5 bg-purple-500 rounded-full" />
                 Investigations / ল্যাব টেস্ট
                 <span className="text-[10px] text-gray-400 font-normal">Lab</span>
               </label>
@@ -772,7 +750,7 @@ function NewPrescriptionForm() {
           </div>
 
           {/* F. Advice & Tests */}
-          <Card>
+          <Card className="border-l-4 border-l-emerald-400">
           <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
