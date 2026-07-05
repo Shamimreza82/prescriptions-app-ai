@@ -268,18 +268,18 @@ function NewPrescriptionForm() {
   }, [reset]);
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] dark:bg-gray-950 pb-24">
-      <div className="max-w-[1600px] mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <button type="button" onClick={() => router.push('/prescriptions')} className="p-2.5 rounded-xl hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors">
-            <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          </button>
-          <div>
-            <h1 className="text-xl font-extrabold text-gray-800 dark:text-gray-200">New Prescription</h1>
-            <p className="text-sm text-gray-400">Create a new prescription for your patient</p>
+    <div className="min-h-screen bg-[#f7f9fb] dark:bg-gray-950 pb-20">
+      <div className="max-w-[1400px] mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button type="button" onClick={() => router.push('/prescriptions')} className="p-2.5 rounded-xl hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors">
+              <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-800 dark:text-gray-200">New Prescription</h1>
+              <p className="text-sm text-gray-400">Create a new prescription for your patient</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center justify-end mb-4">
           <button type="button" onClick={() => setShowPreview(!showPreview)} className="text-xs font-bold text-teal-600 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             {showPreview ? 'Hide' : 'Show'} Preview
@@ -287,7 +287,7 @@ function NewPrescriptionForm() {
         </div>
         <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
         {/* ===== LEFT SIDE: Prescription Builder ===== */}
-        <div className={cn("col-span-12 space-y-6 sm:space-y-8", showPreview ? "lg:col-span-7 xl:col-span-8" : "lg:col-span-12 xl:col-span-12")}>
+        <div className={cn("col-span-12 space-y-4 sm:space-y-5", showPreview ? "lg:col-span-7 xl:col-span-8" : "lg:col-span-12 xl:col-span-12")}>
 
           {!profileStatus.loading && (!profileStatus.isVerified || !profileStatus.isProfileComplete) && (
             <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
@@ -334,7 +334,7 @@ function NewPrescriptionForm() {
           )}
 
           {/* A. Patient Selection */}
-          <section className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-transparent">
+          <section className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-transparent">
             <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">Patient <span className="text-red-500">*</span></label>
             {errors.patientId && <p className="text-xs text-red-500 mb-2">{errors.patientId.message as string}</p>}
             {watchPatientId && selectedPatient ? (
@@ -343,7 +343,7 @@ function NewPrescriptionForm() {
                   {selectedPatient.fullName?.charAt(0) || '?'}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white font-headline leading-tight">{selectedPatient.fullName}</h2>
+                  <h2 className="text-lg font-extrabold text-gray-900 dark:text-white font-headline leading-tight">{selectedPatient.fullName}</h2>
                   <div className="flex items-center gap-3 mt-1 text-gray-500 dark:text-gray-400 font-medium text-sm">
                     <span>{selectedPatient.gender?.charAt(0) || '?'}, {selectedPatient.age || '?'} Years</span>
                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
@@ -368,7 +368,7 @@ function NewPrescriptionForm() {
                   value={patientSearch}
                   onChange={(e) => { setPatientSearch(e.target.value); setShowPatientResults(true); }}
                   onFocus={() => setShowPatientResults(true)}
-                  className="w-full bg-gray-100 dark:bg-gray-800/50 border-none rounded-xl pl-12 pr-4 py-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none placeholder:text-gray-400"
+                  className="w-full bg-gray-100 dark:bg-gray-800/50 border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none placeholder:text-gray-400"
                 />
                 {showPatientResults && (
                   <>
@@ -408,7 +408,7 @@ function NewPrescriptionForm() {
               </div>
             )}
             {selectedPatient && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8 pt-6 border-t border-gray-200/60 dark:border-gray-700/60">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-3 border-t border-gray-200/60 dark:border-gray-700/60">
                 <div>
                   <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mb-1">Weight / ওজন</p>
                   <p className="text-lg font-bold text-teal-800 dark:text-teal-300">{selectedPatient.weight || '—'} <span className="text-xs font-medium text-gray-400">kg</span></p>
@@ -433,7 +433,7 @@ function NewPrescriptionForm() {
           </section>
 
           {/* B. Clinical Section */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
@@ -459,7 +459,7 @@ function NewPrescriptionForm() {
                   onChange={(e) => handleCcInputChange(e.target.value)}
                   onFocus={() => ccQuery.length >= 2 && setShowCcDropdown(true)}
                   onKeyDown={handleCcKeyDown}
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
                   placeholder="Type a chief complaint and press Enter or select from suggestions..."
                 />
                 {showCcDropdown && ccQuery.length >= 2 && (
@@ -495,7 +495,7 @@ function NewPrescriptionForm() {
                 </div>
                 <textarea
                   {...register('diagnosis')}
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none"
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[60px] shadow-sm resize-none"
                   placeholder="Enter diagnosis..."
                 />
               </div>
@@ -504,19 +504,19 @@ function NewPrescriptionForm() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Vitals / ভাইটালস</label>
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">BP</p>
                   <input {...register('bloodPressure')} placeholder="120/80" className="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none" />
                 </div>
-                <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
+                <div className="bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Pulse</p>
                   <div className="flex items-center justify-center">
                     <input {...register('pulseRate')} placeholder="72" className="w-12 bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none" />
                     <span className="text-[10px] text-gray-400 font-normal ml-0.5">bpm</span>
                   </div>
                 </div>
-                <div className="bg-white dark:bg-gray-900 p-3 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
+                <div className="bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">SpO2</p>
                   <div className="flex items-center justify-center">
                     <input {...register('oxygenSaturation')} placeholder="98" className="w-10 bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none" />
@@ -541,7 +541,7 @@ function NewPrescriptionForm() {
           </div>
 
           {/* D. Medicine Entry */}
-          <section className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-teal-500/10 shadow-lg relative">
+          <section className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-teal-500/10 shadow-lg relative">
             <div className="absolute top-0 right-0 p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-lg">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
@@ -561,8 +561,8 @@ function NewPrescriptionForm() {
 
             <div className="space-y-4">
               {medFields.map((field, i) => (
-                <div key={field.id} className="bg-gray-50/50 dark:bg-gray-800/30 rounded-xl p-3 sm:p-4 space-y-3 border border-gray-100 dark:border-gray-700/50">
-                <div className="grid grid-cols-12 gap-3 sm:gap-4 items-start">
+                    <div key={field.id} className="bg-gray-50/50 dark:bg-gray-800/30 rounded-xl p-2.5 sm:p-3 space-y-2 border border-gray-100 dark:border-gray-700/50">
+                <div className="grid grid-cols-12 gap-2 sm:gap-3 items-start">
                     <div className="col-span-12 sm:col-span-6 md:col-span-4 space-y-1.5">
                       <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></label>
                       <div className="relative" ref={activeMedIndex === i ? medDropdownRef : undefined}>
@@ -571,7 +571,7 @@ function NewPrescriptionForm() {
                           onChange={(e) => handleMedInputChange(i, e.target.value)}
                           onFocus={() => { setActiveMedIndex(i); setMedQuery(watch(`medicines.${i}.name`)); }}
                           placeholder="Type Brand or Generic name..."
-                          className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.name && 'border-red-500')}
+                          className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.name && 'border-red-500')}
                         />
                         <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         {activeMedIndex === i && medQuery.length >= 2 && (
@@ -619,11 +619,11 @@ function NewPrescriptionForm() {
                     </div>
                   <div className="col-span-6 sm:col-span-4 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength <span className="text-red-500">*</span></label>
-                    <input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
+                    <input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
                   </div>
                   <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Dose <span className="text-red-500">*</span></label>
-                    <input list={`dosage-suggestions-${i}`} {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
+                    <input list={`dosage-suggestions-${i}`} {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
                     <datalist id={`dosage-suggestions-${i}`}>
                       <option value="1+0+0" />
                       <option value="0+0+1" />
@@ -644,7 +644,7 @@ function NewPrescriptionForm() {
                   </div>
                   <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq</label>
-                    <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
+                    <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
                     <datalist id={`freq-suggestions-${i}`}>
                       <option value="সকাল" />
                       <option value="দুপুর" />
@@ -664,7 +664,7 @@ function NewPrescriptionForm() {
                   </div>
                   <div className="col-span-6 sm:col-span-3 md:col-span-1 space-y-1.5">
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days <span className="text-red-500">*</span></label>
-                    <input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
+                    <input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
                     <datalist id={`duration-suggestions-${i}`}>
                       <option value="3 Days" />
                       <option value="5 Days" />
@@ -681,7 +681,7 @@ function NewPrescriptionForm() {
                   </div>
                   <div className="col-span-6 sm:col-span-3 md:col-span-1 flex items-end justify-end pt-1.5">
                     {medFields.length > 1 && (
-                      <button type="button" onClick={() => removeMed(i)} className="p-3.5 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border border-transparent hover:border-red-200">
+                      <button type="button" onClick={() => removeMed(i)} className="p-3 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border border-transparent hover:border-red-200">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
@@ -701,7 +701,7 @@ function NewPrescriptionForm() {
             </div>
 
             <div className="flex items-center gap-4 mt-6">
-              <button type="button" onClick={() => addMed(emptyMedicine)} className="flex-1 bg-teal-600 text-white font-bold h-[54px] rounded-xl shadow-md shadow-teal-600/20 hover:scale-[1.01] transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm">
+              <button type="button" onClick={() => addMed(emptyMedicine)} className="flex-1 bg-teal-600 text-white font-bold h-[46px] rounded-xl shadow-md shadow-teal-600/20 hover:scale-[1.01] transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm">
                 <Plus className="w-5 h-5" /> Add to Prescription
               </button>
             </div>
@@ -738,7 +738,7 @@ function NewPrescriptionForm() {
                 onChange={(e) => handleInvInputChange(e.target.value)}
                 onFocus={() => invQuery.length >= 2 && setShowInvDropdown(true)}
                 onKeyDown={handleInvKeyDown}
-                className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
                 placeholder="Type a test name and press Enter or select from suggestions..."
               />
               {showInvDropdown && invQuery.length >= 2 && (
@@ -768,70 +768,15 @@ function NewPrescriptionForm() {
             </div>
           </div>
 
-          {/* E. Medicine Table */}
-          <section className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-100/50 dark:bg-gray-800/50">
-                <tr>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Medicine Name &amp; Generic</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Dose &amp; Freq</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Duration</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Instructions</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200/50">
-                {medFields.filter((_, i) => watch(`medicines.${i}.name`)).length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-400">No medicines added yet</td>
-                  </tr>
-                ) : (
-                  medFields.map((field, i) => {
-                    const m = watch(`medicines.${i}`);
-                    if (!m.name) return null;
-                    return (
-                      <tr key={field.id} className="bg-white dark:bg-gray-900 hover:bg-teal-50/30 dark:hover:bg-teal-950/20 transition-colors group">
-                        <td className="px-6 py-5">
-                          <p className="font-bold text-gray-900 dark:text-white">{getForm(m.form)} {m.name}{m.strength ? ` ${m.strength}` : ''}{m.genericName ? ` (${m.genericName})` : ''}</p>
-                          <p className="text-xs text-gray-400">{m.genericName || m.strength ? `${m.genericName || ''}${m.genericName && m.strength ? ' · ' : ''}${m.strength || ''}` : ''}</p>
-                        </td>
-                        <td className="px-6 py-5">
-                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{m.dosage || '—'}</p>
-                          <p className="text-[10px] text-gray-500 font-bold">{m.frequency || ''}</p>
-                        </td>
-                        <td className="px-6 py-5">
-                          <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-3 py-1 rounded-full text-xs font-bold">{m.duration || '—'} Days</span>
-                        </td>
-                        <td className="px-6 py-5">
-                          {m.instructions ? <p className="text-xs text-gray-500 italic max-w-[200px] truncate">{m.instructions}</p> : <span className="text-xs text-gray-300">—</span>}
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button type="button" className="p-2 text-gray-400 hover:text-teal-600 transition-colors" title="Copy">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                            </button>
-                            <button type="button" onClick={() => removeMed(i)} className="p-2 text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </section>
-
           {/* F. Advice & Tests */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-16">
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Lifestyle Advice / পরামর্শ</label>
-              <textarea {...register('advice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[120px] shadow-sm resize-none" placeholder="e.g. Walk 30 mins daily, Low salt diet..." />
+              <textarea {...register('advice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none" placeholder="e.g. Walk 30 mins daily, Low salt diet..." />
             </div>
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Food Advice / খাদ্য</label>
-              <textarea {...register('foodAdvice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none" placeholder="Dietary recommendations..." />
+              <textarea {...register('foodAdvice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[60px] shadow-sm resize-none" placeholder="Dietary recommendations..." />
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Follow-up / পুনরায়</label>
               <div className="flex gap-2">
                 <select
