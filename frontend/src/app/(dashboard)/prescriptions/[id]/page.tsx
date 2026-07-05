@@ -23,11 +23,22 @@ export default function PrescriptionDetailPage() {
   const router = useRouter();
   const { data: rx, isLoading } = usePrescription(id);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [blankPrint, setBlankPrint] = useState(false);
 
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
     QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 72, margin: 1, color: { dark: '#000', light: '#fff' } })
       .then(setQrDataUrl).catch((e) => console.error(e));
+  }, []);
+
+  useEffect(() => {
+    if (blankPrint) window.print();
+  }, [blankPrint]);
+
+  useEffect(() => {
+    const afterPrint = () => setBlankPrint(false);
+    window.addEventListener('afterprint', afterPrint);
+    return () => window.removeEventListener('afterprint', afterPrint);
   }, []);
 
   if (isLoading) return <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-24 bg-muted rounded animate-pulse" />)}</div>;
@@ -42,6 +53,7 @@ export default function PrescriptionDetailPage() {
       <style>{`
         @page { size: A4; margin: 10mm; }
         @media print { body * { visibility: hidden; } #print-content, #print-content * { visibility: visible; } #print-content { position: absolute; top: 0; left: 0; width: 100%; border: none !important; box-shadow: none !important; border-radius: 0 !important; } }
+        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .signature { display: none !important; } #print-content[data-blank-print="true"] { padding-top: 180px !important; } }
       `}</style>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -64,6 +76,9 @@ export default function PrescriptionDetailPage() {
               <Pencil className="h-4 w-4 mr-2" />Edit
             </Link>
           </Button>
+          <Button variant="outline" onClick={() => setBlankPrint(true)}>
+            <Printer className="h-4 w-4 mr-2" />Pad Print
+          </Button>
           <Button onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" />Print
           </Button>
@@ -71,9 +86,9 @@ export default function PrescriptionDetailPage() {
       </div>
 
       {/* ===== Prescription Preview ===== */}
-      <div id="print-content" className="bg-white border shadow-sm" style={{ width: '210mm', margin: '0 auto' }}>
+      <div id="print-content" data-blank-print={blankPrint} className="bg-white border shadow-sm" style={{ width: '210mm', margin: '0 auto' }}>
         {/* Letterhead */}
-        <div className="p-6 border-b-4 border-black flex justify-between items-start">
+        <div className="letterhead p-6 border-b-4 border-black flex justify-between items-start">
           <div>
             <p className="text-xl font-extrabold text-black">{docName}</p>
             {(rx.doctor?.degree || []).length > 0 && <p className="text-xs font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
@@ -195,7 +210,7 @@ export default function PrescriptionDetailPage() {
         </div>
 
         {/* Signature */}
-        <div className="text-right px-6 pb-6">
+        <div className="signature text-right px-6 pb-6">
           {rx.doctor?.signatureImg ? (
             <img src={`${apiBase}/uploads/${rx.doctor.signatureImg}`} alt="Signature" className="h-10 ml-auto mb-1 object-contain" />
           ) : (
