@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, startOfDay } from 'date-fns';
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
@@ -8,9 +8,10 @@ export const formatDate = (d: string | Date) =>
   new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 export const formatFollowUp = (date: string | Date) => {
-  const d = new Date(date);
+  const d = startOfDay(new Date(date));
+  const today = startOfDay(new Date());
   const formatted = formatDate(d);
-  const days = differenceInDays(d, new Date());
+  const days = differenceInDays(d, today);
   if (days < 0) return `${formatted} (${Math.abs(days)} days ago)`;
   if (days === 0) return `${formatted} (Today)`;
   if (days === 1) return `${formatted} (Tomorrow)`;

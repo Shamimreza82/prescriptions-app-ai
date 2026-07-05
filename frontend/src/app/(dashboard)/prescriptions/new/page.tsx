@@ -626,6 +626,13 @@ function NewPrescriptionForm() {
                     <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq</label>
                     <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
                     <datalist id={`freq-suggestions-${i}`}>
+                      <option value="OD (Once daily / দৈনিক ১ বার)" />
+                      <option value="BD (Twice daily / দৈনিক ২ বার)" />
+                      <option value="TDS (Three times daily / দৈনিক ৩ বার)" />
+                      <option value="QID (Four times daily / দৈনিক ৪ বার)" />
+                      <option value="HS (At bedtime / রাত্রে)" />
+                      <option value="PRN (As needed / প্রয়োজন মত)" />
+                      <option value="Stat (Immediately)" />
                       <option value="সকাল" />
                       <option value="দুপুর" />
                       <option value="রাত" />
@@ -633,12 +640,27 @@ function NewPrescriptionForm() {
                       <option value="সকাল + রাত" />
                       <option value="দুপুর + রাত" />
                       <option value="সকাল + দুপুর + রাত" />
+                      <option value="সকাল ১+০+০" />
+                      <option value="০+০+রাত ১" />
+                      <option value="সকাল ১+০+রাত ১" />
+                      <option value="সকাল ১+দুপুর ১+রাত ১" />
+                      <option value="প্রতি ২ ঘণ্টা" />
                       <option value="প্রতি ৪ ঘণ্টা" />
                       <option value="প্রতি ৬ ঘণ্টা" />
                       <option value="প্রতি ৮ ঘণ্টা" />
-                      <option value="প্রয়োজন মত" />
-                      <option value="সকাল ১ + রাত ১" />
-                      <option value="সকাল ১ + দুপুর ১ + রাত ১" />
+                      <option value="প্রতি ১২ ঘণ্টা" />
+                      <option value="প্রতি ২৪ ঘণ্টা" />
+                      <option value="৫ বার দৈনিক" />
+                      <option value="৬ বার দৈনিক" />
+                      <option value="একদিন অন্তর (Alternate day)" />
+                      <option value="সপ্তাহে ১ বার (Once a week)" />
+                      <option value="সপ্তাহে ২ বার (Twice a week)" />
+                      <option value="রাত্রে শোবার আগে (Before bedtime)" />
+                      <option value="খালি পেটে (Empty stomach)" />
+                      <option value="খাবারের আগে (Before meals)" />
+                      <option value="খাবারের পর (After meals)" />
+                      <option value="খাবারের সাথে (With meals)" />
+                      <option value="Continuous / চলমান" />
                     </datalist>
                     {errors.medicines?.[i]?.frequency && <p className="text-xs text-red-500">{errors.medicines[i]?.frequency?.message}</p>}
                   </div>
