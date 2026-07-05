@@ -15,6 +15,8 @@ import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical, Activ
 import { useMedicineSearch, useLabTestSearch, useIndicationSearch } from '@/features/medicine/hooks';
 import { formatFollowUp } from '@/lib/utils';
 import QRCodeLib from 'qrcode';
+import { Card, CardContent } from '@/components/ui/card';
+import { useSidebar } from '@/contexts/sidebar-context';
 
 type FormData = z.infer<typeof prescriptionSchema>;
 const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '', instructions: '' };
@@ -32,6 +34,7 @@ function NewPrescriptionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const create = useCreatePrescription();
+  const { setIsCollapsed } = useSidebar();
   const { data: subscription } = useMySubscription();
   const [rxCount, setRxCount] = useState(0);
   const [profileStatus, setProfileStatus] = useState<{ isProfileComplete: boolean; isVerified: boolean; loading: boolean }>({ isProfileComplete: true, isVerified: true, loading: true });
@@ -267,16 +270,19 @@ function NewPrescriptionForm() {
     }
   }, [reset]);
 
+  useEffect(() => {
+    setIsCollapsed(showPreview);
+  }, [showPreview, setIsCollapsed]);
+
   return (
-    <div className="min-h-screen bg-[#f7f9fb] dark:bg-gray-950 pb-20">
-      <div className="max-w-[1400px] mx-auto px-3 py-3 sm:px-4 sm:py-4 lg:p-6">
-        <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6 pb-20">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => router.push('/prescriptions')} className="p-2.5 rounded-xl hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors">
               <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
             <div>
-              <h1 className="text-xl font-extrabold text-gray-800 dark:text-gray-200">New Prescription</h1>
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">New Prescription</h1>
               <p className="text-sm text-gray-400">Create a new prescription for your patient</p>
             </div>
           </div>
@@ -287,7 +293,7 @@ function NewPrescriptionForm() {
         </div>
         <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
         {/* ===== LEFT SIDE: Prescription Builder ===== */}
-        <div className={cn("col-span-12 space-y-4 sm:space-y-5", showPreview ? "lg:col-span-7 xl:col-span-8" : "lg:col-span-12 xl:col-span-12")}>
+        <div className={cn("col-span-12 space-y-6", showPreview ? "lg:col-span-6" : "lg:col-span-12")}>
 
           {!profileStatus.loading && (!profileStatus.isVerified || !profileStatus.isProfileComplete) && (
             <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
@@ -433,7 +439,9 @@ function NewPrescriptionForm() {
           </section>
 
           {/* B. Clinical Section */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+          <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
@@ -529,16 +537,11 @@ function NewPrescriptionForm() {
                 <input {...register('symptoms')} placeholder="Symptom (জ্বর, কাশি)..." className="flex-[2] bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-full px-4 py-2 text-xs focus:ring-2 focus:ring-teal-500/30 focus:outline-none" />
               </div>
             </div>
-          </section>
-
-          {/* C. Conflict Warning */}
-          <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 p-4 flex items-center gap-4 rounded-r-xl">
-            <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-            <div>
-              <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Drug Interaction Warning</p>
-              <p className="text-xs text-amber-700 dark:text-amber-400">Check for potential interactions before finalizing.</p>
-            </div>
           </div>
+          </CardContent>
+          </Card>
+
+
 
           {/* D. Medicine Entry */}
           <section className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-teal-500/10 shadow-lg relative">
@@ -769,7 +772,9 @@ function NewPrescriptionForm() {
           </div>
 
           {/* F. Advice & Tests */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-16">
+          <Card>
+          <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Lifestyle Advice / পরামর্শ</label>
               <textarea {...register('advice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none" placeholder="e.g. Walk 30 mins daily, Low salt diet..." />
@@ -803,12 +808,14 @@ function NewPrescriptionForm() {
                 />
               </div>
             </div>
-          </section>
+          </div>
+          </CardContent>
+          </Card>
 
         </div>
 
         {/* ===== RIGHT SIDE: Live Preview Panel ===== */}
-        {showPreview && <aside className="col-span-12 lg:col-span-5 xl:col-span-4">
+        {showPreview && <aside className="col-span-12 lg:col-span-6">
           <div className="sticky top-8 space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="font-bold text-gray-500 dark:text-gray-400 flex items-center gap-2 text-sm">
@@ -989,7 +996,6 @@ function NewPrescriptionForm() {
             </div>
           </div>
         </aside>}
-      </div>
       </div>
 
       {/* Validation Error Summary */}
