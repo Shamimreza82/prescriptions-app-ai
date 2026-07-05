@@ -175,7 +175,7 @@ export const getReportsMedicines = async (req: AuthRequest, res: Response, next:
 
 export const getReportsRevenue = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await mrService.getReportsRevenue(req.user!.userId);
+    const result = await mrService.getReportsRevenue(req.user!.userId, req.query);
     sendSuccess(res, result);
   } catch (error) {
     next(error);

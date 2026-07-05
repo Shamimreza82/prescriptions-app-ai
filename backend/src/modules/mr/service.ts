@@ -92,7 +92,12 @@ export const getMyDoctors = async (userId: string, query: Request['query']) => {
   const mr = await repo.findMrByUserId(userId);
   if (!mr) throw notFound('MR profile not found');
   const pagination = getPaginationParams(query);
-  return repo.getMyDoctorsPaginated(mr.id, pagination);
+  const sortPrescriptions = query.sortPrescriptions as string | undefined;
+  return repo.getMyDoctorsPaginated(
+    mr.id,
+    pagination,
+    sortPrescriptions === 'asc' || sortPrescriptions === 'desc' ? sortPrescriptions : undefined,
+  );
 };
 
 export const getDoctorPatients = async (mrUserId: string, doctorId: string) => {
@@ -120,22 +125,82 @@ export const getDashboardStats = async (userId: string) => {
   type MrDoctorAssignment = typeof mr.doctors[number];
   const doctorIds = mr.doctors.map((d: MrDoctorAssignment) => d.doctorId);
   const totalDoctors = doctorIds.length;
-  const todaysPrescriptions = doctorIds.length > 0
-    ? await repo.getTodaysPrescriptionsByDoctors(doctorIds)
-    : 0;
-  const totalPrescriptions = mr.doctors.reduce(
-    (sum: number, d: MrDoctorAssignment) => sum + (d.doctor._count?.prescriptions || 0), 0
-  );
-  const weeklyPrescriptions = doctorIds.length > 0
-    ? await repo.getWeeklyPrescriptionCounts(doctorIds)
-    : [0, 0, 0, 0, 0, 0, 0];
+
+  if (totalDoctors === 0) {
+    return {
+      totalDoctors: 0, todaysPrescriptions: 0, totalPrescriptions: 0,
+      weeklyPrescriptions: [0, 0, 0, 0, 0, 0, 0], weeklyLabels: [],
+      thisMonthPrescriptions: 0, activeSubscriptions: 0, noSubscription: 0,
+      expiringSoon: [], topDoctors: [], recentActivity: [],
+    };
+  }
+
+  const [
+    todaysPrescriptions,
+    totalPrescriptions,
+    weeklyPrescriptions,
+    thisMonthPrescriptions,
+    recentActivity,
+    expiringSoon,
+  ] = await Promise.all([
+    repo.getTodaysPrescriptionsByDoctors(doctorIds),
+    db.prescription.count({ where: { doctorId: { in: doctorIds } } }),
+    repo.getWeeklyPrescriptionCounts(doctorIds),
+    repo.getThisMonthPrescriptionCount(doctorIds),
+    repo.getRecentPrescriptions(doctorIds, 10),
+    repo.getExpiringSoonSubscriptions(doctorIds, 30),
+  ]);
+
+  const subscriptions = mr.doctors
+    .map((d: any) => d.doctor.subscription)
+    .filter(Boolean);
+  const activeSubscriptions = subscriptions.filter(
+    (s: any) => s.status === 'ACTIVE'
+  ).length;
+  const noSubscription = mr.doctors.filter(
+    (d: any) => !d.doctor.subscription
+  ).length;
+
+  const topDoctors = mr.doctors
+    .map((d: any) => ({
+      id: d.doctor.id,
+      fullName: d.doctor.fullName,
+      clinicName: d.doctor.clinicName,
+      prescriptionCount: d.doctor._count?.prescriptions || 0,
+    }))
+    .sort((a: any, b: any) => b.prescriptionCount - a.prescriptionCount)
+    .slice(0, 5);
+
   const now = new Date();
   const weeklyLabels = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now);
     d.setDate(d.getDate() - (6 - i));
     return d.toLocaleString('default', { weekday: 'short' });
   });
-  return { totalDoctors, todaysPrescriptions, totalPrescriptions, weeklyPrescriptions, weeklyLabels };
+
+  return {
+    totalDoctors,
+    todaysPrescriptions,
+    totalPrescriptions,
+    weeklyPrescriptions,
+    weeklyLabels,
+    thisMonthPrescriptions,
+    activeSubscriptions,
+    noSubscription,
+    expiringSoon: expiringSoon.map((s: any) => ({
+      doctorId: s.doctor.id,
+      doctorName: s.doctor.fullName,
+      planName: s.plan.name,
+      daysLeft: Math.ceil((new Date(s.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+    })),
+    topDoctors,
+    recentActivity: recentActivity.map((rx: any) => ({
+      type: 'prescription' as const,
+      patientName: rx.patient?.fullName || 'Unknown',
+      doctorName: rx.doctor?.fullName || 'Unknown',
+      createdAt: rx.createdAt,
+    })),
+  };
 };
 
 export const getDoctorPrescriptionById = async (mrUserId: string, doctorId: string, prescriptionId: string) => {
@@ -239,7 +304,15 @@ export const getReportsPrescriptions = async (userId: string, query: Request['qu
 export const getReportsMedicines = async (userId: string, query: Request['query']) => {
   const mr = await repo.findMrByUserId(userId);
   if (!mr) throw notFound('MR profile not found');
-  const doctorIds = mr.doctors.map((d: { doctorId: string }) => d.doctorId);
+  const doctorId = query.doctorId as string | undefined;
+  let doctorIds: string[];
+  if (doctorId) {
+    const isAssigned = mr.doctors.some((d: any) => d.doctorId === doctorId);
+    if (!isAssigned) throw notFound('Doctor not found in your assigned list');
+    doctorIds = [doctorId];
+  } else {
+    doctorIds = mr.doctors.map((d: { doctorId: string }) => d.doctorId);
+  }
   if (doctorIds.length === 0) return { medicines: [], total: 0, page: 1, limit: 20, totalPages: 0, totalPrescriptions: 0 };
   const pagination = getPaginationParams(query);
   const limit = Math.min(100, pagination.limit);
@@ -248,14 +321,15 @@ export const getReportsMedicines = async (userId: string, query: Request['query'
   return { medicines, total, page: pagination.page, limit, totalPages: Math.ceil(total / limit), totalPrescriptions };
 };
 
-export const getReportsRevenue = async (userId: string) => {
+export const getReportsRevenue = async (userId: string, query: Request['query']) => {
   const mr = await repo.findMrByUserId(userId);
   if (!mr) throw notFound('MR profile not found');
   const now = new Date();
   const monthlyLabels = Array.from({ length: 12 }, (_, i) =>
     new Date(now.getFullYear(), i, 1).toLocaleString('default', { month: 'short' })
   );
-  const [monthlyRevenue, payments] = await Promise.all([
+  const pagination = getPaginationParams(query);
+  const [monthlyRevenue, payments, paymentsTotal] = await Promise.all([
     repo.getMrRevenueReport(mr.id),
     db.payment.findMany({
       where: { paidByMrId: mr.id },
@@ -268,10 +342,17 @@ export const getReportsRevenue = async (userId: string) => {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      skip: pagination.skip,
+      take: pagination.limit,
     }),
+    db.payment.count({ where: { paidByMrId: mr.id } }),
   ]);
-  return { monthlyRevenue, monthlyLabels, payments };
+  return {
+    monthlyRevenue, monthlyLabels, payments,
+    paymentsTotal,
+    paymentsPage: pagination.page,
+    paymentsTotalPages: Math.ceil(paymentsTotal / pagination.limit),
+  };
 };
 
 export const subscribeDoctor = async (mrUserId: string, doctorId: string, input: SubscribeDoctorInput) => {

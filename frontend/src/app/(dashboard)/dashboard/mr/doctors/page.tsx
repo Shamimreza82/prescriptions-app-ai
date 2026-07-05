@@ -7,7 +7,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Badge } from '@/components/ui/badge';
 import { SearchBar } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/ui/pagination';
-import { FileText, Stethoscope, ArrowLeft, Eye, MoreHorizontal, Crown } from 'lucide-react';
+import { FileText, Stethoscope, ArrowLeft, Eye, MoreHorizontal, Crown, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -16,7 +16,8 @@ export default function MrDoctorsPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useMyDoctors({ page, search: search || undefined });
+  const [sortDir, setSortDir] = useState<'asc' | 'desc' | undefined>(undefined);
+  const { data, isLoading } = useMyDoctors({ page, search: search || undefined, sortPrescriptions: sortDir });
 
   const doctors = data?.data ?? [];
   const total = data?.total ?? 0;
@@ -39,7 +40,23 @@ export default function MrDoctorsPage() {
         </div>
       </div>
 
-      <SearchBar value={search} onChange={handleSearch} />
+      <div className="flex items-center gap-2">
+        <div className="flex-1 max-w-sm">
+          <SearchBar value={search} onChange={handleSearch} />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setSortDir(sortDir === undefined ? 'desc' : sortDir === 'desc' ? 'asc' : undefined);
+            setPage(1);
+          }}
+          className={`shrink-0 gap-1.5 text-xs ${sortDir ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : ''}`}
+        >
+          {sortDir === 'desc' ? <ArrowDown className="h-3.5 w-3.5" /> : sortDir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowUpDown className="h-3.5 w-3.5" />}
+          Prescriptions
+        </Button>
+      </div>
 
       {isLoading ? (
         <div className="space-y-3">

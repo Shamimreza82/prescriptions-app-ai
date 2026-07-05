@@ -33,7 +33,7 @@ export const useUpdateMyProfile = () => {
   });
 };
 
-export const useMyDoctors = (params?: { page?: number; limit?: number; search?: string }) =>
+export const useMyDoctors = (params?: { page?: number; limit?: number; search?: string; sortPrescriptions?: string }) =>
   useQuery({
     queryKey: [...mrKeys.myDoctors, params],
     queryFn: () => mrApi.getMyDoctors(params),
@@ -134,16 +134,16 @@ export const useReportsPrescriptions = (params?: { page?: number; limit?: number
     queryFn: () => mrApi.getReportsPrescriptions(params),
   });
 
-export const useReportsMedicines = (params?: { page?: number; limit?: number }) =>
+export const useReportsMedicines = (params?: { page?: number; limit?: number; doctorId?: string }) =>
   useQuery({
     queryKey: ['mr', 'reports', 'medicines', params],
     queryFn: () => mrApi.getReportsMedicines(params),
   });
 
-export const useReportsRevenue = () =>
+export const useReportsRevenue = (params?: { page?: number; limit?: number }) =>
   useQuery({
-    queryKey: ['mr', 'reports', 'revenue'],
-    queryFn: mrApi.getReportsRevenue,
+    queryKey: ['mr', 'reports', 'revenue', params],
+    queryFn: () => mrApi.getReportsRevenue(params),
   });
 
 export const useMrSubscriptions = (params?: { page?: number; limit?: number; search?: string }) =>

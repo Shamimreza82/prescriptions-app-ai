@@ -6,7 +6,7 @@ export const getMyProfile = () =>
 export const updateMyProfile = (data: { fullName?: string; phone?: string; company?: string; department?: string; designation?: string }) =>
   api.put('/mr/my-profile', data).then((r) => r.data.data);
 
-export const getMyDoctors = (params?: { page?: number; limit?: number; search?: string }) =>
+export const getMyDoctors = (params?: { page?: number; limit?: number; search?: string; sortPrescriptions?: string }) =>
   api.get('/mr/doctors', { params }).then((r) => r.data);
 
 export const getDoctorPrescriptions = (doctorId: string, params?: { page?: number; limit?: number; search?: string; dateFrom?: string; dateTo?: string }) =>
@@ -48,8 +48,8 @@ export const getReportsOverview = () =>
 export const getReportsPrescriptions = (params?: { page?: number; limit?: number; search?: string; dateFrom?: string; dateTo?: string; status?: string }) =>
   api.get('/mr/reports/prescriptions', { params }).then((r) => r.data);
 
-export const getReportsMedicines = (params?: { page?: number; limit?: number }) =>
+export const getReportsMedicines = (params?: { page?: number; limit?: number; doctorId?: string }) =>
   api.get('/mr/reports/medicines', { params }).then((r) => r.data.data);
 
-export const getReportsRevenue = () =>
-  api.get('/mr/reports/revenue').then((r) => r.data.data);
+export const getReportsRevenue = (params?: { page?: number; limit?: number }) =>
+  api.get('/mr/reports/revenue', { params }).then((r) => r.data.data);

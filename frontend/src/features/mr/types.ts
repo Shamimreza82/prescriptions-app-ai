@@ -97,6 +97,44 @@ export interface ReportsRevenue {
   monthlyRevenue: number[];
   monthlyLabels: string[];
   payments: ReportPayment[];
+  paymentsTotal: number;
+  paymentsPage: number;
+  paymentsTotalPages: number;
+}
+
+export interface ExpiringSubscription {
+  doctorId: string;
+  doctorName: string;
+  planName: string;
+  daysLeft: number;
+}
+
+export interface TopDoctorInfo {
+  id: string;
+  fullName: string;
+  clinicName: string;
+  prescriptionCount: number;
+}
+
+export interface RecentActivityItem {
+  type: string;
+  patientName: string;
+  doctorName: string;
+  createdAt: string;
+}
+
+export interface DashboardStats {
+  totalDoctors: number;
+  todaysPrescriptions: number;
+  totalPrescriptions: number;
+  thisMonthPrescriptions: number;
+  activeSubscriptions: number;
+  noSubscription: number;
+  weeklyPrescriptions: number[];
+  weeklyLabels: string[];
+  expiringSoon: ExpiringSubscription[];
+  topDoctors: TopDoctorInfo[];
+  recentActivity: RecentActivityItem[];
 }
 
 export interface MrSubscription {

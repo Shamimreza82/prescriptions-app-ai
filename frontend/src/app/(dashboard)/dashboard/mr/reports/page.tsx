@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useReportsOverview, useReportsPrescriptions, useReportsMedicines, useReportsRevenue } from '@/features/mr/hooks';
+import { useReportsOverview, useReportsPrescriptions, useReportsMedicines, useReportsRevenue, useMyDoctors } from '@/features/mr/hooks';
 import { ChartContainer, ChartSkeleton } from '@/components/chart';
 import { Card } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -32,6 +32,10 @@ export default function MrReportsPage() {
   const [dateTo, setDateTo] = useState('');
   const [medPage, setMedPage] = useState(1);
   const [medLimit, setMedLimit] = useState(8);
+  const [payPage, setPayPage] = useState(1);
+  const [doctorSearch, setDoctorSearch] = useState('');
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | undefined>(undefined);
+  const [showDrDropdown, setShowDrDropdown] = useState(false);
 
   const handleRxSearch = (v: string) => {
     setRxSearch(v);
@@ -43,8 +47,11 @@ export default function MrReportsPage() {
     page: rxPage, search: rxSearch || undefined,
     dateFrom: dateFrom || undefined, dateTo: dateTo || undefined,
   });
-  const { data: medicines, isLoading: loadingMedicines } = useReportsMedicines({ page: medPage, limit: medLimit });
-  const { data: revenue, isLoading: loadingRevenue } = useReportsRevenue();
+  const { data: doctorSearchResults } = useMyDoctors(
+    doctorSearch ? { search: doctorSearch, limit: 10 } : undefined,
+  );
+  const { data: medicines, isLoading: loadingMedicines } = useReportsMedicines({ page: medPage, limit: medLimit, doctorId: selectedDoctorId });
+  const { data: revenue, isLoading: loadingRevenue } = useReportsRevenue({ page: payPage, limit: 10 });
 
   const renderTabNav = () => (
     <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
@@ -82,8 +89,8 @@ export default function MrReportsPage() {
 
       {activeTab === 'overview' && renderOverview(overview, loadingOverview)}
       {activeTab === 'prescriptions' && renderPrescriptions(rxData, loadingRx, rxPage, setRxPage, rxSearch, handleRxSearch, dateFrom, setDateFrom, dateTo, setDateTo)}
-      {activeTab === 'medicines' && renderMedicines(medicines, loadingMedicines, medPage, setMedPage, medLimit, setMedLimit)}
-      {activeTab === 'revenue' && renderRevenue(revenue, loadingRevenue)}
+      {activeTab === 'medicines' && renderMedicines(medicines, loadingMedicines, medPage, setMedPage, medLimit, setMedLimit, selectedDoctorId, setSelectedDoctorId, doctorSearch, setDoctorSearch, showDrDropdown, setShowDrDropdown, doctorSearchResults)}
+      {activeTab === 'revenue' && renderRevenue(revenue, loadingRevenue, payPage, setPayPage)}
     </div>
   );
 }
@@ -264,7 +271,14 @@ function renderPrescriptions(
   );
 }
 
-function renderMedicines(data: ReportsMedicines | undefined, loading: boolean, page: number, setPage: (p: number) => void, limit: number, setLimit: (n: number) => void) {
+function renderMedicines(
+  data: ReportsMedicines | undefined, loading: boolean,
+  page: number, setPage: (p: number) => void, limit: number, setLimit: (n: number) => void,
+  selectedDoctorId: string | undefined, setSelectedDoctorId: (id: string | undefined) => void,
+  doctorSearch: string, setDoctorSearch: (s: string) => void,
+  showDrDropdown: boolean, setShowDrDropdown: (v: boolean) => void,
+  doctorSearchResults: any,
+) {
   if (loading) return <ChartSkeleton />;
 
   const meds = data?.medicines ?? [];
@@ -278,7 +292,52 @@ function renderMedicines(data: ReportsMedicines | undefined, loading: boolean, p
 
   return (
     <div className="space-y-6">
-      <ChartContainer title={`Top ${limit} Prescribed Medicines`} description={`Top ${limit} medicines across all assigned doctors`}>
+      {/* Doctor filter */}
+      <div className="relative">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 max-w-sm relative">
+            <SearchBar
+              value={doctorSearch}
+              onChange={(v) => { setDoctorSearch(v); setShowDrDropdown(true); }}
+            />
+            {showDrDropdown && doctorSearch && doctorSearchResults?.data?.length > 0 && (
+              <div className="absolute z-20 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {doctorSearchResults.data.map((d: any) => (
+                  <button
+                    key={d.id}
+                    onClick={() => {
+                      setSelectedDoctorId(d.id);
+                      setDoctorSearch(d.fullName);
+                      setShowDrDropdown(false);
+                      setPage(1);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    {d.fullName}
+                  </button>
+                ))}
+              </div>
+            )}
+            {showDrDropdown && doctorSearch && doctorSearchResults?.data?.length === 0 && (
+              <div className="absolute z-20 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 text-sm text-muted-foreground text-center">
+                No doctors found
+              </div>
+            )}
+          </div>
+          {selectedDoctorId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setSelectedDoctorId(undefined); setDoctorSearch(''); setPage(1); }}
+              className="shrink-0 text-xs"
+            >
+              All Doctors
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <ChartContainer title={`Top ${limit} Prescribed Medicines`} description={`Top ${limit} medicines ${selectedDoctorId ? 'for selected doctor' : 'across all assigned doctors'}`}>
         <div className="mb-4">
           <Select value={String(limit)} onValueChange={(v) => { setLimit(Number(v)); setPage(1); }}>
             <SelectTrigger className="w-[110px]"><SelectValue placeholder="Limit" /></SelectTrigger>
@@ -357,7 +416,7 @@ function renderMedicines(data: ReportsMedicines | undefined, loading: boolean, p
     );
 }
 
-function renderRevenue(data: ReportsRevenue | undefined, loading: boolean) {
+function renderRevenue(data: ReportsRevenue | undefined, loading: boolean, page: number, setPage: (p: number) => void) {
   if (loading) return <ChartSkeleton />;
 
   const chartData = data?.monthlyLabels.map((label, i) => ({
@@ -365,6 +424,8 @@ function renderRevenue(data: ReportsRevenue | undefined, loading: boolean) {
     revenue: data.monthlyRevenue[i] || 0,
   })) || [];
   const payments = data?.payments ?? [];
+  const paymentsTotal = data?.paymentsTotal ?? 0;
+  const paymentsTotalPages = data?.paymentsTotalPages ?? 1;
   const totalRevenue = chartData.reduce((s, d) => s + d.revenue, 0);
 
   return (
@@ -431,6 +492,7 @@ function renderRevenue(data: ReportsRevenue | undefined, loading: boolean) {
         {payments.length === 0 ? (
           <div className="text-center py-8 text-sm text-muted-foreground">No payments recorded</div>
         ) : (
+          <>
           <Table>
             <TableHeader>
               <TableRow>
@@ -461,6 +523,10 @@ function renderRevenue(data: ReportsRevenue | undefined, loading: boolean) {
               ))}
             </TableBody>
           </Table>
+          <div className="mt-4">
+            <Pagination page={page} totalPages={paymentsTotalPages} total={paymentsTotal} onPageChange={setPage} />
+          </div>
+          </>
         )}
       </Card>
     </div>

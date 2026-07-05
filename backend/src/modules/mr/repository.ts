@@ -12,6 +12,9 @@ export const findMrByUserId = (userId: string) =>
           doctor: {
             include: {
               user: { select: { email: true } },
+              subscription: {
+                include: { plan: { select: { id: true, name: true, duration: true } } },
+              },
               _count: { select: { patients: true, prescriptions: true } },
             },
           },
@@ -149,7 +152,7 @@ export const findDoctorsForAssignment = () =>
     orderBy: { fullName: 'asc' },
   });
 
-export const getMyDoctorsPaginated = (mrId: string, pagination: PaginationParams) => {
+export const getMyDoctorsPaginated = (mrId: string, pagination: PaginationParams, sortPrescriptions?: 'asc' | 'desc') => {
   const where: any = {
     mrAssignments: { some: { mrId } },
   };
@@ -170,6 +173,15 @@ export const getMyDoctorsPaginated = (mrId: string, pagination: PaginationParams
         _count: { select: { patients: true, prescriptions: true } },
       },
       orderBy: { fullName: 'asc' },
+    }).then(doctors => {
+      if (sortPrescriptions) {
+        doctors.sort((a, b) =>
+          sortPrescriptions === 'desc'
+            ? (b._count?.prescriptions || 0) - (a._count?.prescriptions || 0)
+            : (a._count?.prescriptions || 0) - (b._count?.prescriptions || 0)
+        );
+      }
+      return doctors;
     }),
     db.doctor.count({ where }),
   ] as const);
@@ -347,6 +359,35 @@ export const getMrRevenueByDoctor = (mrId: string) =>
     _sum: { amount: true },
     _count: true,
   });
+
+export const getRecentPrescriptions = (doctorIds: string[], take: number) =>
+  db.prescription.findMany({
+    where: { doctorId: { in: doctorIds } },
+    include: {
+      patient: { select: { id: true, fullName: true } },
+      doctor: { select: { id: true, fullName: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take,
+  });
+
+export const getExpiringSoonSubscriptions = (doctorIds: string[], withinDays: number) => {
+  const now = new Date();
+  const deadline = new Date();
+  deadline.setDate(deadline.getDate() + withinDays);
+  return db.subscription.findMany({
+    where: {
+      doctorId: { in: doctorIds },
+      status: 'ACTIVE',
+      endDate: { not: null, gte: now, lte: deadline },
+    },
+    include: {
+      doctor: { select: { id: true, fullName: true } },
+      plan: { select: { id: true, name: true } },
+    },
+    orderBy: { endDate: 'asc' },
+  });
+};
 
 export const findPrescriptionForMr = (id: string, doctorIds: string[]) =>
   db.prescription.findFirst({
