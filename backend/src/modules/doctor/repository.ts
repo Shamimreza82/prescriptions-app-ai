@@ -25,6 +25,12 @@ export const removeSignature = (doctorId: string) =>
 export const removeLogo = (doctorId: string) =>
   db.doctor.update({ where: { id: doctorId }, data: { clinicLogo: null } });
 
+export const updateProfileImg = (doctorId: string, filename: string) =>
+  db.doctor.update({ where: { id: doctorId }, data: { profileImg: filename } });
+
+export const removeProfileImg = (doctorId: string) =>
+  db.doctor.update({ where: { id: doctorId }, data: { profileImg: null } });
+
 export const findAllDoctors = (pagination: PaginationParams) => {
   const where: any = {};
   if (pagination.search) {

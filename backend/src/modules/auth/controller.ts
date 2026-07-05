@@ -49,7 +49,16 @@ export const refreshToken = async (req: AuthRequest, res: Response, next: NextFu
 
 export const logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (req.user) await authService.logoutUser(req.user.userId);
+    if (req.user) {
+      await authService.logoutUser(req.user.userId);
+      await createAuditLog({
+        userId: req.user.userId,
+        action: 'LOGOUT',
+        entity: 'User',
+        entityId: req.user.userId,
+        ipAddress: req.ip,
+      });
+    }
     sendSuccess(res, { message: 'Logged out successfully' });
   } catch (error) {
     next(error);

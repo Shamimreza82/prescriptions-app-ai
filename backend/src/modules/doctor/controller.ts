@@ -71,6 +71,24 @@ export const removeLogo = async (req: AuthRequest, res: Response, next: NextFunc
   }
 };
 
+export const uploadProfileImg = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await doctorService.uploadProfileImg(req.user!.doctorId!, req.file!.filename);
+    sendSuccess(res, { profileImg: result.profileImg });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeProfileImg = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await doctorService.removeProfileImg(req.user!.doctorId!);
+    sendSuccess(res, { profileImg: result.profileImg });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getAllDoctors = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const [doctors, total] = await doctorService.getAllDoctors(req.query);

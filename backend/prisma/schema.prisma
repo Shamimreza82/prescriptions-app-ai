@@ -82,6 +82,7 @@ model Doctor {
   phone               String
   signatureImg        String?                                              @map("signature_img")
   clinicLogo          String?                                              @map("clinic_logo")
+  profileImg          String?                                              @map("profile_img")
   chamberSchedule     Json?                                                @map("chamber_schedule")
   isProfileComplete   Boolean          @default(false)                     @map("is_profile_complete")
   createdAt           DateTime         @default(now())                     @map("created_at")

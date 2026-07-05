@@ -39,6 +39,18 @@ export const removeLogo = async (doctorId: string) => {
   return repo.removeLogo(doctorId);
 };
 
+export const uploadProfileImg = async (doctorId: string, filename: string) => {
+  const doctor = await repo.findDoctorById(doctorId);
+  if (!doctor) throw notFound('Doctor not found');
+  return repo.updateProfileImg(doctorId, filename);
+};
+
+export const removeProfileImg = async (doctorId: string) => {
+  const doctor = await repo.findDoctorById(doctorId);
+  if (!doctor) throw notFound('Doctor not found');
+  return repo.removeProfileImg(doctorId);
+};
+
 export const getAllDoctors = (query: Request['query']) => {
   const pagination = getPaginationParams(query);
   return repo.findAllDoctors(pagination);

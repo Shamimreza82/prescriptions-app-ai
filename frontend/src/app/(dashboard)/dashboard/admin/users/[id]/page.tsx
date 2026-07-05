@@ -2,24 +2,51 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { api } from '@/lib/axios';
+import { toast } from 'sonner';
 import { useAdminUser, useResetUserPassword } from '@/features/dashboard/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, Mail, Shield, Calendar, Clock, CheckCircle, XCircle, User, Building2, Stethoscope, FileText, Pill, Syringe, CreditCard, Activity, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Mail, Shield, Calendar, Clock, CheckCircle, XCircle, User, Building2, Stethoscope, FileText, Pill, Syringe, CreditCard, Activity, KeyRound, Eye, EyeOff, ImageIcon } from 'lucide-react';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: user, isLoading } = useAdminUser(id);
+  const { data: user, isLoading, refetch } = useAdminUser(id);
   const [resetDialog, setResetDialog] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const resetPassword = useResetUserPassword();
+
+  const handleUpload = useCallback(async (field: string, file: File | null) => {
+    if (!file || !user?.doctor?.id) return;
+    const fd = new FormData();
+    fd.append(field, file);
+    try {
+      await api.post(`/admin/doctors/${user.doctor.id}/upload-${field}`, fd);
+      toast.success('File uploaded');
+      refetch();
+    } catch {
+      toast.error('Upload failed');
+    }
+  }, [user?.doctor?.id, refetch]);
+
+  const handleRemove = useCallback(async (field: string) => {
+    if (!user?.doctor?.id) return;
+    try {
+      await api.delete(`/admin/doctors/${user.doctor.id}/remove-${field}`);
+      toast.success('File removed');
+      refetch();
+    } catch {
+      toast.error('Remove failed');
+    }
+  }, [user?.doctor?.id, refetch]);
 
   const handleResetPassword = () => {
     if (!newPassword || newPassword.length < 6) return;
@@ -171,6 +198,79 @@ export default function AdminUserDetailPage() {
                   <Syringe className="h-5 w-5 mx-auto mb-1 text-amber-600 dark:text-amber-400" />
                   <p className="text-lg font-bold text-gray-900 dark:text-white">{doc._count?.appointments ?? 0}</p>
                   <p className="text-xs text-muted-foreground">Appointments</p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" /> Brand Assets
+                </p>
+                <div className="grid grid-cols-3 gap-4 max-w-sm">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center">Profile Photo</p>
+                    <div className="relative group/upload aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
+                      {doc.profileImg ? (
+                        <>
+                          <img src={`http://localhost:5000/uploads/${doc.profileImg}`} alt="Profile" className="h-full w-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            <Label htmlFor="admin-profile-img" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30">Change</Label>
+                            <button onClick={() => handleRemove('profile-img')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500">Remove</button>
+                          </div>
+                        </>
+                      ) : (
+                        <label htmlFor="admin-profile-img" className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center pointer-events-none">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <span className="text-[11px] font-medium text-muted-foreground pointer-events-none">Upload</span>
+                        </label>
+                      )}
+                      <input id="admin-profile-img" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('profile-img', e.target.files?.[0] || null)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center">Signature</p>
+                    <div className="relative group/upload aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
+                      {doc.signatureImg ? (
+                        <>
+                          <img src={`http://localhost:5000/uploads/${doc.signatureImg}`} alt="Signature" className="h-full w-full object-contain p-2" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            <Label htmlFor="admin-sig" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30">Change</Label>
+                            <button onClick={() => handleRemove('signature')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500">Remove</button>
+                          </div>
+                        </>
+                      ) : (
+                        <label htmlFor="admin-sig" className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center pointer-events-none">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <span className="text-[11px] font-medium text-muted-foreground pointer-events-none">Upload</span>
+                        </label>
+                      )}
+                      <input id="admin-sig" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('signature', e.target.files?.[0] || null)} />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 text-center">Clinic Logo</p>
+                    <div className="relative group/upload aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
+                      {doc.clinicLogo ? (
+                        <>
+                          <img src={`http://localhost:5000/uploads/${doc.clinicLogo}`} alt="Logo" className="h-full w-full object-contain p-2" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            <Label htmlFor="admin-logo" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30">Change</Label>
+                            <button onClick={() => handleRemove('logo')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500">Remove</button>
+                          </div>
+                        </>
+                      ) : (
+                        <label htmlFor="admin-logo" className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center pointer-events-none">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <span className="text-[11px] font-medium text-muted-foreground pointer-events-none">Upload</span>
+                        </label>
+                      )}
+                      <input id="admin-logo" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('logo', e.target.files?.[0] || null)} />
+                    </div>
+                  </div>
                 </div>
               </div>
               {!doc.isProfileComplete && (

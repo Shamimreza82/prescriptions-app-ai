@@ -3,6 +3,7 @@ import { sendSuccess, sendPaginated } from '../../utils/apiResponse';
 import { catchAsync } from '../../utils/catchAsync';
 import { createAuditLog } from '../../utils/auditLogger';
 import * as adminService from './service';
+import * as doctorService from '../doctor/service';
 
 export const getDashboardStats = catchAsync(async (_req: AuthRequest, res) => {
   const stats = await adminService.getDashboardStats();
@@ -110,4 +111,40 @@ export const clearDoctorMrAssignments = catchAsync(async (req: AuthRequest, res)
   const result = await adminService.clearDoctorMrAssignments(req.params.doctorId as string);
   await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'clear_mr_assignments' } });
   sendSuccess(res, result);
+});
+
+export const uploadDoctorProfileImg = catchAsync(async (req: AuthRequest, res) => {
+  const result = await doctorService.uploadProfileImg(req.params.doctorId as string, req.file!.filename);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'upload_profile_img' } });
+  sendSuccess(res, { profileImg: result.profileImg });
+});
+
+export const uploadDoctorSignature = catchAsync(async (req: AuthRequest, res) => {
+  const result = await doctorService.uploadSignature(req.params.doctorId as string, req.file!.filename);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'upload_signature' } });
+  sendSuccess(res, { signatureImg: result.signatureImg });
+});
+
+export const uploadDoctorLogo = catchAsync(async (req: AuthRequest, res) => {
+  const result = await doctorService.uploadLogo(req.params.doctorId as string, req.file!.filename);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'upload_logo' } });
+  sendSuccess(res, { clinicLogo: result.clinicLogo });
+});
+
+export const removeDoctorProfileImg = catchAsync(async (req: AuthRequest, res) => {
+  const result = await doctorService.removeProfileImg(req.params.doctorId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'remove_profile_img' } });
+  sendSuccess(res, { profileImg: result.profileImg });
+});
+
+export const removeDoctorSignature = catchAsync(async (req: AuthRequest, res) => {
+  const result = await doctorService.removeSignature(req.params.doctorId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'remove_signature' } });
+  sendSuccess(res, { signatureImg: result.signatureImg });
+});
+
+export const removeDoctorLogo = catchAsync(async (req: AuthRequest, res) => {
+  const result = await doctorService.removeLogo(req.params.doctorId as string);
+  await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'remove_logo' } });
+  sendSuccess(res, { clinicLogo: result.clinicLogo });
 });

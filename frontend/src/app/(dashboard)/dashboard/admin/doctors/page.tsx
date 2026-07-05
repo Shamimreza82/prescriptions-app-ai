@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAdminDoctors, useClearDoctorMrAssignments, useToggleDoctorVerification } from '@/features/dashboard/hooks';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ export default function AdminDoctorsPage() {
   const [clearDoctorId, setClearDoctorId] = useState<string | null>(null);
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [menuTarget, setMenuTarget] = useState<{ doc: any; top: number; right: number } | null>(null);
+  const router = useRouter();
   const { data, isLoading } = useAdminDoctors({ page, limit: 10, search, verified: verifiedFilter !== 'all' ? verifiedFilter : undefined, status: statusFilter !== 'all' ? statusFilter : undefined });
   const clearMr = useClearDoctorMrAssignments();
   const toggleVerify = useToggleDoctorVerification();
@@ -163,7 +165,7 @@ export default function AdminDoctorsPage() {
             style={{ top: menuTarget.top, right: menuTarget.right }}
           >
             <button
-              onClick={() => { setSelectedDoctor(menuTarget.doc); setMenuTarget(null); }}
+              onClick={() => { router.push(`/dashboard/admin/users/${menuTarget.doc.user.id}`); setMenuTarget(null); }}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             >
               <Eye className="h-4 w-4 text-blue-500" /> View Details

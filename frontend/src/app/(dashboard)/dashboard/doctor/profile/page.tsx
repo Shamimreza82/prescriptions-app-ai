@@ -158,8 +158,25 @@ export default function DoctorProfilePage() {
       <Card className="premium-card-static overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
-              <span className="text-xl font-bold text-gray-600 dark:text-gray-300">{initials}</span>
+            <div className="relative group/avatar w-16 h-16 shrink-0">
+              {profile?.profileImg ? (
+                <img src={`http://localhost:5000/uploads/${profile.profileImg}`} alt="Profile" className="w-full h-full rounded-2xl object-cover" />
+              ) : (
+                <div className="w-full h-full rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <span className="text-xl font-bold text-gray-600 dark:text-gray-300">{initials}</span>
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                <Label htmlFor="profile-img" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
+                  Change
+                </Label>
+                {profile?.profileImg && (
+                  <button type="button" onClick={() => handleRemove('profile-img')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500 transition-colors">
+                    Remove
+                  </button>
+                )}
+              </div>
+              <input id="profile-img" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('profile-img', e.target.files?.[0] || null)} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -233,7 +250,35 @@ export default function DoctorProfilePage() {
                 <p className="text-xs text-muted-foreground">Signature & clinic logo</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4 max-w-md">
+            <div className="grid grid-cols-3 gap-4 max-w-lg">
+              <div className="relative group/upload">
+                <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
+                  {profile?.profileImg ? (
+                    <>
+                      <img src={`http://localhost:5000/uploads/${profile.profileImg}`} alt="Profile" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Label htmlFor="prof-img" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
+                          Change
+                        </Label>
+                        <button type="button" onClick={() => handleRemove('profile-img')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500 transition-colors">
+                          Remove
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <label htmlFor="prof-img" className="w-full h-full flex flex-col items-center justify-center gap-1 cursor-pointer">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center pointer-events-none">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <span className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors pointer-events-none">
+                        Upload
+                      </span>
+                    </label>
+                  )}
+                </div>
+                <input id="prof-img" type="file" accept="image/*" className="hidden" onChange={(e) => handleUpload('profile-img', e.target.files?.[0] || null)} />
+                <p className="text-[11px] text-center text-muted-foreground mt-1.5">Profile Photo</p>
+              </div>
               <div className="relative group/upload">
                 <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
                   {profile?.signatureImg ? (
