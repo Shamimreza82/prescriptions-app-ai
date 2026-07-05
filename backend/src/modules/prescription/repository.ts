@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../../config/database';
 import type { Prisma } from '@prisma/client';
 import { CreatePrescriptionInput, UpdatePrescriptionInput } from './types';
-import { PaginationParams } from '../../utils/pagination';
+import { PaginationParamsExtended } from '../../utils/pagination';
 
 const generateRxNo = () => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -13,13 +13,20 @@ const generateRxNo = () => {
 export const countPrescriptionsByDoctor = (doctorId: string) =>
   db.prescription.count({ where: { doctorId } });
 
-export const findPrescriptionsByDoctor = (doctorId: string, pagination: PaginationParams) => {
+export const findPrescriptionsByDoctor = (doctorId: string, pagination: PaginationParamsExtended) => {
   const where: any = { doctorId };
   if (pagination.search) {
     where.OR = [
       { prescriptionNo: { contains: pagination.search, mode: 'insensitive' } },
       { patient: { fullName: { contains: pagination.search, mode: 'insensitive' } } },
+      { patient: { patientId: { contains: pagination.search, mode: 'insensitive' } } },
+      { patient: { phone: { contains: pagination.search, mode: 'insensitive' } } },
     ];
+  }
+  if (pagination.dateFrom || pagination.dateTo) {
+    where.createdAt = {};
+    if (pagination.dateFrom) where.createdAt.gte = new Date(pagination.dateFrom);
+    if (pagination.dateTo) where.createdAt.lte = new Date(pagination.dateTo + 'T23:59:59.999Z');
   }
 
   return Promise.all([
@@ -29,7 +36,7 @@ export const findPrescriptionsByDoctor = (doctorId: string, pagination: Paginati
       skip: pagination.skip,
       take: pagination.limit,
       include: {
-        patient: { select: { id: true, fullName: true, patientId: true, age: true, gender: true } },
+        patient: { select: { id: true, fullName: true, patientId: true, age: true, gender: true, phone: true } },
         medicines: true,
       },
     }),

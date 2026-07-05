@@ -10,14 +10,16 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Plus, Search, MoreHorizontal, Eye, Trash2, Pencil } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Eye, Trash2, Pencil, RotateCcw } from 'lucide-react';
 
 export default function PrescriptionsPage() {
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [menuTarget, setMenuTarget] = useState<{ id: string; top: number; right: number } | null>(null);
-  const params = { page: String(page), limit: '20', search };
+  const params = { page: String(page), limit: '20', search, ...(dateFrom && { dateFrom }), ...(dateTo && { dateTo }) };
   const { data, isLoading } = usePrescriptions(params);
   const deleteRx = useDeletePrescription();
 
@@ -43,9 +45,20 @@ export default function PrescriptionsPage() {
 
       <Card>
         <CardHeader>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search by Rx no or patient..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Search by Rx no or patient..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
+            </div>
+            <div className="flex gap-2 items-center">
+              <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="w-40" />
+              <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="w-40" />
+              {(search || dateFrom || dateTo) && (
+                <Button variant="ghost" size="icon" onClick={() => { setSearch(''); setDateFrom(''); setDateTo(''); setPage(1); }}>
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -60,23 +73,25 @@ export default function PrescriptionsPage() {
             <>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Rx No</TableHead>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Diagnosis</TableHead>
-                    <TableHead>Medicines</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
+                    <TableRow>
+                      <TableHead>Rx No</TableHead>
+                      <TableHead>Patient ID</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead className="hidden md:table-cell">Phone</TableHead>
+                      <TableHead className="hidden md:table-cell">Date</TableHead>
+                      <TableHead className="hidden lg:table-cell">Medicines</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data?.data.map((rx: any) => (
                     <TableRow key={rx.id}>
                       <TableCell className="font-mono text-xs">{rx.prescriptionNo}</TableCell>
+                      <TableCell className="font-mono text-xs">{rx.patient?.patientId || '-'}</TableCell>
                       <TableCell className="font-medium">{rx.patient?.fullName}</TableCell>
-                      <TableCell>{new Date(rx.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell className="max-w-[150px] truncate">{rx.diagnosis || '-'}</TableCell>
-                      <TableCell>{rx.medicines?.length || 0}</TableCell>
+                      <TableCell className="hidden md:table-cell">{rx.patient?.phone || '-'}</TableCell>
+                      <TableCell className="hidden md:table-cell whitespace-nowrap">{new Date(rx.updatedAt || rx.createdAt).toLocaleString()}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{rx.medicines?.length || 0}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
