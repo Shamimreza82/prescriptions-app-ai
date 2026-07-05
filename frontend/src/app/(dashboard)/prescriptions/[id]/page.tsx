@@ -4,19 +4,13 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { usePrescription } from '@/features/prescriptions/hooks';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, Printer, Pencil, Plus, Calendar, FileText, Stethoscope } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { formatFollowUp } from '@/lib/utils';
 import QRCodeLib from 'qrcode';
+import { TemplateSelector } from '@/features/prescription-templates/components/TemplateSelector';
+import { getTemplateById, defaultTemplateId } from '@/features/prescription-templates/registry';
 
-const formAbbr: Record<string, string> = {
-  'Tablet': 'TAB.', 'Capsule': 'CAP.', 'Injection': 'INJ.', 'Inject': 'INJ.',
-  'Syrup': 'SYP.', 'Cream': 'CRM.', 'Ointment': 'OINT.', 'Gel': 'GEL.',
-  'Drop': 'DROP.', 'Inhaler': 'INH.', 'Suspension': 'SUSP.', 'Solution': 'SOLN.',
-  'Lotion': 'LOT.', 'Spray': 'SPRAY.', 'Powder': 'PDR.', 'Sachet': 'SACH.',
-};
-const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
-const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
+const TEMPLATE_STORAGE_KEY = 'prescription-template-preference';
 
 export default function PrescriptionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,11 +18,20 @@ export default function PrescriptionDetailPage() {
   const { data: rx, isLoading } = usePrescription(id);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [blankPrint, setBlankPrint] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(defaultTemplateId);
 
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 72, margin: 1, color: { dark: '#000', light: '#fff' } })
+    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 72, margin: 1, color: { dark: '#0f766e', light: '#ffffff' } })
       .then(setQrDataUrl).catch((e) => console.error(e));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem(TEMPLATE_STORAGE_KEY);
+    if (saved && getTemplateById(saved)) {
+      setSelectedTemplateId(saved);
+    }
   }, []);
 
   useEffect(() => {
@@ -41,191 +44,179 @@ export default function PrescriptionDetailPage() {
     return () => window.removeEventListener('afterprint', afterPrint);
   }, []);
 
-  if (isLoading) return <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-24 bg-muted rounded animate-pulse" />)}</div>;
-  if (!rx) return <div className="text-center py-12 text-muted-foreground">Prescription not found</div>;
+  const handleSelectTemplate = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TEMPLATE_STORAGE_KEY, templateId);
+    }
+  };
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-  const docName = rx.doctor?.fullName ? `Dr. ${rx.doctor.fullName}` : 'Dr. Doctor';
-  const docLogo = rx.doctor?.clinicLogo ? `${apiBase}/uploads/${rx.doctor.clinicLogo}` : '';
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <style>{`
-        @page { size: A4; margin: 10mm; }
-        ${blankPrint ? '@page { margin-top: 200px; }' : ''}
-        @media print { body * { visibility: hidden; } #print-content, #print-content * { visibility: visible; } #print-content { position: absolute; top: 0; left: 0; width: 100%; border: none !important; box-shadow: none !important; border-radius: 0 !important; } }
-        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .signature { display: none !important; } }
-      `}</style>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/prescriptions')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Prescription #{rx.prescriptionNo}</h1>
-            <p className="text-muted-foreground">{new Date(rx.createdAt).toLocaleDateString()}</p>
-          </div>
+  if (isLoading) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50">
+        <div className="h-20 bg-white dark:bg-gray-950 border-b animate-pulse" />
+        <div className="flex-1 p-6 space-y-4">
+          {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-white dark:bg-gray-900 rounded-2xl shadow-sm animate-pulse" />)}
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/prescriptions/new">
-              <Plus className="h-4 w-4 mr-2" />New
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href={`/prescriptions/${rx.id}/edit`}>
-              <Pencil className="h-4 w-4 mr-2" />Edit
-            </Link>
-          </Button>
-          <Button variant="outline" onClick={() => setBlankPrint(true)}>
-            <Printer className="h-4 w-4 mr-2" />Pad Print
-          </Button>
-          <Button onClick={() => window.print()}>
-            <Printer className="h-4 w-4 mr-2" />Print
+      </div>
+    );
+  }
+
+  if (!rx) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50 items-center justify-center">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-soft p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-teal-50 dark:bg-teal-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileText className="h-8 w-8 text-teal-600" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Prescription not found</h2>
+          <p className="text-muted-foreground mb-6">The prescription you are looking for does not exist or has been removed.</p>
+          <Button onClick={() => router.push('/prescriptions')} className="bg-teal-600 hover:bg-teal-700">
+            <ArrowLeft className="h-4 w-4 mr-2" />Back to Prescriptions
           </Button>
         </div>
       </div>
+    );
+  }
 
-      {/* ===== Prescription Preview ===== */}
-      <div id="print-content" data-blank-print={blankPrint} className="bg-white border shadow-sm" style={{ width: '210mm', margin: '0 auto' }}>
-        {/* Letterhead */}
-        <div className="letterhead p-6 border-b-4 border-black grid grid-cols-2 items-start">
-          <div>
-            <p className="text-2xl font-extrabold text-black">{docName}</p>
-            {(rx.doctor?.degree || []).length > 0 && <p className="text-xs font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
-            {(rx.doctor?.specialization || []).length > 0 && <p className="text-[11px] font-semibold text-black tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
-            {rx.doctor?.clinicName && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicName}</p>}
-            {rx.doctor?.clinicAddress && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicAddress}</p>}
-            {rx.doctor?.bmdcRegNo && <p className="text-[11px] font-semibold text-black">BMDC: {rx.doctor.bmdcRegNo}</p>}
-          </div>
-          <div className="text-right">
-            {docLogo ? (
-              <img src={docLogo} alt="" className="w-12 h-12 object-contain ml-auto mb-1" />
-            ) : (
-              <div className="w-10 h-10 bg-black rounded ml-auto mb-1 flex items-center justify-center">
-                <span className="text-white text-[10px] font-bold">RX</span>
+  const selectedTemplate = getTemplateById(selectedTemplateId) || getTemplateById(defaultTemplateId)!;
+  const TemplateComponent = selectedTemplate.component;
+
+  const formattedDate = new Date(rx.createdAt).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return (
+    <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50">
+      <style>{`
+        @page { size: A4; margin: 0; }
+        ${blankPrint ? '@page { margin-top: 200px; }' : ''}
+        @media print {
+          body * { visibility: hidden; }
+          #print-content, #print-content * { visibility: visible; }
+          #print-content {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 210mm;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            background: white !important;
+          }
+          #print-content > div {
+            width: 100% !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            background: white !important;
+          }
+        }
+        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .signature { display: none !important; } }
+      `}</style>
+
+      {/* Modern Teal Header */}
+      <header className="shrink-0 bg-white dark:bg-gray-950 border-b border-teal-100 dark:border-teal-900/30">
+        <div className="px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => router.push('/prescriptions')}
+                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    Prescription #{rx.prescriptionNo}
+                  </h1>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-800">
+                    <Stethoscope className="h-3 w-3" />
+                    {rx.doctor?.specialization?.[0] || 'Medical Prescription'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-teal-500" />
+                    {formattedDate}
+                  </span>
+                  {rx.patient && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300">{rx.patient.fullName}</span>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
-            <p className="text-[8px] font-bold text-black">Forwarded by PRESMANAGE</p>
-            <p className="text-[10px] font-semibold text-black mt-1">Rx: {rx.prescriptionNo}</p>
-            <p className="text-[10px] font-semibold text-black">{new Date(rx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-            {rx.updatedAt && rx.updatedAt !== rx.createdAt && <p className="text-[9px] font-semibold text-black">Last update: {new Date(rx.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                asChild
+                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+              >
+                <Link href="/prescriptions/new">
+                  <Plus className="h-4 w-4 mr-2" />New
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                asChild
+                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+              >
+                <Link href={`/prescriptions/${rx.id}/edit`}>
+                  <Pencil className="h-4 w-4 mr-2" />Edit
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setBlankPrint(true)}
+                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+              >
+                <Printer className="h-4 w-4 mr-2" />Pad Print
+              </Button>
+              <Button
+                onClick={() => window.print()}
+                className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
+              >
+                <Printer className="h-4 w-4 mr-2" />Print
+              </Button>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Body */}
-        <div className="p-6 grid grid-cols-[4fr_8fr] gap-6 text-[12px]">
-          {/* Left Column */}
-          <div className="border-r border-black pr-5 space-y-5">
-            <div>
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">PATIENT DETAILS</p>
-              <p className="text-[16px] font-bold text-black">{rx.patient?.fullName || ''}</p>
-              <p className="text-[14px] font-semibold text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''} | Wt: {rx.patient?.weight || '—'}kg</p>
+      {/* Main Content: Template Selector + Preview */}
+      <div className="flex flex-1 overflow-hidden">
+        <TemplateSelector
+          selectedId={selectedTemplateId}
+          onSelect={handleSelectTemplate}
+        />
+        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-[210mm] mx-auto">
+            <div
+              id="print-content"
+              data-blank-print={blankPrint}
+              className="bg-white dark:bg-gray-900 rounded-2xl shadow-strong overflow-hidden border border-gray-100 dark:border-gray-800"
+            >
+              <TemplateComponent
+                prescription={rx}
+                qrDataUrl={qrDataUrl}
+                blankPrint={blankPrint}
+              />
             </div>
-            <div>
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">CHIEF COMPLAINT</p>
-              {rx.chiefComplaint ? rx.chiefComplaint.split('\n').filter(Boolean).map((item, i) => (
-                <p key={i} className="text-[14px] font-semibold text-black">• {item}</p>
-              )) : <p className="text-[14px] font-semibold text-black">—</p>}
-            </div>
-            {rx.symptoms && (
-              <div>
-                <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">SYMPTOMS</p>
-                <p className="text-[14px] font-semibold text-black">{rx.symptoms}</p>
-              </div>
-            )}
-            {(rx.bloodPressure || rx.pulseRate) && (
-              <div>
-                <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">VITALS</p>
-                <p className="text-[14px] font-semibold text-black">BP: {rx.bloodPressure || '—'} mmHg</p>
-                <p className="text-[14px] font-semibold text-black">HR: {rx.pulseRate || '—'} bpm</p>
-              </div>
-            )}
-            {rx.diagnosis && (
-              <div>
-                <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">DIAGNOSIS</p>
-                <p className="text-[14px] font-semibold text-black">{rx.diagnosis}</p>
-              </div>
-            )}
-            {qrDataUrl && (
-              <div className="pt-4">
-                <img src={qrDataUrl} alt="QR" className="w-[72px] h-[72px] block mb-1" />
-                <p className="text-[10px] font-bold text-black">Scan for e-validation</p>
-                {blankPrint && (
-                  <div className="pt-2 border-t border-black space-y-0.5 text-[10px] font-semibold text-black">
-                    <p>Rx: {rx.prescriptionNo}</p>
-                    <p>{new Date(rx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
-                    {rx.doctor?.bmdcRegNo && <p>BMDC: {rx.doctor.bmdcRegNo}</p>}
-                  </div>
-                )}
-              </div>
-            )}
+            <p className="text-center text-xs text-gray-400 mt-4">
+              Preview with &quot;{selectedTemplate.name}&quot; template
+            </p>
           </div>
-
-          {/* Right Column */}
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-3xl italic font-bold text-black font-serif">Rx</span>
-              <div className="h-px flex-1 bg-black" />
-            </div>
-
-            {rx.medicines?.filter((m: any) => m.name).length > 0 ? (
-              <div>
-                {rx.medicines.filter((m: any) => m.name).map((m: any, i: number) => {
-                  const prefix = getForm(m.form);
-                  return (
-                    <div key={i} className="mb-3 pb-2 border-b border-dashed border-gray-400 last:border-0">
-                      <p className="text-[14px] font-extrabold text-black">{prefix} {m.name}{m.strength ? ` ${m.strength}` : ''}{m.genericName ? <span className="font-semibold text-black"> ({m.genericName})</span> : ''}</p>
-                      <p className="text-[13px] font-semibold text-black ml-8">{m.dosage || '—'} · {m.frequency || '—'} · {fmtDur(m.duration)}</p>
-                      {m.instructions && <p className="text-[11px] font-semibold text-black ml-8">{m.instructions}</p>}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-[12px] font-semibold text-black">No medicines prescribed</p>
-            )}
-
-            {rx.investigations?.filter((i: any) => i.name).length > 0 && (
-              <div className="mt-6">
-                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">INVESTIGATIONS</p>
-                {rx.investigations.filter((i: any) => i.name).map((i: any, idx: number) => (
-                  <p key={idx} className="text-[14px] font-semibold text-black">• {i.name}</p>
-                ))}
-              </div>
-            )}
-
-            {rx.advice && (
-              <div className="mt-6">
-                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">ADVICE</p>
-                <p className="text-[12px] font-semibold text-black">{rx.advice}</p>
-              </div>
-            )}
-
-            {rx.foodAdvice && (
-              <div className="mt-6">
-                <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">FOOD ADVICE</p>
-                <p className="text-[12px] font-semibold text-black">{rx.foodAdvice}</p>
-              </div>
-            )}
-
-            {rx.followUpDate && (
-              <div className="mt-6">
-                <p className="text-[12px] font-semibold text-black"><span className="font-bold text-base">Follow-up:</span> {formatFollowUp(rx.followUpDate)}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Signature */}
-        <div className="signature text-right px-6 pb-6">
-          {rx.doctor?.signatureImg ? (
-            <img src={`${apiBase}/uploads/${rx.doctor.signatureImg}`} alt="Signature" className="h-10 ml-auto mb-1 object-contain" />
-          ) : (
-            <div className="w-40 h-px bg-black ml-auto mb-2" />
-          )}
-          <p className="text-[12px] font-extrabold text-black uppercase">{docName}</p>
-          {rx.doctor?.bmdcRegNo && <p className="text-[10px] font-semibold text-black">Reg No: {rx.doctor.bmdcRegNo}</p>}
         </div>
       </div>
     </div>
