@@ -116,7 +116,7 @@ export default function PrescriptionDetailPage() {
             background: white !important;
           }
         }
-        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .signature { display: none !important; } }
+        @media print { #print-content[data-blank-print="true"] .letterhead, #print-content[data-blank-print="true"] .header-separator, #print-content[data-blank-print="true"] .signature { display: none !important; } }
       `}</style>
 
       {/* Modern Teal Header */}

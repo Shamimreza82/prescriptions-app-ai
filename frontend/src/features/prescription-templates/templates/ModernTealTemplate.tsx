@@ -62,6 +62,9 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
         </div>
       </div>
 
+      {/* Separator between header and content */}
+      <div className="header-separator h-px bg-gradient-to-r from-transparent via-teal-300 to-transparent dark:from-transparent dark:via-teal-700 dark:to-transparent mx-8" />
+
       {/* Rx Content */}
       <div className="px-8 pb-8 grid grid-cols-12 gap-8 text-[12px]">
         {/* Left Column */}
