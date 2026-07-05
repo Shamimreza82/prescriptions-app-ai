@@ -89,11 +89,11 @@ export default function PrescriptionDetailPage() {
       {/* ===== Prescription Preview ===== */}
       <div id="print-content" data-blank-print={blankPrint} className="bg-white border shadow-sm" style={{ width: '210mm', margin: '0 auto' }}>
         {/* Letterhead */}
-        <div className="letterhead p-6 border-b-4 border-black flex justify-between items-start">
+        <div className="letterhead p-6 border-b-4 border-black grid grid-cols-2 items-start">
           <div>
-            <p className="text-xl font-extrabold text-black">{docName}</p>
+            <p className="text-2xl font-extrabold text-black">{docName}</p>
             {(rx.doctor?.degree || []).length > 0 && <p className="text-xs font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
-            {(rx.doctor?.specialization || []).length > 0 && <p className="text-[11px] font-semibold text-black uppercase tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
+            {(rx.doctor?.specialization || []).length > 0 && <p className="text-[11px] font-semibold text-black tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
             {rx.doctor?.clinicName && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicName}</p>}
             {rx.doctor?.clinicAddress && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicAddress}</p>}
             {rx.doctor?.bmdcRegNo && <p className="text-[11px] font-semibold text-black">BMDC: {rx.doctor.bmdcRegNo}</p>}
@@ -119,7 +119,7 @@ export default function PrescriptionDetailPage() {
           <div className="border-r border-black pr-5 space-y-5">
             <div>
               <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">PATIENT DETAILS</p>
-              <p className="text-[14px] font-bold text-black">{rx.patient?.fullName || ''}</p>
+              <p className="text-[16px] font-bold text-black">{rx.patient?.fullName || ''}</p>
               <p className="text-[14px] font-semibold text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''} | Wt: {rx.patient?.weight || '—'}kg</p>
             </div>
             <div>
