@@ -64,7 +64,10 @@ function NewPrescriptionForm() {
     if (val) {
       const d = new Date();
       d.setDate(d.getDate() + parseInt(val));
-      setValue('followUpDate', d.toISOString().split('T')[0], { shouldValidate: true });
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      setValue('followUpDate', `${yyyy}-${mm}-${dd}`, { shouldValidate: true });
     }
   };
 

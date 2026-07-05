@@ -8,7 +8,11 @@ export const formatDate = (d: string | Date) =>
   new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 export const formatFollowUp = (date: string | Date) => {
-  const d = startOfDay(new Date(date));
+  const d = startOfDay(
+    typeof date === 'string' && !date.includes('T')
+      ? new Date(`${date}T00:00:00`)
+      : new Date(date)
+  );
   const today = startOfDay(new Date());
   const formatted = formatDate(d);
   const days = differenceInDays(d, today);

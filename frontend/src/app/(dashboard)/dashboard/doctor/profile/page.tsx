@@ -152,6 +152,14 @@ export default function DoctorProfilePage() {
     </div>
   );
 
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`;
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -208,13 +216,36 @@ export default function DoctorProfilePage() {
       </Card>
 
       {/* Info Cards */}
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { section: 'personal' as const, icon: <User />, title: 'Personal', subtitle: 'Contact details', rows: () => (<>{infoRow(<Mail />, 'Email', profile?.user?.email)}{infoRow(<Phone />, 'Phone', profile?.phone)}</>) },
-          { section: 'professional' as const, icon: <Award />, title: 'Professional', subtitle: 'Credentials & expertise', rows: () => (<>{infoRow(<Award />, 'Degree', (profile?.degree || []).join(', '))}{infoRow(<Stethoscope />, 'Specialization', (profile?.specialization || []).join(', '))}{infoRow(<FileText />, 'BMDC Reg No', profile?.bmdcRegNo)}</>) },
-          { section: 'clinic' as const, icon: <Building2 />, title: 'Clinic', subtitle: 'Practice location', rows: () => (<>{infoRow(<Building2 />, 'Clinic Name', profile?.clinicName)}{infoRow(<MapPin />, 'Address', profile?.clinicAddress)}</>) },
+          { key: 'personal', section: 'personal' as const, icon: <User />, title: 'Personal', subtitle: 'Contact details', rows: () => (<>{infoRow(<Mail />, 'Email', profile?.user?.email)}{infoRow(<Phone />, 'Phone', profile?.phone)}</>) },
+          { key: 'professional', section: 'professional' as const, icon: <Award />, title: 'Professional', subtitle: 'Credentials & expertise', rows: () => (<>{infoRow(<Award />, 'Degree', (profile?.degree || []).join(', '))}{infoRow(<Stethoscope />, 'Specialization', (profile?.specialization || []).join(', '))}{infoRow(<FileText />, 'BMDC Reg No', profile?.bmdcRegNo)}</>) },
+          { key: 'clinic', section: 'clinic' as const, icon: <Building2 />, title: 'Clinic', subtitle: 'Practice location', rows: () => (<>{infoRow(<Building2 />, 'Clinic Name', profile?.clinicName)}{infoRow(<MapPin />, 'Address', profile?.clinicAddress)}</>) },
+          { key: 'schedule', section: 'clinic' as const, icon: <Calendar />, title: 'Schedule', subtitle: 'Chamber hours', rows: () => (
+            <div className="space-y-2">
+              {(profile?.chamberSchedule || []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No schedule added</p>
+              ) : (
+                (profile?.chamberSchedule || []).map((slot: any, idx: number) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">{slot.day || '—'}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {slot.startTime && slot.endTime
+                          ? `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`
+                          : '—'}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )},
         ].map((card) => (
-          <Card key={card.section} className="premium-card-static group">
+          <Card key={card.key} className="premium-card-static group">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-3">
