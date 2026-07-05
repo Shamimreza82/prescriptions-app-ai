@@ -13,6 +13,28 @@ export const Header = () => {
   const user = mounted ? getUser() : null;
   const role = user?.role;
 
+  const hiddenSpecializations = [
+    'Cardiology',
+    'Rheumatology',
+    'Hematology',
+    'Pulmonology',
+    'Neurology',
+    'Cardiothoracic Surgery',
+    'General Surgery',
+    'Vascular Surgery',
+    'Pediatric Surgery',
+    'Urology',
+    'Gynecology',
+    'Emergency Medicine',
+    'Family Medicine',
+    'Infectious Disease',
+    'Critical Care Medicine',
+  ];
+
+  const visibleSpecializations = (user?.doctor?.specialization || []).filter(
+    (spec: string) => !hiddenSpecializations.includes(spec)
+  );
+
   const roleConfig: Record<string, { name: string; title: string; icon: React.ReactNode; initial: string }> = {
     SUPER_ADMIN: {
       name: 'Admin',
@@ -21,19 +43,19 @@ export const Header = () => {
       initial: 'A',
     },
     DOCTOR: {
-      name: user?.doctor?.fullName?.split(' ')[0] || 'Doctor',
-      title: (user?.doctor?.specialization || []).join(', ') || 'Doctor',
+      name: user?.doctor?.fullName || 'Doctor',
+      title: visibleSpecializations.join(', ') || 'Doctor',
       icon: null,
       initial: user?.doctor?.fullName?.charAt(0) || 'D',
     },
     MEDICAL_REPRESENTATIVE: {
-      name: user?.mr?.fullName?.split(' ')[0] || 'MR',
+      name: user?.mr?.fullName || 'MR',
       title: 'Medical Representative',
       icon: null,
       initial: user?.mr?.fullName?.charAt(0) || 'M',
     },
     RECEPTIONIST: {
-      name: user?.email?.split('@')[0] || 'User',
+      name: user?.receptionist?.fullName || user?.email?.split('@')[0] || 'User',
       title: 'Receptionist',
       icon: null,
       initial: user?.email?.charAt(0).toUpperCase() || 'R',
