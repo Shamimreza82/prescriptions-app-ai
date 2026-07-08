@@ -58,6 +58,19 @@ pm2 logs pres-api           # View backend logs
 pm2 logs pres-frontend      # View frontend logs
 ```
 
+### CI/CD (GitHub Actions)
+- `.github/workflows/ci.yml` — Typecheck + lint + build on every push/PR
+- `.github/workflows/deploy.yml` — Auto-deploy to VPS on push to `main`
+
+**Required GitHub Secrets:**
+| Secret | Description |
+|--------|-------------|
+| `VPS_HOST` | VPS IP or domain |
+| `VPS_USER` | SSH username |
+| `VPS_SSH_KEY` | Private SSH key |
+
+Prisma generate runs inside `deploy.sh` — no separate DB in CI needed.
+
 ### Database
 ```bash
 npm run db:generate      # Generate Prisma client

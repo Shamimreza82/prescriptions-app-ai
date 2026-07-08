@@ -148,6 +148,40 @@ pm2 startOrReload ecosystem.config.js --update-env
 
 ---
 
+## CI/CD with GitHub Actions
+
+Two workflows are provided in `.github/workflows/`:
+
+### CI — `ci.yml`
+
+Runs on **every push and pull request**. Checks code quality before merging:
+
+- TypeScript typecheck (backend + frontend)
+- ESLint (frontend)
+- Build (backend + frontend)
+
+### CD — `deploy.yml`
+
+Runs on **push to `main`**. Auto-deploys to your VPS:
+
+1. Connects via SSH using `appleboy/ssh-action`
+2. Pulls the latest code
+3. Runs `bash deploy.sh`
+
+### Required GitHub Secrets
+
+Go to your repo → **Settings → Secrets and variables → Actions** and add:
+
+| Secret | Description |
+|--------|-------------|
+| `VPS_HOST` | Your VPS IP or domain (e.g. `192.168.1.100`) |
+| `VPS_USER` | SSH username (e.g. `ubuntu` or `root`) |
+| `VPS_SSH_KEY` | Private SSH key (paste the whole key, including `-----BEGIN...-----`) |
+
+Also add the **public key** to `~/.ssh/authorized_keys` on your VPS.
+
+---
+
 ## Useful PM2 Commands
 
 ```bash
@@ -185,6 +219,10 @@ sudo tail -f /var/log/nginx/error.log
 │   │   └── static/         # Static assets
 │   ├── node_modules/
 │   └── public/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml          # Typecheck + lint + build
+│       └── deploy.yml      # Auto-deploy to VPS
 ├── ecosystem.config.js     # PM2 process config
 ├── deploy.sh               # Deploy script
 └── logs/                   # PM2 log files
