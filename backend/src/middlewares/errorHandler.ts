@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import * as Sentry from '@sentry/node';
 import { AppError } from '../utils/errors';
 import { createAuditLog } from '../utils/auditLogger';
 import { logger } from '../utils/logger';
@@ -15,10 +14,6 @@ export const errorHandler = (
   if (err instanceof AppError) {
     if (err.statusCode >= 500) {
       logger.error(err.message, { err, userId, path: req.path, method: req.method, ip: req.ip });
-      Sentry.captureException(err, {
-        tags: { statusCode: err.statusCode, userId },
-        extra: { path: req.path, method: req.method },
-      });
       createAuditLog({ userId, action: 'ERROR', entity: 'System', details: { error: err.message, statusCode: err.statusCode }, ipAddress: req.ip }).catch(() => {});
     } else {
       logger.warn(err.message, { err, userId, path: req.path, method: req.method });
@@ -30,10 +25,6 @@ export const errorHandler = (
   }
 
   logger.error(err.message, { err, userId, path: req.path, method: req.method, ip: req.ip });
-  Sentry.captureException(err, {
-    tags: { userId },
-    extra: { path: req.path, method: req.method },
-  });
   createAuditLog({ userId, action: 'ERROR', entity: 'System', details: { error: err.message, stack: err.stack }, ipAddress: req.ip }).catch(() => {});
   return res.status(500).json({
     success: false,

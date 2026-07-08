@@ -5,21 +5,9 @@ import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
-import * as Sentry from '@sentry/node';
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
-
 import { env } from './config/env';
 import { db } from './config/database';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
-
-Sentry.init({
-  dsn: env.sentry.dsn,
-  environment: env.nodeEnv,
-  integrations: [Sentry.expressIntegration(), nodeProfilingIntegration()],
-  tracesSampleRate: env.nodeEnv === 'production' ? 0.1 : 0,
-  profilesSampleRate: env.nodeEnv === 'production' ? 0.1 : 0,
-  enabled: !!env.sentry.dsn,
-});
 
 // Module routes
 import authRoutes from './modules/auth/route';
@@ -96,7 +84,6 @@ app.use('/api/plans', planRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use(notFoundHandler);
-Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
 
 export default app;

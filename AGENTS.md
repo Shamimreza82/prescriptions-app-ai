@@ -13,7 +13,6 @@ Prescriptions App - A doctor prescription management system with AI capabilities
 - TanStack React Query
 - React Hook Form + Zod validation
 - Lucide React icons
-- Sentry for error tracking
 - Recharts for charts
 - Sonner for toasts
 
@@ -25,7 +24,6 @@ Prescriptions App - A doctor prescription management system with AI capabilities
 - Multer for file uploads
 - PDFKit for PDF generation
 - Winston for logging
-- Sentry for error tracking
 - Zod for validation
 
 ## Commands
@@ -50,6 +48,14 @@ npm run typecheck        # Typecheck both frontend and backend
 ### Linting
 ```bash
 cd frontend && npm run lint
+```
+
+### Deploy (PM2 + Nginx)
+```bash
+bash deploy.sh              # Full deploy (pull, build, restart)
+pm2 status                  # Check process status
+pm2 logs pres-api           # View backend logs
+pm2 logs pres-frontend      # View frontend logs
 ```
 
 ### Database
@@ -80,8 +86,7 @@ npm run db:seed          # Seed the database
 │   │   ├── modules/     # Feature modules
 │   │   ├── types/       # TypeScript types
 │   │   └── utils/       # Utilities
-│   └── prisma/          # Prisma schema & migrations
-└── docker-compose.yml   # Docker configuration
+│       └── prisma/          # Prisma schema & migrations
 ```
 
 ## Code Conventions

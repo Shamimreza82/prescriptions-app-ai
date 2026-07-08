@@ -1,5 +1,4 @@
 import axios from 'axios';
-import * as Sentry from '@sentry/nextjs';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -29,12 +28,6 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response && error.response.status >= 500) {
-      Sentry.captureException(error, {
-        tags: { statusCode: error.response.status, url: originalRequest?.url },
-        extra: { responseData: error.response.data },
-      });
-    }
     const isAuthRoute = originalRequest?.url?.startsWith('/auth/');
     if (isAuthRoute) return Promise.reject(error);
     if (error.response?.status === 401 && !originalRequest._retry) {
