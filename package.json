@@ -8,6 +8,9 @@
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd backend && npm run build && cd ../frontend && npm run build",
     "typecheck": "cd backend && npm run typecheck && cd ../frontend && npm run typecheck",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
     "db:push": "cd backend && npx prisma db push",
     "db:seed": "cd backend && npx ts-node prisma/seed.ts",
     "db:generate": "cd backend && npx prisma generate"

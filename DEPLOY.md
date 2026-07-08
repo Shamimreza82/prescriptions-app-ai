@@ -42,7 +42,7 @@ Fill in the required values:
 | `DATABASE_URL` | `postgresql://user:password@localhost:5432/pres_manage?schema=public` |
 | `JWT_SECRET` | `openssl rand -hex 32` |
 | `JWT_REFRESH_SECRET` | `openssl rand -hex 32` |
-| `FRONTEND_URL` | `https://your-domain.com` |
+| `FRONTEND_URL` | `http://123.136.30.206` |
 
 ### 3. Create Database
 
@@ -84,14 +84,41 @@ pm2 status
 sudo nano /etc/nginx/sites-available/pres-manage
 ```
 
-Paste the following (replace `your-domain.com` with your actual domain):
+Paste the following (replace `123.136.30.206` with your VPS IP):
 
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name 123.136.30.206;
 
-    client_max_body_size 10M;
+    client_max_body_size 50M;
+
+    location /_next/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -102,31 +129,16 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /uploads/ {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
 }
 ```
 
-### 2. Enable Site & SSL
+### 2. Enable Site
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/pres-manage /etc/nginx/sites-enabled/
-sudo certbot --nginx -d your-domain.com
-sudo nginx -s reload
+sudo nginx -t && sudo nginx -s reload
 ```
 
 ---

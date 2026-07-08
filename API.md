@@ -3,7 +3,7 @@
 A RESTful JSON API for a prescription management application.
 
 - **Base URL (Dev):** `http://localhost:5000/api`
-- **Base URL (Prod):** `https://your-domain.com/api`
+- **Base URL (Prod):** `http://123.136.30.206/api`
 - **Content-Type:** `application/json`
 
 ---
