@@ -4,7 +4,6 @@ import { useAuthGuard } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { SidebarProvider } from '@/contexts/sidebar-context';
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   useAuthGuard();
 
