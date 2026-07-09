@@ -36,4 +36,11 @@ router.post('/plans', adminController.createPlan);
 router.put('/plans/:id', adminController.updatePlan);
 router.delete('/plans/:id', adminController.deletePlan);
 
+import * as backupCtrl from './backup';
+router.post('/backup', backupCtrl.createBackup);
+router.get('/backups', backupCtrl.listBackups);
+router.get('/backups/:filename/download', backupCtrl.downloadBackup);
+router.delete('/backups/:filename', backupCtrl.deleteBackup);
+router.post('/backups/restore', backupCtrl.restoreUpload, backupCtrl.restoreBackup);
+
 export default router;

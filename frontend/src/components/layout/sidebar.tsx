@@ -9,7 +9,7 @@ import { useLogout } from '@/features/auth/hooks';
 import {
   LayoutDashboard, Users, FileText, Calendar, Building2,
   LogOut, Sun, Moon, Stethoscope, ChevronLeft, ChevronRight,
-  Shield, UserCog, CreditCard, PersonStanding, ClipboardList, UserRound, Crown, Settings, ChevronDown, BarChart3,
+  Shield, UserCog, CreditCard, PersonStanding, ClipboardList, UserRound, Crown, Settings, ChevronDown, BarChart3, Database,
 } from 'lucide-react';
 import { useThemeContext } from '@/providers/theme-provider';
 
@@ -47,6 +47,7 @@ const adminMenu = [
     ],
   },
   { href: '/dashboard/admin/logs', label: 'Activity Logs', icon: ClipboardList },
+  { href: '/dashboard/admin/backup', label: 'Database Backup', icon: Database },
 ];
 
 const mrMenu = [

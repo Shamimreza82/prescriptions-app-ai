@@ -27,6 +27,9 @@ export const env = {
     address: process.env.PLATFORM_ADDRESS || '',
     phone: process.env.PLATFORM_PHONE || '',
   },
+  backup: {
+    dir: process.env.BACKUP_DIR || './backups',
+  },
   rateLimit: {
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
     apiMax: Number(process.env.API_RATE_LIMIT_MAX) || 200,
