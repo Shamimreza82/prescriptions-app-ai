@@ -103,7 +103,7 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
         </div>
 
         {/* Right Column */}
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-3 mb-5">
             <span className="text-2xl italic font-bold text-gray-800 font-serif">Rx</span>
             <div className="h-px flex-1 bg-gray-300" />
@@ -138,14 +138,14 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
           {rx.advice && (
             <div className="mt-5">
               <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-1">Advice</p>
-              <p className="text-[10px] text-gray-700">{rx.advice}</p>
+              <p className="text-[10px] text-gray-700 break-words whitespace-pre-wrap">{rx.advice}</p>
             </div>
           )}
 
           {rx.foodAdvice && (
             <div className="mt-5">
               <p className="text-[9px] uppercase tracking-wider text-gray-400 mb-1">Food Advice</p>
-              <p className="text-[10px] text-gray-700">{rx.foodAdvice}</p>
+              <p className="text-[10px] text-gray-700 break-words whitespace-pre-wrap">{rx.foodAdvice}</p>
             </div>
           )}
 

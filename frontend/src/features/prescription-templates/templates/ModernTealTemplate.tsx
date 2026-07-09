@@ -173,7 +173,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
         </div>
 
         {/* Right Column */}
-        <div className="col-span-8 space-y-6">
+        <div className="col-span-8 space-y-6 min-w-0">
           {/* Rx Header */}
           <div className="flex items-center gap-3 mb-2">
             <span className="text-4xl italic font-bold text-teal-700 dark:text-teal-400 font-serif">Rx</span>
@@ -243,7 +243,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Advice
               </h4>
-              <p className="text-[12px] text-gray-700 dark:text-gray-300 leading-relaxed">{rx.advice}</p>
+              <p className="text-[12px] text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">{rx.advice}</p>
             </div>
           )}
 
@@ -254,7 +254,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Food Advice
               </h4>
-              <p className="text-[12px] text-gray-700 dark:text-gray-300 leading-relaxed">{rx.foodAdvice}</p>
+              <p className="text-[12px] text-gray-700 dark:text-gray-300 leading-relaxed break-words whitespace-pre-wrap">{rx.foodAdvice}</p>
             </div>
           )}
 

@@ -90,7 +90,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
         </div>
 
         {/* Right Column */}
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-3 mb-6">
             <span className="text-3xl italic font-bold text-black font-serif">Rx</span>
             <div className="h-px flex-1 bg-black" />
@@ -125,14 +125,14 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
           {rx.advice && (
             <div className="mt-6">
               <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b border-gray-300 pb-1 mb-2">ADVICE</p>
-              <p className="text-[12px] font-semibold text-black">{rx.advice}</p>
+              <p className="text-[12px] text-black break-words whitespace-pre-wrap">{rx.advice}</p>
             </div>
           )}
 
           {rx.foodAdvice && (
             <div className="mt-6">
               <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b border-gray-300 pb-1 mb-2">FOOD ADVICE</p>
-              <p className="text-[12px] font-semibold text-black">{rx.foodAdvice}</p>
+              <p className="text-[12px] text-black break-words whitespace-pre-wrap">{rx.foodAdvice}</p>
             </div>
           )}
 
