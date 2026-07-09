@@ -240,8 +240,8 @@ function renderPrescriptions(
                   <TableCell className="text-sm">{rx.doctor?.fullName}</TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="flex flex-wrap gap-1">
-                      {rx.medicines?.slice(0, 3).map((m: any) => (
-                        <Badge key={m.name} variant="outline" className="text-xs">{m.name}</Badge>
+                      {rx.medicines?.slice(0, 3).map((m: any, i: number) => (
+                        <Badge key={m.id || `${m.name}-${m.strength || ''}-${i}`} variant="outline" className="text-xs">{m.name}</Badge>
                       ))}
                       {rx._count?.medicines > 3 && (
                         <Badge variant="outline" className="text-xs">+{rx._count.medicines - 3}</Badge>
