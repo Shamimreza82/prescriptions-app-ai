@@ -113,7 +113,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
 
           {rx.investigations?.filter((i: any) => i.name).length > 0 && (
             <div className="mt-6">
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">INVESTIGATIONS</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b border-gray-300 pb-1 mb-2">INVESTIGATIONS</p>
               {rx.investigations.filter((i: any) => i.name).map((i: any, idx: number) => (
                 <p key={idx} className="text-[14px] text-black">• {i.name}</p>
               ))}
