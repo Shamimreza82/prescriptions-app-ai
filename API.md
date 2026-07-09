@@ -53,8 +53,8 @@ Authorization: Bearer <accessToken>
 
 ### Rate Limiting
 
-- **Global:** 100 requests per 15 minutes
-- **Auth routes:** 10 requests per 15 minutes
+- **Global:** 200 requests per 15 minutes
+- **Auth routes:** 100 requests per 15 minutes
 
 ---
 
@@ -396,6 +396,7 @@ Get the authenticated doctor's profile.
     "phone": "01712345678",
     "signatureImg": "signature-abc.png",
     "clinicLogo": "logo-xyz.png",
+    "profileImg": null,
     "chamberSchedule": null,
     "isProfileComplete": true,
     "createdAt": "2026-06-25T10:00:00.000Z",
@@ -450,6 +451,7 @@ Update the doctor's profile. Supports multipart file uploads for signature and l
     "phone": "01712345678",
     "signatureImg": "signature-abc.png",
     "clinicLogo": "logo-xyz.png",
+    "profileImg": null,
     "chamberSchedule": null,
     "isProfileComplete": true,
     ...
@@ -537,6 +539,48 @@ Remove the doctor's clinic logo.
   "success": true,
   "data": {
     "clinicLogo": null
+  }
+}
+```
+
+### POST /api/doctors/upload-profile-img
+
+Upload a profile image.
+
+**Roles:** DOCTOR (via JWT)
+
+**Content-Type:** `multipart/form-data`
+
+**Form Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `profile-img` | file | Profile image (single) |
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "profileImg": "profile-abc.png"
+  }
+}
+```
+
+### DELETE /api/doctors/remove-profile-img
+
+Remove the profile image.
+
+**Roles:** DOCTOR (via JWT)
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "profileImg": null
   }
 }
 ```
@@ -899,6 +943,7 @@ Create a new prescription.
   "medicines": [
     {
       "name": "Paracetamol",
+      "genericName": "Paracetamol",
       "strength": "500mg",
       "form": "Tablet",
       "dosage": "1+1+1",
@@ -933,6 +978,7 @@ Create a new prescription.
 | `oxygenSaturation` | string | No | |
 | `medicines` | array | Yes | At least 1 medicine |
 | `medicines[].name` | string | Yes | |
+| `medicines[].genericName` | string | No | |
 | `medicines[].strength` | string | No | |
 | `medicines[].form` | string | No | |
 | `medicines[].dosage` | string | Yes | |
@@ -974,6 +1020,7 @@ Create a new prescription.
         "id": "uuid",
         "prescriptionId": "uuid",
         "name": "Paracetamol",
+        "genericName": "Paracetamol",
         "strength": "500mg",
         "form": "Tablet",
         "dosage": "1+1+1",
@@ -1122,6 +1169,7 @@ Create a new appointment.
     "date": "2026-07-01T00:00:00.000Z",
     "time": "10:30",
     "status": "SCHEDULED",
+    "serialNo": 1,
     "fee": null,
     "paymentStatus": "UNPAID",
     "paymentMethod": null,
@@ -1341,6 +1389,66 @@ Get MR dashboard statistics.
     "totalPrescriptions": 300,
     "totalSubscriptions": 3
   }
+}
+```
+
+#### GET /api/mr/reports/overview
+
+Get MR report overview statistics.
+
+**Roles:** MEDICAL_REPRESENTATIVE
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+#### GET /api/mr/reports/prescriptions
+
+Get prescription report data.
+
+**Roles:** MEDICAL_REPRESENTATIVE
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+#### GET /api/mr/reports/medicines
+
+Get medicine usage report data.
+
+**Roles:** MEDICAL_REPRESENTATIVE
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+#### GET /api/mr/reports/revenue
+
+Get revenue report data.
+
+**Roles:** MEDICAL_REPRESENTATIVE
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
 }
 ```
 
@@ -2139,6 +2247,120 @@ Clear all MR assignments for a doctor.
 }
 ```
 
+### POST /api/admin/doctors/:doctorId/upload-profile-img
+
+Upload a profile image for a doctor.
+
+**Roles:** SUPER_ADMIN
+
+**Content-Type:** `multipart/form-data`
+
+**Form Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `profile-img` | file | Profile image (single) |
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### POST /api/admin/doctors/:doctorId/upload-signature
+
+Upload a signature image for a doctor.
+
+**Roles:** SUPER_ADMIN
+
+**Content-Type:** `multipart/form-data`
+
+**Form Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `signature` | file | Signature image (single) |
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### POST /api/admin/doctors/:doctorId/upload-logo
+
+Upload a clinic logo for a doctor.
+
+**Roles:** SUPER_ADMIN
+
+**Content-Type:** `multipart/form-data`
+
+**Form Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `logo` | file | Logo image (single) |
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### DELETE /api/admin/doctors/:doctorId/remove-profile-img
+
+Remove a doctor's profile image.
+
+**Roles:** SUPER_ADMIN
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### DELETE /api/admin/doctors/:doctorId/remove-signature
+
+Remove a doctor's signature image.
+
+**Roles:** SUPER_ADMIN
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### DELETE /api/admin/doctors/:doctorId/remove-logo
+
+Remove a doctor's clinic logo.
+
+**Roles:** SUPER_ADMIN
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
 ### GET /api/admin/plans
 
 List all plans (including inactive).
@@ -2478,9 +2700,15 @@ http://localhost:5000/uploads/logo-xyz.png
 |----------|-------------|---------|
 | `PORT` | Server port | `5000` |
 | `DATABASE_URL` | PostgreSQL connection string | - |
-| `JWT_SECRET` | Access token signing secret | - |
-| `JWT_REFRESH_SECRET` | Refresh token signing secret | - |
+| `JWT_SECRET` | Access token signing secret | `fallback-secret` |
+| `JWT_REFRESH_SECRET` | Refresh token signing secret | `fallback-refresh-secret` |
 | `JWT_EXPIRES_IN` | Access token expiry | `15m` |
 | `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry | `7d` |
-| `FRONTEND_URL` | CORS allowed origins | - |
+| `FRONTEND_URL` | CORS allowed origins (comma-separated) | `http://localhost:3000` |
 | `NODE_ENV` | Environment (development/production/test) | `development` |
+| `PLATFORM_COMPANY_NAME` | Platform company name for PDFs | `Prescribe Pro` |
+| `PLATFORM_ADDRESS` | Platform address for PDFs | `` |
+| `PLATFORM_PHONE` | Platform phone for PDFs | `` |
+| `RATE_LIMIT_WINDOW_MS` | Rate limit window in ms | `900000` (15 min) |
+| `API_RATE_LIMIT_MAX` | Global API max requests per window | `200` |
+| `AUTH_RATE_LIMIT_MAX` | Auth routes max requests per window | `100` |
