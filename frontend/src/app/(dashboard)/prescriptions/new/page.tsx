@@ -84,8 +84,8 @@ function NewPrescriptionForm() {
       setProfileStatus({ isProfileComplete: p.isProfileComplete, isVerified: p.user?.isVerified, loading: false });
     }).catch((e) => { console.error(e); setProfileStatus((s) => ({ ...s, loading: false })); });
     api.get('/prescriptions?limit=1').then((r) => setRxCount(r.data.total || 0)).catch(() => {});
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    QRCodeLib.toDataURL(`${origin}/verify/preview`, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
       .then(setQrDataUrl).catch((e) => console.error(e));
   }, []);
 

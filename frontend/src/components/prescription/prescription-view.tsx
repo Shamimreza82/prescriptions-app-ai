@@ -30,10 +30,11 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(propDefaultId || defaultTemplateId);
 
   useEffect(() => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 72, margin: 1, color: { dark: '#0f766e', light: '#ffffff' } })
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    const verifyId = rx?.id || prescriptionId;
+    QRCodeLib.toDataURL(`${origin}/verify/${verifyId}`, { width: 200, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
       .then(setQrDataUrl).catch((e) => console.error(e));
-  }, []);
+  }, [rx?.id, prescriptionId]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

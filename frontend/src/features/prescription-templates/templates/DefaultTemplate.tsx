@@ -74,8 +74,10 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
           )}
           {qrDataUrl && (
             <div className="pt-4">
-              <img src={qrDataUrl} alt="QR" className="w-[72px] h-[72px] block mb-1" />
-              <p className="text-[10px] font-bold text-black">Scan for e-validation</p>
+              <div className="inline-block border border-gray-200 p-1.5 rounded">
+                <img src={qrDataUrl} alt="QR" className="w-24 h-24 block" />
+              </div>
+              <p className="text-[9px] font-semibold text-black mt-1">Scan for e-validation</p>
               {blankPrint && (
                 <div className="pt-2 border-t border-black space-y-0.5 text-[10px] font-semibold text-black">
                   <p>Rx: {rx.prescriptionNo}</p>
@@ -122,14 +124,14 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
 
           {rx.advice && (
             <div className="mt-6">
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">ADVICE</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b border-gray-300 pb-1 mb-2">ADVICE</p>
               <p className="text-[12px] font-semibold text-black">{rx.advice}</p>
             </div>
           )}
 
           {rx.foodAdvice && (
             <div className="mt-6">
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">FOOD ADVICE</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b border-gray-300 pb-1 mb-2">FOOD ADVICE</p>
               <p className="text-[12px] font-semibold text-black">{rx.foodAdvice}</p>
             </div>
           )}

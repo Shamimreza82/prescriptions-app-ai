@@ -209,8 +209,8 @@ function EditPrescriptionForm() {
     api.get('/doctors/profile').then((r) => {
       setDoctorProfile(r.data.data);
     }).catch((e) => console.error(e));
-    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    QRCodeLib.toDataURL(`${apiBase}/verify`, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    QRCodeLib.toDataURL(`${origin}/verify/preview`, { width: 120, margin: 1, color: { dark: '#111827', light: '#ffffff' } })
       .then(setQrDataUrl).catch((e) => console.error(e));
   }, []);
 

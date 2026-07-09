@@ -89,8 +89,8 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
           )}
           {qrDataUrl && (
             <div className="pt-2">
-              <img src={qrDataUrl} alt="QR" className="w-14 h-14 mb-1" />
-              <p className="text-[7px] text-gray-400">Scan for e-validation</p>
+              <img src={qrDataUrl} alt="QR" className="w-20 h-20 mb-1" />
+              <p className="text-[8px] font-semibold text-black">Scan for e-validation</p>
               {blankPrint && (
                 <div className="pt-2 border-t border-gray-200 space-y-0.5 text-[8px] text-gray-500">
                   <p>Rx: {rx.prescriptionNo}</p>

@@ -158,9 +158,9 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
           {qrDataUrl && (
             <div className="pt-2">
               <div className="inline-block bg-white dark:bg-gray-900 p-2 rounded-xl border border-teal-100 dark:border-teal-900/30 shadow-sm">
-                <img src={qrDataUrl} alt="QR" className="w-16 h-16" />
+                <img src={qrDataUrl} alt="QR" className="w-20 h-20" />
               </div>
-              <p className="text-[9px] font-bold text-gray-400 mt-1">Scan for e-validation</p>
+              <p className="text-[9px] font-semibold text-black dark:text-white mt-1">Scan for e-validation</p>
               {blankPrint && (
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-0.5 text-[9px] text-gray-500">
                   <p>Rx: {rx.prescriptionNo}</p>

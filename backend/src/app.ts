@@ -21,6 +21,7 @@ import mrRoutes from './modules/mr/route';
 import receptionistRoutes from './modules/receptionist/route';
 import planRoutes from './modules/plan/route';
 import adminRoutes from './modules/admin/route';
+import verifyRoutes from './modules/verify/route';
 
 const app = express();
 
@@ -82,6 +83,7 @@ app.use('/api/mr', mrRoutes);
 app.use('/api/receptionist', receptionistRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/verify', verifyRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
