@@ -20,13 +20,14 @@ interface PrescriptionViewProps {
     new?: boolean;
     edit?: boolean;
   };
+  defaultTemplateId?: string;
 }
 
-export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescriptionId, showActions }: PrescriptionViewProps) {
+export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescriptionId, showActions, defaultTemplateId: propDefaultId }: PrescriptionViewProps) {
   const router = useRouter();
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [blankPrint, setBlankPrint] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(defaultTemplateId);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(propDefaultId || defaultTemplateId);
 
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';

@@ -25,23 +25,19 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
           <div className="flex justify-between items-start gap-6">
             <div className="space-y-1">
               <h1 className="text-2xl font-extrabold text-teal-900 dark:text-teal-200 tracking-tight">{docName}</h1>
-              <p className="text-xs font-bold text-teal-600 dark:text-teal-400">
+              <p className="text-sm font-bold text-teal-600 dark:text-teal-400">
                 {(rx.doctor?.degree || []).join(', ') || 'MBBS, FCPS'}
               </p>
               {(rx.doctor?.specialization || []).length > 0 && (
-                <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   {(rx.doctor.specialization || []).join(', ')}
                 </p>
               )}
               {rx.doctor?.clinicName && (
-                <p className="text-[11px] font-bold text-gray-700 dark:text-gray-300 mt-1">{rx.doctor.clinicName}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{rx.doctor.clinicName}</p>
               )}
-              {rx.doctor?.clinicAddress && (
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-[260px]">{rx.doctor.clinicAddress}</p>
-              )}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {rx.doctor?.bmdcRegNo && <span>BMDC: {rx.doctor.bmdcRegNo}</span>}
-                {rx.doctor?.phone && <span>Phone: {rx.doctor.phone}</span>}
               </div>
             </div>
             <div className="text-right shrink-0">
@@ -200,7 +196,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
                           {prefix} {m.name}
                           {m.strength ? <span className="text-teal-700 dark:text-teal-400 ml-1">{m.strength}</span> : ''}
                           {m.genericName ? (
-                            <span className="font-semibold text-gray-500 dark:text-gray-400 text-[12px]"> ({m.genericName})</span>
+                            <span className="font-normal text-black dark:text-gray-400 text-[12px]"> ({m.genericName})</span>
                           ) : ''}
                         </p>
                         <p className="text-[12px] font-bold text-gray-700 dark:text-gray-300 mt-1">

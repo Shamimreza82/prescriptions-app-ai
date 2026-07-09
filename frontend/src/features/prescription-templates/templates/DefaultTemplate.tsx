@@ -16,11 +16,10 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
       <div className="letterhead p-6 border-b-4 border-black grid grid-cols-2 items-start">
         <div>
           <p className="text-2xl font-extrabold text-black">{docName}</p>
-          {(rx.doctor?.degree || []).length > 0 && <p className="text-xs font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
-          {(rx.doctor?.specialization || []).length > 0 && <p className="text-[11px] font-semibold text-black tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
-          {rx.doctor?.clinicName && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicName}</p>}
-          {rx.doctor?.clinicAddress && <p className="text-[11px] font-semibold text-black">{rx.doctor.clinicAddress}</p>}
-          {rx.doctor?.bmdcRegNo && <p className="text-[11px] font-semibold text-black">BMDC: {rx.doctor.bmdcRegNo}</p>}
+          {(rx.doctor?.degree || []).length > 0 && <p className="text-sm font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
+          {(rx.doctor?.specialization || []).length > 0 && <p className="text-sm font-semibold text-black tracking-wide">{(rx.doctor?.specialization || []).join(', ')}</p>}
+          {rx.doctor?.clinicName && <p className="text-sm text-black">{rx.doctor.clinicName}</p>}
+          {rx.doctor?.bmdcRegNo && <p className="text-sm text-black">BMDC: {rx.doctor.bmdcRegNo}</p>}
         </div>
         <div className="text-right">
           {docLogo ? (
@@ -42,33 +41,33 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
         {/* Left Column */}
         <div className="border-r border-black pr-5 space-y-5">
           <div>
-            <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">PATIENT DETAILS</p>
+            <p className="text-[12px] font-extrabold text-black uppercase tracking-widest border-b border-gray-300 pb-0.5 mb-1">PATIENT DETAILS</p>
             <p className="text-[16px] font-bold text-black">{rx.patient?.fullName || ''}</p>
-            <p className="text-[14px] font-semibold text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''} | Wt: {rx.patient?.weight || '—'}kg</p>
+            <p className="text-[13px] text-black">Age: {rx.patient?.age || ''}Y | Sex: {(rx.patient?.gender || '')?.charAt(0) || ''} | Wt: {rx.patient?.weight || '—'}kg</p>
           </div>
+          {(rx.bloodPressure || rx.pulseRate) && (
+            <div>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest border-b border-gray-300 pb-0.5 mb-1">VITALS</p>
+              <p className="text-[13px] text-black">BP: {rx.bloodPressure || '—'} mmHg</p>
+              <p className="text-[13px] text-black">HR: {rx.pulseRate || '—'} bpm</p>
+            </div>
+          )}
           <div>
-            <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">CHIEF COMPLAINT</p>
+            <p className="text-[12px] font-extrabold text-black uppercase tracking-widest border-b border-gray-300 pb-0.5 mb-1">CHIEF COMPLAINT</p>
             {rx.chiefComplaint ? rx.chiefComplaint.split('\n').filter(Boolean).map((item, i) => (
-              <p key={i} className="text-[14px] font-semibold text-black">• {item}</p>
-            )) : <p className="text-[14px] font-semibold text-black">—</p>}
+              <p key={i} className="text-[13px] text-black">• {item}</p>
+            )) : <p className="text-[13px] text-black">—</p>}
           </div>
           {rx.symptoms && (
             <div>
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">SYMPTOMS</p>
-              <p className="text-[14px] font-semibold text-black">{rx.symptoms}</p>
-            </div>
-          )}
-          {(rx.bloodPressure || rx.pulseRate) && (
-            <div>
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">VITALS</p>
-              <p className="text-[14px] font-semibold text-black">BP: {rx.bloodPressure || '—'} mmHg</p>
-              <p className="text-[14px] font-semibold text-black">HR: {rx.pulseRate || '—'} bpm</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest border-b border-gray-300 pb-0.5 mb-1">SYMPTOMS</p>
+              <p className="text-[13px] text-black">{rx.symptoms}</p>
             </div>
           )}
           {rx.diagnosis && (
             <div>
-              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest mb-1">DIAGNOSIS</p>
-              <p className="text-[14px] font-semibold text-black">{rx.diagnosis}</p>
+              <p className="text-[12px] font-extrabold text-black uppercase tracking-widest border-b border-gray-300 pb-0.5 mb-1">DIAGNOSIS</p>
+              <p className="text-[13px] text-black">{rx.diagnosis}</p>
             </div>
           )}
           {qrDataUrl && (
@@ -99,7 +98,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
                 const prefix = getForm(m.form);
                 return (
                   <div key={i} className="mb-3 pb-2 border-b border-dashed border-gray-400 last:border-0">
-                    <p className="text-[14px] font-extrabold text-black">{prefix} {m.name}{m.strength ? ` ${m.strength}` : ''}{m.genericName ? <span className="font-semibold text-black"> ({m.genericName})</span> : ''}</p>
+                    <p className="text-[14px] font-extrabold text-black">{prefix} {m.name}{m.strength ? ` ${m.strength}` : ''}{m.genericName ? <span className="font-normal text-black"> ({m.genericName})</span> : ''}</p>
                     <p className="text-[13px] font-semibold text-black ml-8">{m.dosage || '—'} · {m.frequency || '—'} · {fmtDur(m.duration)}</p>
                     {m.instructions && <p className="text-[11px] font-semibold text-black ml-8">{m.instructions}</p>}
                   </div>
@@ -114,7 +113,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
             <div className="mt-6">
               <p className="text-[12px] font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1 mb-2">INVESTIGATIONS</p>
               {rx.investigations.filter((i: any) => i.name).map((i: any, idx: number) => (
-                <p key={idx} className="text-[14px] font-semibold text-black">• {i.name}</p>
+                <p key={idx} className="text-[14px] text-black">• {i.name}</p>
               ))}
             </div>
           )}

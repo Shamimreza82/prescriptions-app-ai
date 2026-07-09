@@ -16,14 +16,13 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
       <div className="letterhead px-8 pt-8 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">{docName}</h1>
-            <p className="text-[10px] text-gray-600 mt-0.5">{(rx.doctor?.degree || []).join(', ')}</p>
+            <h1 className="text-xl font-bold text-gray-900">{docName}</h1>
+            <p className="text-sm text-gray-700 mt-0.5">{(rx.doctor?.degree || []).join(', ')}</p>
             {(rx.doctor?.specialization || []).length > 0 && (
-              <p className="text-[9px] text-gray-500 mt-0.5">{(rx.doctor.specialization || []).join(', ')}</p>
+              <p className="text-sm text-gray-600 mt-0.5">{(rx.doctor.specialization || []).join(', ')}</p>
             )}
-            <div className="mt-1 text-[9px] text-gray-500 space-y-0.5">
+            <div className="mt-1 text-sm text-gray-600 space-y-0.5">
               {rx.doctor?.clinicName && <p>{rx.doctor.clinicName}</p>}
-              {rx.doctor?.clinicAddress && <p>{rx.doctor.clinicAddress}</p>}
               {rx.doctor?.bmdcRegNo && <p>BMDC: {rx.doctor.bmdcRegNo}</p>}
             </div>
           </div>

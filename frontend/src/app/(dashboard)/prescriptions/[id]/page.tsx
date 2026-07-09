@@ -15,6 +15,7 @@ export default function PrescriptionDetailPage() {
       backUrl="/prescriptions"
       prescriptionId={id}
       showActions={{ new: true, edit: true }}
+      defaultTemplateId="default"
     />
   );
 }

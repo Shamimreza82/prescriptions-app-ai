@@ -17,6 +17,7 @@ import { formatFollowUp } from '@/lib/utils';
 import QRCodeLib from 'qrcode';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSidebar } from '@/contexts/sidebar-context';
+import { DefaultTemplate } from '@/features/prescription-templates/templates/DefaultTemplate';
 
 type FormData = z.infer<typeof prescriptionSchema>;
 const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '', instructions: '' };
@@ -831,171 +832,23 @@ function NewPrescriptionForm() {
               </div>
             </div>
 
-            {/* Printable Sheet Simulation */}
-            <div id="print-content" className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl overflow-hidden min-h-[842px] relative transform origin-top transition-transform duration-500 border border-gray-100 dark:border-gray-800">
-              {/* Letterhead */}
-              <div className="p-8 border-b-4 border-teal-600">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-0.5">
-                    <h1 className="text-xl font-extrabold text-teal-800 dark:text-teal-300">
-                      {doctorProfile?.fullName ? `Dr. ${doctorProfile.fullName}` : 'Dr. Doctor'}
-                    </h1>
-                    <p className="text-[11px] font-bold text-gray-500">{(doctorProfile?.degree || []).join(', ') || 'MBBS, FCPS'}</p>
-                    {(doctorProfile?.specialization || []).length > 0 && (
-                      <p className="text-[10px] text-gray-400 uppercase tracking-tighter">{(doctorProfile.specialization || []).join(', ')}</p>
-                    )}
-                    {doctorProfile?.clinicName && (
-                      <p className="text-[10px] text-gray-400">{doctorProfile.clinicName}</p>
-                    )}
-                    {doctorProfile?.clinicAddress && (
-                      <p className="text-[10px] text-gray-400">{doctorProfile.clinicAddress}</p>
-                    )}
-                    {doctorProfile?.bmdcRegNo && (
-                      <p className="text-[10px] text-gray-400">BMDC: {doctorProfile.bmdcRegNo}</p>
-                    )}
-                    {doctorProfile?.phone && (
-                      <p className="text-[10px] text-gray-400">{doctorProfile.phone}</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    {doctorProfile?.clinicLogo ? (
-                      <img src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/${doctorProfile.clinicLogo}`} alt="Clinic" className="w-14 h-14 object-contain ml-auto mb-2" />
-                    ) : (
-                      <div className="w-12 h-12 bg-teal-800 rounded-lg flex items-center justify-center text-white ml-auto mb-2">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                      </div>
-                    )}
-                    <p className="text-[7px] font-bold text-teal-800 dark:text-teal-300">Forwarded by PRESMANAGE</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rx Content */}
-              <div className="p-8 grid grid-cols-12 gap-8 text-[11px]">
-                {/* Left Column - Patient Info */}
-                <div className="col-span-4 border-r border-gray-100 dark:border-gray-700 pr-6 space-y-6">
-                  {selectedPatient && (
-                    <div>
-                      <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[9px] mb-2">Patient Details</h4>
-                      <p className="font-bold text-gray-900 dark:text-white truncate">{selectedPatient.fullName}</p>
-                      <p className="text-gray-500">Age: {selectedPatient.age}Y | Sex: {selectedPatient.gender?.charAt(0)}</p>
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[9px] mb-2">Chief Complaint</h4>
-                    {(watch('chiefComplaint') || '').split('\n').filter(Boolean).map((item, i) => (
-                      <p key={i} className="text-gray-600 dark:text-gray-400">• {item}</p>
-                    ))}
-                    {!watch('chiefComplaint') && <p className="text-gray-600 dark:text-gray-400">—</p>}
-                  </div>
-                  {watch('symptoms') && (
-                    <div>
-                      <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[9px] mb-2">Symptoms</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{watch('symptoms')}</p>
-                    </div>
-                  )}
-                  {(watch('bloodPressure') || watch('pulseRate')) && (
-                    <div>
-                      <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[9px] mb-2">Vitals</h4>
-                      <p className="text-gray-600 dark:text-gray-400">BP: {watch('bloodPressure') || '—'} mmHg</p>
-                      <p className="text-gray-600 dark:text-gray-400">HR: {watch('pulseRate') || '—'} bpm</p>
-                    </div>
-                  )}
-                  {watch('diagnosis') && (
-                    <div>
-                      <h4 className="font-bold text-gray-400 uppercase tracking-widest text-[9px] mb-2">Diagnosis</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{watch('diagnosis')}</p>
-                    </div>
-                  )}
-                  <div className="pt-10">
-                    {qrDataUrl ? (
-                      <img src={qrDataUrl} alt="QR" className="w-[72px] h-[72px] block mb-1" />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded mb-2" />
-                    )}
-                    <p className="text-[8px] text-gray-300">Scan for e-validation</p>
-                  </div>
-                </div>
-
-                {/* Right Column - Rx */}
-                <div className="col-span-8 space-y-8">
-                  <div className="flex items-center gap-4 text-teal-600 opacity-50">
-                    <span className="text-4xl font-serif italic" style={{ fontFamily: 'serif' }}>Rx</span>
-                    <div className="h-[1px] flex-1 bg-gray-100 dark:bg-gray-700" />
-                  </div>
-
-                  <div className="space-y-6">
-                    {medFields.filter((_, i) => watch(`medicines.${i}.name`)).length === 0 ? (
-                      <p className="text-gray-400 italic">No medicines prescribed</p>
-                    ) : (
-                      medFields.map((field, i) => {
-                        const m = watch(`medicines.${i}`);
-                        if (!m.name) return null;
-                        return (
-                          <div key={field.id} className="relative pl-2 border-l-2 border-teal-300/50">
-                            <p className="font-bold text-sm text-gray-900 dark:text-white">{getForm(m.form)} {m.name}{m.strength ? ` ${m.strength}` : ''}{m.genericName ? ` (${m.genericName})` : ''}</p>
-                            <p className="text-gray-500 text-[10px]">{m.dosage} · {m.frequency || '—'} · {fmtDur(m.duration)}</p>
-                            {m.instructions && <p className="text-gray-400 text-[9px] mt-0.5 italic">{m.instructions}</p>}
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  {invs && invs.filter((_, i) => watch(`investigations.${i}.name`)).length > 0 && (
-                    <div className="mt-10">
-                      <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Investigations</h4>
-                      {invs.filter((_, i) => watch(`investigations.${i}.name`)).map((_, i) => (
-                        <p key={i} className="text-gray-600 dark:text-gray-400">• {watch(`investigations.${i}.name`)}</p>
-                      ))}
-                    </div>
-                  )}
-
-                  {watch('advice') && (
-                    <div className="mt-8">
-                      <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Advice</h4>
-                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{watch('advice')}</p>
-                    </div>
-                  )}
-
-                  {watch('foodAdvice') && (
-                    <div className="mt-6">
-                      <h4 className="font-bold text-gray-800 dark:text-gray-200 text-[10px] mb-2 border-b border-gray-100 dark:border-gray-700 pb-1 uppercase tracking-widest">Food Advice</h4>
-                      <p className="text-gray-600 dark:text-gray-400">{watch('foodAdvice')}</p>
-                    </div>
-                  )}
-
-                  {watch('followUpDate') && (
-                    <div className="mt-6">
-                      <p className="text-gray-600 dark:text-gray-400 text-sm font-medium"><span className="font-bold">Follow-up:</span> {formatFollowUp(watch('followUpDate')!)}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Signature */}
-              <div className="absolute bottom-12 right-12 text-center">
-                {doctorProfile?.signatureImg ? (
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/${doctorProfile.signatureImg}`}
-                    alt="Signature"
-                    className="h-10 mx-auto mb-1 object-contain"
-                  />
-                ) : (
-                  <div className="w-40 h-[1px] bg-gray-200 dark:bg-gray-700 mb-2 mx-auto" />
-                )}
-                <p className="text-[10px] font-bold text-gray-800 dark:text-gray-200 uppercase">
-                  {doctorProfile?.fullName ? `Dr. ${doctorProfile.fullName}` : 'Dr. Doctor'}
-                </p>
-                {doctorProfile?.bmdcRegNo && (
-                  <p className="text-[8px] text-gray-400">Reg No: {doctorProfile.bmdcRegNo}</p>
-                )}
-              </div>
-
-              {/* Watermark */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 pointer-events-none opacity-[0.03] text-teal-900 select-none">
-                <span className="text-8xl font-black">RX</span>
-              </div>
+            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+              <DefaultTemplate
+                prescription={{
+                  ...watch(),
+                  id: 'preview',
+                  doctorId: doctorProfile?.id || '',
+                  patientId: watch('patientId') || '',
+                  prescriptionNo: 'Preview',
+                  createdAt: new Date().toISOString(),
+                  doctor: doctorProfile,
+                  patient: selectedPatient || watch().patientId,
+                  medicines: (watch('medicines') || []).filter((m: any) => m.name),
+                  investigations: (watch('investigations') || []).filter((i: any) => i.name),
+                }}
+                qrDataUrl={qrDataUrl}
+                blankPrint={false}
+              />
             </div>
           </div>
         </aside>}
