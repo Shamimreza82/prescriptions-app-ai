@@ -37,7 +37,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
       </div>
 
       {/* Body */}
-      <div className="p-6 grid grid-cols-[4fr_8fr] gap-6 text-[12px]">
+      <div className="px-10 py-6 grid grid-cols-[4fr_8fr] gap-6 text-[12px]">
         {/* Left Column */}
         <div className="border-r border-black pr-5 space-y-5">
           <div>
