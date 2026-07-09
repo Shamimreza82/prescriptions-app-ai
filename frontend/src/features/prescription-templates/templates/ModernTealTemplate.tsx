@@ -15,7 +15,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
   return (
     <div
       data-blank-print={blankPrint}
-      className="bg-white dark:bg-gray-900 overflow-hidden"
+      className="bg-white dark:bg-gray-900 overflow-hidden flex flex-col"
       style={{ width: '210mm', margin: '0 auto', minHeight: '297mm', boxSizing: 'border-box' }}
     >
       {/* Modern Teal Letterhead */}
@@ -62,7 +62,8 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
       <div className="header-separator h-px bg-gradient-to-r from-transparent via-teal-300 to-transparent dark:from-transparent dark:via-teal-700 dark:to-transparent mx-8" />
 
       {/* Rx Content */}
-      <div className="px-8 pb-8 grid grid-cols-12 gap-8 text-[12px]">
+      <div className="flex flex-col flex-1">
+      <div className="px-8 pb-8 grid grid-cols-12 gap-8 text-[12px] flex-1">
         {/* Left Column */}
         <div className="col-span-4 border-r border-teal-100 dark:border-teal-900/30 pr-6 space-y-6">
           {rx.patient && (
@@ -290,6 +291,22 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
           </div>
         </div>
       </div>
+      </div>
+
+      {/* Footer */}
+      {!blankPrint && <div className="footer px-8 pb-4">
+        <div className="border-t border-teal-100 dark:border-teal-900/30 pt-3 flex items-center justify-between text-[9px] text-gray-500 dark:text-gray-400">
+          <div className="space-y-0.5">
+            {rx.doctor?.clinicAddress && <p>{rx.doctor.clinicAddress}</p>}
+            {rx.doctor?.phone && <p>Phone: {rx.doctor.phone}</p>}
+            {rx.doctor?.user?.email && <p>Email: {rx.doctor.user.email}</p>}
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-teal-700 dark:text-teal-400">PRESMANAGE</p>
+            <p>Digitally Generated Prescription</p>
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }

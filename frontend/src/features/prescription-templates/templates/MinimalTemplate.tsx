@@ -9,7 +9,7 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
   return (
     <div
       data-blank-print={blankPrint}
-      className="bg-white"
+      className="bg-white flex flex-col"
       style={{ width: '210mm', margin: '0 auto', minHeight: '297mm' }}
     >
       {/* Header */}
@@ -38,6 +38,9 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
           </div>
         </div>
       </div>
+
+      {/* Body + Signature wrapper */}
+      <div className="flex flex-col flex-1">
 
       {/* Meta */}
       <div className="px-8 py-3 border-b border-gray-100 flex justify-between text-[9px] text-gray-500">
@@ -166,6 +169,22 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
           {rx.doctor?.bmdcRegNo && <p className="text-[9px] text-gray-500">Reg No: {rx.doctor.bmdcRegNo}</p>}
         </div>
       </div>
+      </div>
+
+      {/* Footer */}
+      {!blankPrint && <div className="footer px-8 pb-4">
+        <div className="border-t border-gray-200 pt-3 flex items-center justify-between text-[9px] text-gray-500">
+          <div className="space-y-0.5">
+            {rx.doctor?.clinicAddress && <p>{rx.doctor.clinicAddress}</p>}
+            {rx.doctor?.phone && <p>Phone: {rx.doctor.phone}</p>}
+            {rx.doctor?.user?.email && <p>Email: {rx.doctor.user.email}</p>}
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-gray-900">PRESMANAGE</p>
+            <p>Digitally Generated Prescription</p>
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }

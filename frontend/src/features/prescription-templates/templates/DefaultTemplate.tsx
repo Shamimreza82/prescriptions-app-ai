@@ -9,8 +9,8 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
   return (
     <div
       data-blank-print={blankPrint}
-      className="bg-white"
-      style={{ width: '210mm', margin: '0 auto', boxSizing: 'border-box' }}
+      className="bg-white flex flex-col"
+      style={{ width: '210mm', minHeight: '297mm', margin: '0 auto', boxSizing: 'border-box' }}
     >
       {/* Letterhead */}
       <div className="letterhead p-6 border-b-4 border-black grid grid-cols-2 items-start">
@@ -37,7 +37,9 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
       </div>
 
       {/* Body */}
-      <div className="px-10 py-6 grid grid-cols-[4fr_8fr] gap-6 text-[12px]">
+      {/* Body + Signature wrapper */}
+      <div className="flex flex-col flex-1">
+        <div className="px-10 py-6 grid grid-cols-[4fr_8fr] gap-6 text-[12px] flex-1">
         {/* Left Column */}
         <div className="border-r border-black pr-5 space-y-5">
           <div>
@@ -150,6 +152,22 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
         <p className="text-[12px] font-extrabold text-black uppercase">{docName}</p>
         {rx.doctor?.bmdcRegNo && <p className="text-[10px] font-semibold text-black">Reg No: {rx.doctor.bmdcRegNo}</p>}
       </div>
+      </div>
+
+      {/* Footer */}
+      {!blankPrint && <div className="footer px-6 pb-4">
+        <div className="border-t border-gray-300 pt-3 flex items-center justify-between text-[9px] text-gray-500">
+          <div className="space-y-0.5">
+            {rx.doctor?.clinicAddress && <p>{rx.doctor.clinicAddress}</p>}
+            {rx.doctor?.phone && <p>Phone: {rx.doctor.phone}</p>}
+            {rx.doctor?.user?.email && <p>Email: {rx.doctor.user.email}</p>}
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-black">PRESMANAGE</p>
+            <p>Digitally Generated Prescription</p>
+          </div>
+        </div>
+      </div>}
     </div>
   );
 }
