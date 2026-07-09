@@ -13,13 +13,13 @@ import { MultiSelect } from '@/components/ui/multi-select';
 import { DEGREES, SPECIALIZATIONS } from '@/lib/constants';
 import {
   User, Mail, Phone, Award, Stethoscope, Building2, MapPin,
-  FileText, Clock, Save, Image as ImageIcon, Calendar, X, Plus, Pencil, CheckCircle, XCircle,
+  FileText, Clock, Save, Image as ImageIcon, Calendar, X, Plus, Pencil, CheckCircle, XCircle, DollarSign,
 } from 'lucide-react';
 
 const DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 type Profile = Record<string, any>;
-type Section = 'personal' | 'professional' | 'clinic' | null;
+type Section = 'personal' | 'professional' | 'clinic' | 'fees' | null;
 
 export default function DoctorProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -51,6 +51,8 @@ export default function DoctorProfilePage() {
       clinicName: p.clinicName || '',
       clinicAddress: p.clinicAddress || '',
       chamberSchedule: p.chamberSchedule || [],
+      feesNewVisit: p.feesNewVisit || '',
+      feesFollowUp: p.feesFollowUp || '',
     });
   };
 
@@ -221,6 +223,7 @@ export default function DoctorProfilePage() {
           { key: 'personal', section: 'personal' as const, icon: <User />, title: 'Personal', subtitle: 'Contact details', rows: () => (<>{infoRow(<Mail />, 'Email', profile?.user?.email)}{infoRow(<Phone />, 'Phone', profile?.phone)}</>) },
           { key: 'professional', section: 'professional' as const, icon: <Award />, title: 'Professional', subtitle: 'Credentials & expertise', rows: () => (<>{infoRow(<Award />, 'Degree', (profile?.degree || []).join(', '))}{infoRow(<Stethoscope />, 'Specialization', (profile?.specialization || []).join(', '))}{infoRow(<FileText />, 'BMDC Reg No', profile?.bmdcRegNo)}</>) },
           { key: 'clinic', section: 'clinic' as const, icon: <Building2 />, title: 'Clinic', subtitle: 'Practice location', rows: () => (<>{infoRow(<Building2 />, 'Clinic Name', profile?.clinicName)}{infoRow(<MapPin />, 'Address', profile?.clinicAddress)}</>) },
+          { key: 'fees', section: 'fees' as const, icon: <DollarSign />, title: 'Consultation Fees', subtitle: 'New & follow-up visit', rows: () => (<>{infoRow(<DollarSign />, 'New Visit', profile?.feesNewVisit ? `BDT ${profile.feesNewVisit}` : '—')}{infoRow(<DollarSign />, 'Follow-up Visit', profile?.feesFollowUp ? `BDT ${profile.feesFollowUp}` : '—')}</>) },
           { key: 'schedule', section: 'clinic' as const, icon: <Calendar />, title: 'Schedule', subtitle: 'Chamber hours', rows: () => (
             <div className="space-y-2">
               {(profile?.chamberSchedule || []).length === 0 ? (
@@ -382,11 +385,13 @@ export default function DoctorProfilePage() {
               {editingSection === 'personal' && 'Edit Personal Information'}
               {editingSection === 'professional' && 'Edit Professional Details'}
               {editingSection === 'clinic' && 'Edit Clinic Information'}
+              {editingSection === 'fees' && 'Edit Consultation Fees'}
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
               {editingSection === 'personal' && 'Update your contact details'}
               {editingSection === 'professional' && 'Update your credentials'}
               {editingSection === 'clinic' && 'Update your practice information'}
+              {editingSection === 'fees' && 'Set your consultation charges'}
             </p>
           </DialogHeader>
 
@@ -461,6 +466,33 @@ export default function DoctorProfilePage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {editingSection === 'fees' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">New Visit Fee (BDT)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.feesNewVisit}
+                    onChange={(e) => setForm({ ...form, feesNewVisit: e.target.value })}
+                    className="h-11 premium-input"
+                    placeholder="e.g. 500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Follow-up Visit Fee (BDT)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.feesFollowUp}
+                    onChange={(e) => setForm({ ...form, feesFollowUp: e.target.value })}
+                    className="h-11 premium-input"
+                    placeholder="e.g. 300"
+                  />
                 </div>
               </div>
             )}

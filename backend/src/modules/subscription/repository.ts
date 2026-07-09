@@ -11,6 +11,7 @@ export const getDoctorStats = (doctorId: string) => {
     db.appointment.count({ where: { doctorId, date: { gte: monthStart } } }),
     db.prescription.count({ where: { doctorId, createdAt: { gte: monthStart } } }),
     db.prescription.count({ where: { doctorId, createdAt: { gte: todayStart } } }),
+    db.patient.count({ where: { doctorId, createdAt: { gte: todayStart } } }),
     Promise.all(
       Array.from({ length: 12 }, (_, i) => {
         const ms = new Date(now.getFullYear(), i, 1);

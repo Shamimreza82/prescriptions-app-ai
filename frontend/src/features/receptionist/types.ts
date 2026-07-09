@@ -3,6 +3,8 @@ export interface ReceptionistDashboardData {
   totalPrescriptions: number;
   monthlyAppointments: number;
   monthlyPrescriptions: number;
+  todaysPatients: number;
+  todaysPrescriptions: number;
   monthlyData: number[];
 }
 

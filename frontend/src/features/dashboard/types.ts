@@ -4,6 +4,7 @@ export interface DoctorDashboardData {
   monthlyAppointments: number;
   monthlyPrescriptions: number;
   todaysPrescriptions: number;
+  todaysPatients: number;
   monthlyData: number[];
 }
 

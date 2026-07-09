@@ -84,6 +84,15 @@ export const getAppointmentById = async (req: AuthRequest, res: Response, next: 
   }
 };
 
+export const getDoctorProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const doctor = await receptionistService.getDoctorProfile(req.user!.userId);
+    sendSuccess(res, doctor);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getTodayAppointments = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const appointments = await receptionistService.getTodayAppointments(req.user!.userId);

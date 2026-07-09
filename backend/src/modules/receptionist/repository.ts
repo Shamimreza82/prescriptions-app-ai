@@ -36,7 +36,10 @@ export const findPatientsByDoctor = (doctorId: string, pagination: PaginationPar
 };
 
 export const findPatientById = (id: string, doctorId: string) =>
-  db.patient.findFirst({ where: { id, doctorId } });
+  db.patient.findFirst({
+    where: { id, doctorId },
+    include: { _count: { select: { appointments: true } } },
+  });
 
 export const createPatient = (data: any) =>
   db.patient.create({
@@ -76,7 +79,11 @@ export const findAppointmentsByDoctor = (doctorId: string, pagination: Paginatio
       orderBy: { date: 'desc' },
       skip: pagination.skip,
       take: pagination.limit,
-      include: { patient: { select: { id: true, fullName: true, patientId: true, phone: true } } },
+      include: {
+        patient: {
+          include: { _count: { select: { appointments: true } } },
+        },
+      },
     }),
     db.appointment.count({ where }),
   ] as const);

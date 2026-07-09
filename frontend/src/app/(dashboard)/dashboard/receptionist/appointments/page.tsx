@@ -51,6 +51,16 @@ export default function RecAppointmentsPage() {
     enabled: open,
   });
 
+  const { data: doctorProfile } = useQuery({
+    queryKey: ['rec-doctor-profile'],
+    queryFn: () => api.get('/receptionist/doctor').then((r) => r.data.data),
+    enabled: open,
+  });
+
+  const selectedPatient = patients?.find((p: any) => p.id === newApt.patientId) ?? null;
+  const isFollowUp = selectedPatient?._count?.appointments > 0;
+  const defaultFee = isFollowUp ? doctorProfile?.feesFollowUp : doctorProfile?.feesNewVisit;
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -128,7 +138,13 @@ export default function RecAppointmentsPage() {
                               <button
                                 key={p.id}
                                 type="button"
-                                onClick={() => { setNewApt({ ...newApt, patientId: p.id }); setPatientSearch(p.fullName); setShowPatientResults(false); }}
+                                onClick={() => {
+                                  const isFollow = p._count?.appointments > 0;
+                                  const fee = isFollow ? (doctorProfile?.feesFollowUp || '') : (doctorProfile?.feesNewVisit || '');
+                                  setNewApt({ ...newApt, patientId: p.id, fee: String(fee) });
+                                  setPatientSearch(p.fullName);
+                                  setShowPatientResults(false);
+                                }}
                                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
                               >
                                 <User className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -171,17 +187,26 @@ export default function RecAppointmentsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Consultation Fee</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        value={newApt.fee}
-                        onChange={(e) => setNewApt({ ...newApt, fee: e.target.value })}
-                        className="pl-9 rounded-xl"
-                      />
+                    <div className="h-11 px-3 rounded-xl border border-input bg-gray-50 dark:bg-gray-800/50 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
+                      {newApt.patientId ? (
+                        <div className="flex items-center gap-2 w-full">
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            BDT {newApt.fee || '0'}
+                          </span>
+                          {selectedPatient && (
+                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                              isFollowUp
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                            }`}>
+                              {isFollowUp ? 'Follow-up' : 'New Visit'}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Select a patient</span>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -406,6 +431,7 @@ export default function RecAppointmentsPage() {
                       <th>Patient</th>
                       <th>Patient ID</th>
                       <th>Phone</th>
+                      <th>Visit</th>
                       <th>Date</th>
                       <th>Time</th>
                       <th>Status</th>
@@ -420,6 +446,15 @@ export default function RecAppointmentsPage() {
                         <td className="font-medium text-gray-900 dark:text-white">{apt.patient?.fullName}</td>
                         <td className="font-mono text-xs text-muted-foreground">{apt.patient?.patientId || '—'}</td>
                         <td className="text-muted-foreground">{apt.patient?.phone || '—'}</td>
+                        <td>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
+                            apt.patient?._count?.appointments > 1
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                          }`}>
+                            {apt.patient?._count?.appointments > 1 ? 'Follow-up' : 'New'}
+                          </span>
+                        </td>
                         <td>{new Date(apt.date).toLocaleDateString()}</td>
                         <td className="font-mono text-sm">{apt.time}</td>
                         <td><span className={statusStyles[apt.status] || 'badge-gradient-blue'}>{apt.status}</span></td>

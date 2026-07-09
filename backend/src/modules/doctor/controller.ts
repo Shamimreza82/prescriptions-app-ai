@@ -15,13 +15,18 @@ export const getProfile = async (req: AuthRequest, res: Response, next: NextFunc
 const ALLOWED_FIELDS = [
   'fullName', 'degree', 'specialization', 'bmdcRegNo',
   'clinicName', 'clinicAddress', 'phone', 'chamberSchedule',
+  'feesNewVisit', 'feesFollowUp',
 ];
 
 export const updateProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const data: Record<string, unknown> = {};
     for (const field of ALLOWED_FIELDS) {
-      if (req.body[field] !== undefined) data[field] = req.body[field];
+      if (req.body[field] !== undefined) {
+        data[field] = field === 'feesNewVisit' || field === 'feesFollowUp'
+          ? (req.body[field] === '' ? null : Number(req.body[field]))
+          : req.body[field];
+      }
     }
     if (req.files) {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };

@@ -54,7 +54,7 @@ export default function MrReportsPage() {
   const { data: revenue, isLoading: loadingRevenue } = useReportsRevenue({ page: payPage, limit: 10 });
 
   const renderTabNav = () => (
-    <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit">
+    <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.key;
@@ -62,7 +62,7 @@ export default function MrReportsPage() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
               isActive
                 ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -154,7 +154,7 @@ function renderOverview(data: ReportsOverview | undefined, loading: boolean) {
 
       <ChartContainer title="Monthly Prescription Trend" description="Prescriptions per month across all assigned doctors (current year)">
         {chartData.length > 0 ? (
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -190,22 +190,22 @@ function renderPrescriptions(
   return (
     <Card className="p-5 premium-card-static">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-        <div className="flex-1 max-w-sm">
+        <div className="flex-1 w-full sm:max-w-sm">
           <SearchBar value={search} onChange={onSearch} />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="h-9 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+            className="h-9 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm w-full sm:w-auto"
           />
-          <span className="text-xs text-muted-foreground">to</span>
+          <span className="text-xs text-muted-foreground self-center">to</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="h-9 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+            className="h-9 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm w-full sm:w-auto"
           />
         </div>
       </div>
@@ -221,24 +221,24 @@ function renderPrescriptions(
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Rx No</TableHead>
+                <TableHead className="hidden lg:table-cell">Rx No</TableHead>
                 <TableHead>Patient</TableHead>
                 <TableHead>Doctor</TableHead>
-                <TableHead>Medicines</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="hidden lg:table-cell">Medicines</TableHead>
+                <TableHead className="hidden lg:table-cell">Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.map((rx: any) => (
                 <TableRow key={rx.id}>
-                  <TableCell className="font-mono text-xs">{rx.prescriptionNo}</TableCell>
+                  <TableCell className="font-mono text-xs hidden lg:table-cell">{rx.prescriptionNo}</TableCell>
                   <TableCell>
                     <div className="font-medium text-sm">{rx.patient?.fullName}</div>
                     <div className="text-xs text-muted-foreground">{rx.patient?.patientId}</div>
                   </TableCell>
                   <TableCell className="text-sm">{rx.doctor?.fullName}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {rx.medicines?.slice(0, 3).map((m: any) => (
                         <Badge key={m.name} variant="outline" className="text-xs">{m.name}</Badge>
@@ -248,7 +248,7 @@ function renderPrescriptions(
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                     {new Date(rx.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
@@ -294,8 +294,8 @@ function renderMedicines(
     <div className="space-y-6">
       {/* Doctor filter */}
       <div className="relative">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 max-w-sm relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="flex-1 max-w-sm relative w-full sm:w-auto">
             <SearchBar
               value={doctorSearch}
               onChange={(v) => { setDoctorSearch(v); setShowDrDropdown(true); }}
@@ -329,7 +329,7 @@ function renderMedicines(
               variant="ghost"
               size="sm"
               onClick={() => { setSelectedDoctorId(undefined); setDoctorSearch(''); setPage(1); }}
-              className="shrink-0 text-xs"
+              className="shrink-0 text-xs self-start sm:self-center"
             >
               All Doctors
             </Button>
@@ -349,12 +349,12 @@ function renderMedicines(
           </Select>
         </div>
         {chartData.length > 0 ? (
-          <div className="h-80">
+          <div className="h-72 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+              <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis type="number" tick={{ fontSize: 12 }} stroke="#9ca3af" allowDecimals={false} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9ca3af" width={75} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} stroke="#9ca3af" width={55} />
                 <Tooltip
                   contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '13px' }}
                   formatter={(value: any, _name: any, props: any) => [value, props.payload.fullName]}
@@ -377,10 +377,10 @@ function renderMedicines(
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>#</TableHead>
+                <TableHead className="hidden sm:table-cell">#</TableHead>
                 <TableHead>Brand Name</TableHead>
-                <TableHead>Strength</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead className="hidden md:table-cell">Strength</TableHead>
+                <TableHead className="hidden md:table-cell">Category</TableHead>
                 <TableHead>Times Prescribed</TableHead>
                 <TableHead>Share</TableHead>
               </TableRow>
@@ -390,10 +390,10 @@ function renderMedicines(
                 const catLabels: Record<string, string> = { 'TAB.': 'Tablet', 'CAP.': 'Capsule', 'INJ.': 'Injection', 'SYR.': 'Syrup', 'DROP': 'Drop', 'CRM.': 'Cream', 'OIN.': 'Ointment', 'SUS.': 'Suspension', 'SPRAY': 'Spray', 'INH.': 'Inhaler' };
                 return (
                   <TableRow key={`${m.name}-${m.strength}-${m.form}`}>
-                    <TableCell className="text-xs text-muted-foreground">{idx + 1}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{idx + 1}</TableCell>
                     <TableCell className="text-sm font-medium">{m.name}</TableCell>
-                    <TableCell className="text-sm">{m.strength || '—'}</TableCell>
-                    <TableCell className="text-sm">{m.form ? (catLabels[m.form] || m.form) : '—'}</TableCell>
+                    <TableCell className="text-sm hidden md:table-cell">{m.strength || '—'}</TableCell>
+                    <TableCell className="text-sm hidden md:table-cell">{m.form ? (catLabels[m.form] || m.form) : '—'}</TableCell>
                     <TableCell className="text-sm">{m._count._all}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -468,7 +468,7 @@ function renderRevenue(data: ReportsRevenue | undefined, loading: boolean, page:
 
       <ChartContainer title="Monthly Revenue" description="Subscription revenue per month (current year)">
         {chartData.some(d => d.revenue > 0) ? (
-          <div className="h-72">
+          <div className="h-60 sm:h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -496,18 +496,18 @@ function renderRevenue(data: ReportsRevenue | undefined, loading: boolean, page:
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Transaction ID</TableHead>
+                <TableHead className="hidden lg:table-cell">Transaction ID</TableHead>
                 <TableHead>Doctor</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead className="hidden lg:table-cell">Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {payments.map((p: ReportPayment) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-mono text-xs">{p.transactionId}</TableCell>
+                  <TableCell className="font-mono text-xs hidden lg:table-cell">{p.transactionId}</TableCell>
                   <TableCell className="text-sm">{p.subscription?.doctor?.fullName}</TableCell>
                   <TableCell className="text-sm">{p.subscription?.plan?.name}</TableCell>
                   <TableCell className="text-sm font-medium">BDT {p.amount.toLocaleString()}</TableCell>
@@ -516,7 +516,7 @@ function renderRevenue(data: ReportsRevenue | undefined, loading: boolean, page:
                       {p.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground hidden lg:table-cell">
                     {new Date(p.createdAt).toLocaleDateString()}
                   </TableCell>
                 </TableRow>

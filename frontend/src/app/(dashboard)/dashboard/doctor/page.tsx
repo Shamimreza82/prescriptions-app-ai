@@ -3,7 +3,7 @@
 import { useDoctorDashboard } from '@/features/dashboard/hooks';
 import { StatsCard } from '@/features/dashboard/components/StatsCard';
 import { MonthlyChart } from '@/features/dashboard/components/MonthlyChart';
-import { Users, FileText, Calendar, Activity, Clock } from 'lucide-react';
+import { Users, FileText, Calendar, Activity, Clock, UserPlus } from 'lucide-react';
 
 export default function DoctorDashboardPage() {
   const { data: stats, isLoading } = useDoctorDashboard();
@@ -23,12 +23,16 @@ export default function DoctorDashboardPage() {
   }
 
   const cards = [
-    { title: 'Total Patients', value: stats?.totalPatients || 0, icon: Users, gradient: 'gradient-primary', delay: 0 },
-    { title: 'Total Prescriptions', value: stats?.totalPrescriptions || 0, icon: FileText, gradient: 'gradient-success', delay: 0.1 },
-    { title: 'Monthly Appointments', value: stats?.monthlyAppointments || 0, icon: Calendar, gradient: 'gradient-warning', delay: 0.2 },
-    { title: 'This Month Rx', value: stats?.monthlyPrescriptions || 0, icon: Activity, gradient: 'gradient-info', delay: 0.3 },
-    { title: 'Today Rx', value: stats?.todaysPrescriptions || 0, icon: Clock, gradient: 'gradient-primary', delay: 0.4 },
+    { title: 'Today Patients', value: stats?.todaysPatients || 0, icon: UserPlus, gradient: 'gradient-info', delay: 0 },
+    { title: 'Today Rx', value: stats?.todaysPrescriptions || 0, icon: Clock, gradient: 'gradient-primary', delay: 0.1 },
+    { title: 'Total Patients', value: stats?.totalPatients || 0, icon: Users, gradient: 'gradient-primary', delay: 0.2 },
+    { title: 'Total Prescriptions', value: stats?.totalPrescriptions || 0, icon: FileText, gradient: 'gradient-success', delay: 0.3 },
+    { title: 'Monthly Appointments', value: stats?.monthlyAppointments || 0, icon: Calendar, gradient: 'gradient-warning', delay: 0.4 },
+    { title: 'This Month Rx', value: stats?.monthlyPrescriptions || 0, icon: Activity, gradient: 'gradient-info', delay: 0.5 },
   ];
+
+  // 2 cols on md, 3 on lg since we now have 6 cards
+  const gridCols = 'md:grid-cols-2 lg:grid-cols-3';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -37,7 +41,7 @@ export default function DoctorDashboardPage() {
         <p className="text-sm text-muted-foreground mt-1">Overview of your practice</p>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      <div className={`grid gap-5 ${gridCols}`}>
         {cards.map((card) => (
           <StatsCard key={card.title} {...card} />
         ))}

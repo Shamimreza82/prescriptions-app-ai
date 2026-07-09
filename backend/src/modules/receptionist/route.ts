@@ -23,6 +23,7 @@ router.delete('/my/:id', authorize('DOCTOR'), receptionistController.deleteMyRec
 
 // RECEPTIONIST endpoints
 router.get('/dashboard', authorize('RECEPTIONIST'), receptionistController.getDashboardStats);
+router.get('/doctor', authorize('RECEPTIONIST'), receptionistController.getDoctorProfile);
 
 router.get('/patients', authorize('RECEPTIONIST'), receptionistController.getPatients);
 router.post('/patients', authorize('RECEPTIONIST'), validateBody(createPatientSchema), receptionistController.createPatient);

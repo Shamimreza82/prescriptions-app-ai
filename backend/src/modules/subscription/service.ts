@@ -5,9 +5,9 @@ import { badRequest, notFound } from '../../utils/errors';
 import * as repo from './repository';
 
 export const getDoctorDashboardStats = async (doctorId: string) => {
-  const [totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, todaysPrescriptions, monthlyData] =
+  const [totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, todaysPrescriptions, todaysPatients, monthlyData] =
     await repo.getDoctorStats(doctorId);
-  return { totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, todaysPrescriptions, monthlyData };
+  return { totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, todaysPrescriptions, todaysPatients, monthlyData };
 };
 
 export const getAdminDashboardStats = async () => {

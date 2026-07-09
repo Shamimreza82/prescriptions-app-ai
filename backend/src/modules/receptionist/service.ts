@@ -17,12 +17,15 @@ export const getDashboardStats = async (userId: string) => {
   const doctorId = rec.doctorId;
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const [totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, prescriptions] = await Promise.all([
+  const [totalPatients, totalPrescriptions, monthlyAppointments, monthlyPrescriptions, todaysPatients, todaysPrescriptions, prescriptions] = await Promise.all([
     repo.countPatientsByDoctor(doctorId),
     repo.countPrescriptionsByDoctor(doctorId),
     db.appointment.count({ where: { doctorId, date: { gte: startOfMonth } } }),
     db.prescription.count({ where: { doctorId, createdAt: { gte: startOfMonth } } }),
+    db.patient.count({ where: { doctorId, createdAt: { gte: todayStart } } }),
+    db.prescription.count({ where: { doctorId, createdAt: { gte: todayStart } } }),
     db.prescription.findMany({
       where: { doctorId, createdAt: { gte: new Date(now.getFullYear() - 1, 0, 1) } },
       select: { createdAt: true },
@@ -41,6 +44,8 @@ export const getDashboardStats = async (userId: string) => {
     totalPrescriptions,
     monthlyAppointments,
     monthlyPrescriptions,
+    todaysPatients,
+    todaysPrescriptions,
     monthlyData: monthlyCounts,
   } as const;
 };
@@ -87,6 +92,11 @@ export const updatePatientForDoctor = async (userId: string, patientId: string, 
   if (!patient) throw notFound('Patient not found');
   await checkDuplicatePhone(input.phone, rec.doctorId, patientId);
   return repo.updatePatient(patientId, rec.doctorId, input);
+};
+
+export const getDoctorProfile = async (userId: string) => {
+  const rec = await getReceptionistOrThrow(userId);
+  return rec.doctor;
 };
 
 export const getAppointmentsByDoctor = async (userId: string, query: Request['query']) => {
