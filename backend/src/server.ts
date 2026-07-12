@@ -2,7 +2,6 @@ import app from './app';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 import { db } from './config/database';
-import { setupTerminalWs } from './modules/admin/terminal';
 process.on('uncaughtException', (err) => {
   logger.error('UNCAUGHT_EXCEPTION', { err });
   process.exit(1);
@@ -15,8 +14,6 @@ process.on('unhandledRejection', (reason) => {
 const server = app.listen(env.port, () => {
   logger.info(`Server running in ${env.nodeEnv} mode on port ${env.port}`);
 });
-
-setupTerminalWs(server);
 
 const shutdown = async (signal: string) => {
   logger.info(`${signal} received — shutting down gracefully`);

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Download, Trash2, Upload, RotateCw, HardDrive, AlertTriangle, Loader2, Terminal, ChevronDown, Copy, Check, ExternalLink } from 'lucide-react';
+import { Download, Trash2, Upload, RotateCw, HardDrive, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface BackupFile {
   filename: string;
@@ -14,49 +14,6 @@ interface BackupFile {
   sizeFormatted: string;
   createdAt: string;
 }
-
-const COMMANDS = [
-  {
-    label: 'Create Backup',
-    cmd: 'npm run backup:db',
-    desc: 'Quick backup via npm script (run from project root on VPS)',
-  },
-  {
-    label: 'Backup (direct)',
-    cmd: 'bash backend/scripts/backup-db.sh',
-    desc: 'Same command, run from project root',
-  },
-  {
-    label: 'List Backups',
-    cmd: 'ls -lh backend/backups/',
-    desc: 'View all backup files with sizes and timestamps',
-  },
-  {
-    label: 'Download via SCP',
-    cmd: 'scp user@your-vps-ip:~/pres-manage-app/backend/backups/pres_manage_20260709_*.sql.gz .',
-    desc: 'Copy a backup from VPS to your local machine',
-  },
-  {
-    label: 'Upload via SCP',
-    cmd: 'scp ./your-backup.sql.gz user@your-vps-ip:~/pres-manage-app/backend/backups/',
-    desc: 'Upload a backup file to the VPS backup directory',
-  },
-  {
-    label: 'Restore via CLI',
-    cmd: 'gunzip -c backend/backups/pres_manage_20260709_*.sql.gz | psql "$DATABASE_URL"',
-    desc: 'Restore a backup directly from terminal',
-  },
-  {
-    label: 'Restore (specific file)',
-    cmd: 'gunzip -c backend/backups/YOUR_FILE.sql.gz | psql "$DATABASE_URL"',
-    desc: 'Replace YOUR_FILE.sql.gz with the actual filename',
-  },
-  {
-    label: 'SSH into VPS',
-    cmd: 'ssh user@your-vps-ip',
-    desc: 'Login to your VPS to run backup/restore commands directly',
-  },
-];
 
 export default function AdminBackupPage() {
   const [backups, setBackups] = useState<BackupFile[]>([]);
@@ -68,8 +25,6 @@ export default function AdminBackupPage() {
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restoreConfirm, setRestoreConfirm] = useState('');
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
-  const [shellOpen, setShellOpen] = useState(false);
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const fetchBackups = useCallback(async () => {
     try {
@@ -149,16 +104,6 @@ export default function AdminBackupPage() {
       toast.error(err.response?.data?.message || 'Failed to restore database');
     } finally {
       setRestoring(false);
-    }
-  };
-
-  const copyCommand = async (idx: number, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedIdx(idx);
-      setTimeout(() => setCopiedIdx(null), 2000);
-    } catch {
-      toast.error('Failed to copy');
     }
   };
 
@@ -281,66 +226,6 @@ export default function AdminBackupPage() {
           </div>
         </div>
       </div>
-
-      {/* Shell Commands */}
-      <div className="premium-card-static">
-        <button
-          onClick={() => setShellOpen(!shellOpen)}
-          className="w-full px-5 py-4 flex items-center justify-between text-left"
-        >
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Terminal className="h-4 w-4" />
-            Shell Commands (VPS Terminal)
-          </h2>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${shellOpen ? 'rotate-0' : '-rotate-90'}`} />
-        </button>
-        {shellOpen && (
-          <div className="px-5 pb-5 space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Run these commands directly on your VPS via SSH. Files are stored in <code className="text-blue-600 dark:text-blue-400">backend/backups/</code>.
-            </p>
-            {COMMANDS.map((item, idx) => (
-              <div key={idx} className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{item.label}</span>
-                  <button
-                    onClick={() => copyCommand(idx, item.cmd)}
-                    className="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-                    title="Copy command"
-                  >
-                    {copiedIdx === idx ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                  </button>
-                </div>
-                <div className="px-4 py-3 bg-gray-900 dark:bg-black">
-                  <code className="text-sm text-green-400 font-mono break-all">$ {item.cmd}</code>
-                </div>
-                <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/30">
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* VPS Terminal Link */}
-      <a
-        href="/dashboard/admin/terminal"
-        className="premium-card-static block group hover:border-blue-200 dark:hover:border-blue-800 transition-colors"
-      >
-        <div className="px-5 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Terminal className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">VPS Terminal</h2>
-              <p className="text-xs text-muted-foreground">Open interactive terminal to run commands directly on the server</p>
-            </div>
-          </div>
-          <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-blue-600 transition-colors" />
-        </div>
-      </a>
 
       {/* Delete Confirm */}
       <ConfirmDialog
