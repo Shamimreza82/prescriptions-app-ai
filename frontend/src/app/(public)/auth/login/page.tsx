@@ -3,13 +3,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { useThemeContext } from '@/providers/theme-provider';
 import { useLogin } from '@/features/auth/hooks';
 import { loginSchema } from '@/features/auth/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Stethoscope, Moon, Sun, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -18,7 +17,6 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const login = useLogin();
-  const { theme, toggle } = useThemeContext();
   const {
     register,
     handleSubmit,
@@ -29,28 +27,20 @@ export default function LoginPage() {
   const onSubmit = (data: LoginForm) => login.mutate(data);
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
-      {/* Animated background blobs */}
+    <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-200/30 dark:bg-blue-800/10 rounded-full blur-3xl animate-float" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-200/30 dark:bg-indigo-800/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-100/20 to-indigo-100/20 dark:from-blue-900/5 dark:to-indigo-900/5 rounded-full blur-3xl hidden sm:block" />
       </div>
 
-      {/* Theme toggle */}
-      <Button variant="ghost" size="icon" onClick={toggle} className="fixed top-6 right-6 z-50 bg-white/50 dark:bg-gray-800/50 backdrop-blur-xl rounded-full border border-gray-200 dark:border-gray-700 hover:bg-white/80 dark:hover:bg-gray-800/80">
-        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      </Button>
-
-      <div className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-8">
+      <div className="relative z-10 flex items-center justify-center py-24 sm:py-28 px-4 sm:px-8">
         <div className="w-full max-w-md animate-fade-in">
-          {/* Logo/brand */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gradient">Prescribe Pro</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">Doctor Prescription Management System</p>
           </div>
 
-          {/* Card */}
           <div className="glass-strong rounded-2xl p-8 space-y-6">
             <div className="text-center">
               <h2 className="text-xl font-semibold">Welcome back</h2>
@@ -105,7 +95,6 @@ export default function LoginPage() {
             </form>
           </div>
 
-          {/* Demo credentials */}
           <div className="mt-6 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50">
             <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">Demo Credentials</p>
             <div className="space-y-1.5">

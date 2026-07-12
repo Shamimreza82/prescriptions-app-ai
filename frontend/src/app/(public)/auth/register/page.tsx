@@ -8,7 +8,7 @@ import { registerSchema } from '@/features/auth/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Stethoscope, Mail, Lock, User, ArrowRight, UserPlus, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { z } from 'zod';
 
@@ -30,26 +30,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
-      {/* Animated background blobs */}
+    <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-950 dark:via-gray-900 dark:to-blue-950">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-200/30 dark:bg-indigo-800/10 rounded-full blur-3xl animate-float" />
         <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-blue-200/30 dark:bg-blue-800/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
         <div className="absolute top-1/3 right-1/4 w-64 h-64 bg-purple-200/20 dark:bg-purple-800/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }} />
       </div>
 
-      <div className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-8">
+      <div className="relative z-10 flex items-center justify-center py-24 sm:py-28 px-4 sm:px-8">
         <div className="w-full max-w-md animate-fade-in">
-          {/* Brand */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary shadow-glow mb-4 animate-scale-in">
-              <UserPlus className="h-8 w-8 text-white" />
-            </div>
             <h1 className="text-3xl font-bold text-gradient">Create Account</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">Register as a new doctor</p>
           </div>
 
-          {/* Card */}
           <div className="glass-strong rounded-2xl p-8 space-y-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
