@@ -133,14 +133,34 @@ model Mr {
   createdAt   DateTime @default(now())            @map("created_at")
   updatedAt   DateTime @updatedAt                 @map("updated_at")
 
-  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  doctors   DoctorMrAssignment[]
-  payments  Payment[]
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctors           DoctorMrAssignment[]
+  payments          Payment[]
+  trackedMedicines  TrackedMedicine[]
 
   @@index([fullName])
   @@index([phone])
   @@index([createdAt])
   @@map("mrs")
+}
+
+model TrackedMedicine {
+  id          String   @id @default(uuid())
+  mrId        String                              @map("mr_id")
+  name        String
+  genericName String?                             @map("generic_name")
+  strength    String?
+  form        String?
+  isActive    Boolean  @default(true)             @map("is_active")
+  createdAt   DateTime @default(now())            @map("created_at")
+  updatedAt   DateTime @updatedAt                 @map("updated_at")
+
+  mr Mr @relation(fields: [mrId], references: [id], onDelete: Cascade)
+
+  @@unique([mrId, name])
+  @@index([mrId])
+  @@index([mrId, isActive])
+  @@map("tracked_medicines")
 }
 
 model DoctorMrAssignment {

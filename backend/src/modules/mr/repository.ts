@@ -413,6 +413,364 @@ export const findPrescriptionForMr = (id: string, doctorIds: string[]) =>
     },
   });
 
+// ── Tracked Medicine CRUD ──────────────────────────────────────────
+
+export const createTrackedMedicine = (mrId: string, data: { name: string; genericName?: string; strength?: string; form?: string }) =>
+  db.trackedMedicine.create({ data: { ...data, mrId } });
+
+export const findAllTrackedMedicines = (mrId: string, pagination?: PaginationParams) => {
+  if (!pagination) {
+    return db.trackedMedicine.findMany({
+      where: { mrId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+  const where: any = { mrId };
+  if (pagination.search) {
+    where.OR = [
+      { name: { contains: pagination.search, mode: 'insensitive' } },
+      { genericName: { contains: pagination.search, mode: 'insensitive' } },
+    ];
+  }
+  return Promise.all([
+    db.trackedMedicine.findMany({
+      where,
+      skip: pagination.skip,
+      take: pagination.limit,
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.trackedMedicine.count({ where }),
+  ] as const);
+};
+
+export const findActiveTrackedMedicineNames = (mrId: string) =>
+  db.trackedMedicine.findMany({
+    where: { mrId, isActive: true },
+    select: { name: true },
+  }).then((rows) => rows.map((r) => r.name));
+
+export const toggleTrackedMedicineStatus = async (id: string, mrId: string) => {
+  const med = await db.trackedMedicine.findUnique({ where: { id } });
+  if (!med || med.mrId !== mrId) throw new Error('Not found');
+  return db.trackedMedicine.update({
+    where: { id },
+    data: { isActive: !med.isActive },
+  });
+};
+
+export const deleteTrackedMedicine = (id: string, mrId: string) =>
+  db.trackedMedicine.delete({ where: { id, mrId } });
+
+// ── Audit Queries ──────────────────────────────────────────────────
+
+export const getAuditOverview = async (mrId: string) => {
+  const mr = await db.mr.findUnique({
+    where: { id: mrId },
+    include: { doctors: { select: { doctorId: true } } },
+  });
+  if (!mr) throw new Error('MR not found');
+  const doctorIds = mr.doctors.map((d) => d.doctorId);
+  const trackedNames = await findActiveTrackedMedicineNames(mrId);
+
+  if (doctorIds.length === 0 || trackedNames.length === 0) {
+    return {
+      trackedMedicinesCount: 0,
+      activeTrackedMedicinesCount: 0,
+      doctorsPrescribingTracked: 0,
+      totalTrackedPrescriptions: 0,
+      topTrackedMedicine: null,
+      thisMonthTracked: 0,
+      lastMonthTracked: 0,
+      trendPercent: 0,
+    };
+  }
+
+  const [totalTracked, medicineRanking, doctorsPrescribing, trackedCount, thisMonthCount, lastMonthCount] = await Promise.all([
+    // Total prescriptions containing any tracked medicine
+    db.prescription.count({
+      where: {
+        doctorId: { in: doctorIds },
+        medicines: { some: { name: { in: trackedNames } } },
+      },
+    }),
+    // Top tracked medicine
+    db.medicine.groupBy({
+      by: ['name'],
+      where: {
+        name: { in: trackedNames },
+        prescription: { doctorId: { in: doctorIds } },
+      },
+      _count: { name: true },
+      orderBy: { _count: { name: 'desc' } },
+      take: 1,
+    }),
+    // How many doctors prescribed at least one tracked medicine
+    db.prescription.groupBy({
+      by: ['doctorId'],
+      where: {
+        doctorId: { in: doctorIds },
+        medicines: { some: { name: { in: trackedNames } } },
+      },
+    }),
+    // Active tracked medicines count
+    db.trackedMedicine.count({ where: { mrId, isActive: true } }),
+    // This month
+    (() => {
+      const now = new Date();
+      const ms = new Date(now.getFullYear(), now.getMonth(), 1);
+      const me = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      return db.prescription.count({
+        where: {
+          doctorId: { in: doctorIds },
+          medicines: { some: { name: { in: trackedNames } } },
+          createdAt: { gte: ms, lt: me },
+        },
+      });
+    })(),
+    // Last month
+    (() => {
+      const now = new Date();
+      const ms = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const me = new Date(now.getFullYear(), now.getMonth(), 1);
+      return db.prescription.count({
+        where: {
+          doctorId: { in: doctorIds },
+          medicines: { some: { name: { in: trackedNames } } },
+          createdAt: { gte: ms, lt: me },
+        },
+      });
+    })(),
+  ]);
+
+  const topMedicine = medicineRanking.length > 0
+    ? { name: medicineRanking[0].name, count: medicineRanking[0]._count.name }
+    : null;
+
+  const trendPercent = lastMonthCount === 0
+    ? (thisMonthCount > 0 ? 100 : 0)
+    : Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
+
+  return {
+    trackedMedicinesCount: trackedNames.length,
+    activeTrackedMedicinesCount: trackedCount,
+    doctorsPrescribingTracked: doctorsPrescribing.length,
+    totalTrackedPrescriptions: totalTracked,
+    topTrackedMedicine: topMedicine,
+    thisMonthTracked: thisMonthCount,
+    lastMonthTracked: lastMonthCount,
+    trendPercent,
+  };
+};
+
+export const getDoctorAudit = async (mrId: string, pagination: { skip: number; limit: number }) => {
+  const mr = await db.mr.findUnique({ where: { id: mrId }, include: { doctors: { select: { doctorId: true } } } });
+  if (!mr) throw new Error('MR not found');
+  const doctorIds = mr.doctors.map((d) => d.doctorId);
+  const trackedNames = await findActiveTrackedMedicineNames(mrId);
+
+  if (doctorIds.length === 0 || trackedNames.length === 0) {
+    return { data: [], total: 0 };
+  }
+
+  const total = doctorIds.length;
+
+  // Fetch doctors with their prescription data
+  const doctors = await db.doctor.findMany({
+    where: { id: { in: doctorIds } },
+    skip: pagination.skip,
+    take: pagination.limit,
+    select: {
+      id: true,
+      fullName: true,
+      clinicName: true,
+      _count: { select: { prescriptions: true } },
+    },
+    orderBy: { fullName: 'asc' },
+  });
+
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const data = await Promise.all(
+    doctors.map(async (doctor) => {
+      const [trackedCount, lastRx, thisMonthCount, lastMonthCount] = await Promise.all([
+        db.prescription.count({
+          where: {
+            doctorId: doctor.id,
+            medicines: { some: { name: { in: trackedNames } } },
+          },
+        }),
+        db.prescription.findFirst({
+          where: {
+            doctorId: doctor.id,
+            medicines: { some: { name: { in: trackedNames } } },
+          },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        }),
+        db.prescription.count({
+          where: {
+            doctorId: doctor.id,
+            medicines: { some: { name: { in: trackedNames } } },
+            createdAt: { gte: currentMonthStart },
+          },
+        }),
+        db.prescription.count({
+          where: {
+            doctorId: doctor.id,
+            medicines: { some: { name: { in: trackedNames } } },
+            createdAt: { gte: prevMonthStart, lt: currentMonthStart },
+          },
+        }),
+      ]);
+
+      const totalRx = doctor._count?.prescriptions || 0;
+      const engagementPercent = totalRx === 0 ? 0 : Math.round((trackedCount / totalRx) * 100);
+
+      let trend: 'up' | 'down' | 'flat' = 'flat';
+      if (thisMonthCount > lastMonthCount) trend = 'up';
+      else if (thisMonthCount < lastMonthCount) trend = 'down';
+
+      return {
+        doctorId: doctor.id,
+        doctorName: doctor.fullName,
+        clinicName: doctor.clinicName || '',
+        totalPrescriptions: totalRx,
+        trackedPrescriptions: trackedCount,
+        engagementPercent,
+        lastPrescriptionDate: lastRx?.createdAt.toISOString() || null,
+        trend,
+      };
+    })
+  );
+
+  return { data, total };
+};
+
+export const getMedicineAudit = async (mrId: string, pagination: { skip: number; limit: number }) => {
+  const mr = await db.mr.findUnique({ where: { id: mrId }, include: { doctors: { select: { doctorId: true } } } });
+  if (!mr) throw new Error('MR not found');
+  const doctorIds = mr.doctors.map((d) => d.doctorId);
+  const trackedMedicines = await db.trackedMedicine.findMany({
+    where: { mrId, isActive: true },
+    select: { name: true, genericName: true, strength: true, form: true },
+  });
+
+  if (doctorIds.length === 0 || trackedMedicines.length === 0) {
+    return { data: [], total: 0 };
+  }
+
+  const trackedNames = trackedMedicines.map((m) => m.name);
+
+  // Get all matching medicines from prescriptions
+  const medicineGroups = await db.medicine.groupBy({
+    by: ['name'],
+    where: {
+      name: { in: trackedNames },
+      prescription: { doctorId: { in: doctorIds } },
+    },
+    _count: { name: true },
+    orderBy: { _count: { name: 'desc' } },
+    skip: pagination.skip,
+    take: pagination.limit,
+  });
+
+  const total = trackedMedicines.length;
+
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const data = await Promise.all(
+    medicineGroups.map(async (mg) => {
+      const tracked = trackedMedicines.find((t) => t.name === mg.name);
+      const [doctorsCount, thisMonthCount, lastMonthCount] = await Promise.all([
+        db.prescription.groupBy({
+          by: ['doctorId'],
+          where: {
+            doctorId: { in: doctorIds },
+            medicines: { some: { name: mg.name } },
+          },
+        }).then((r) => r.length),
+        db.prescription.count({
+          where: {
+            doctorId: { in: doctorIds },
+            medicines: { some: { name: mg.name } },
+            createdAt: { gte: currentMonthStart },
+          },
+        }),
+        db.prescription.count({
+          where: {
+            doctorId: { in: doctorIds },
+            medicines: { some: { name: mg.name } },
+            createdAt: { gte: prevMonthStart, lt: currentMonthStart },
+          },
+        }),
+      ]);
+
+      let trend: 'up' | 'down' | 'flat' = 'flat';
+      if (thisMonthCount > lastMonthCount) trend = 'up';
+      else if (thisMonthCount < lastMonthCount) trend = 'down';
+
+      return {
+        name: mg.name,
+        genericName: tracked?.genericName || null,
+        strength: tracked?.strength || null,
+        form: tracked?.form || null,
+        totalPrescriptions: mg._count.name,
+        doctorsCount,
+        trend,
+      };
+    })
+  );
+
+  return { data, total };
+};
+
+export const getAuditTrends = async (mrId: string, filters?: { doctorId?: string; medicineName?: string }) => {
+  const mr = await db.mr.findUnique({ where: { id: mrId }, include: { doctors: { select: { doctorId: true } } } });
+  if (!mr) throw new Error('MR not found');
+  let doctorIds = mr.doctors.map((d) => d.doctorId);
+  const trackedNames = await findActiveTrackedMedicineNames(mrId);
+
+  if (filters?.doctorId) {
+    if (!doctorIds.includes(filters.doctorId)) throw new Error('Doctor not assigned');
+    doctorIds = [filters.doctorId];
+  }
+
+  const medicineFilter = filters?.medicineName
+    ? [filters.medicineName]
+    : trackedNames;
+
+  if (doctorIds.length === 0 || medicineFilter.length === 0) {
+    return Array.from({ length: 12 }, (_, i) => ({
+      month: new Date(2025, i, 1).toLocaleString('default', { month: 'short' }),
+      count: 0,
+    }));
+  }
+
+  const now = new Date();
+  const months = await Promise.all(
+    Array.from({ length: 12 }, (_, i) => {
+      const ms = new Date(now.getFullYear(), i, 1);
+      const me = new Date(now.getFullYear(), i + 1, 1);
+      return db.prescription.count({
+        where: {
+          doctorId: { in: doctorIds },
+          medicines: { some: { name: { in: medicineFilter } } },
+          createdAt: { gte: ms, lt: me },
+        },
+      });
+    })
+  );
+
+  return months.map((count, i) => ({
+    month: new Date(now.getFullYear(), i, 1).toLocaleString('default', { month: 'short' }),
+    count,
+  }));
+};
+
 export const downgradeExpiredSubscriptions = async (doctorIds: string[]) => {
   const now = new Date();
   const freePlan = await db.plan.findFirst({ where: { price: 0, isActive: true } });

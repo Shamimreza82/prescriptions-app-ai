@@ -155,6 +155,90 @@ export const getReportsOverview = async (req: AuthRequest, res: Response, next: 
   }
 };
 
+// ── Audit Controllers ──────────────────────────────────────────────
+
+export const getAuditOverview = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const overview = await mrService.getAuditOverview(req.user!.userId);
+    sendSuccess(res, overview);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAuditDoctors = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { data, total } = await mrService.getAuditDoctors(req.user!.userId, req.query);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    sendPaginated(res, data, total, page, limit);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAuditMedicines = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { data, total } = await mrService.getAuditMedicines(req.user!.userId, req.query);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    sendPaginated(res, data, total, page, limit);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAuditTrends = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const trends = await mrService.getAuditTrends(req.user!.userId, req.query);
+    sendSuccess(res, trends);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ── Tracked Medicine Controllers ───────────────────────────────────
+
+export const listTrackedMedicines = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await mrService.listTrackedMedicines(req.user!.userId, req.query) as any;
+    if (typeof result === 'object' && 'length' in result && result.length === 2 && typeof result[1] === 'number') {
+      sendPaginated(res, result[0], result[1], Number(req.query.page) || 1, Number(req.query.limit) || 20);
+    } else {
+      sendSuccess(res, result);
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addTrackedMedicine = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const medicine = await mrService.addTrackedMedicine(req.user!.userId, req.body);
+    sendSuccess(res, medicine, 201);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const toggleTrackedMedicine = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const medicine = await mrService.toggleTrackedMedicine(req.user!.userId, req.params.id as string);
+    sendSuccess(res, medicine);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const removeTrackedMedicine = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    await mrService.removeTrackedMedicine(req.user!.userId, req.params.id as string);
+    sendSuccess(res, { message: 'Tracked medicine removed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getReportsPrescriptions = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const result = await mrService.getReportsPrescriptions(req.user!.userId, req.query);

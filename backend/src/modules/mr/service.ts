@@ -4,7 +4,7 @@ import { getPaginationParams } from '../../utils/pagination';
 import { db } from '../../config/database';
 import { env } from '../../config/env';
 import * as repo from './repository';
-import { CreateMrInput, UpdateMrInput, AssignDoctorsInput, SubscribeDoctorInput } from './types';
+import { CreateMrInput, UpdateMrInput, AssignDoctorsInput, SubscribeDoctorInput, CreateTrackedMedicineInput } from './types';
 import { Request } from 'express';
 import { generatePrescriptionPDF } from '../prescription/pdf';
 import type { Prisma } from '@prisma/client';
@@ -356,6 +356,65 @@ export const getReportsRevenue = async (userId: string, query: Request['query'])
     paymentsPage: pagination.page,
     paymentsTotalPages: Math.ceil(paymentsTotal / pagination.limit),
   };
+};
+
+// ── Tracked Medicine Services ──────────────────────────────────────
+
+export const addTrackedMedicine = async (userId: string, input: CreateTrackedMedicineInput) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  return repo.createTrackedMedicine(mr.id, input);
+};
+
+export const listTrackedMedicines = async (userId: string, query?: Request['query']) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  if (!query) return repo.findAllTrackedMedicines(mr.id);
+  const pagination = getPaginationParams(query);
+  return repo.findAllTrackedMedicines(mr.id, pagination);
+};
+
+export const toggleTrackedMedicine = async (userId: string, medicineId: string) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  return repo.toggleTrackedMedicineStatus(medicineId, mr.id);
+};
+
+export const removeTrackedMedicine = async (userId: string, medicineId: string) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  return repo.deleteTrackedMedicine(medicineId, mr.id);
+};
+
+// ── Audit Services ─────────────────────────────────────────────────
+
+export const getAuditOverview = async (userId: string) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  return repo.getAuditOverview(mr.id);
+};
+
+export const getAuditDoctors = async (userId: string, query: Request['query']) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  const pagination = getPaginationParams(query);
+  return repo.getDoctorAudit(mr.id, pagination);
+};
+
+export const getAuditMedicines = async (userId: string, query: Request['query']) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  const pagination = getPaginationParams(query);
+  return repo.getMedicineAudit(mr.id, pagination);
+};
+
+export const getAuditTrends = async (userId: string, query: Request['query']) => {
+  const mr = await repo.findMrByUserId(userId);
+  if (!mr) throw notFound('MR profile not found');
+  const filters: { doctorId?: string; medicineName?: string } = {};
+  if (query.doctorId) filters.doctorId = query.doctorId as string;
+  if (query.medicineName) filters.medicineName = query.medicineName as string;
+  return repo.getAuditTrends(mr.id, filters);
 };
 
 export const subscribeDoctor = async (mrUserId: string, doctorId: string, input: SubscribeDoctorInput) => {

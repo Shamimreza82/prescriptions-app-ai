@@ -1,12 +1,22 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../../middlewares/auth';
 import { validateBody } from '../../middlewares/validate';
-import { createMrSchema, updateMrSchema, assignDoctorsSchema, subscribeDoctorSchema } from './validation';
+import { createMrSchema, updateMrSchema, assignDoctorsSchema, subscribeDoctorSchema, createTrackedMedicineSchema } from './validation';
 import * as mrController from './controller';
 
 const router = Router();
 
 router.use(authenticate);
+
+// ── Audit Routes ───────────────────────────────────────────────────
+router.get('/audit/overview', authorize('MEDICAL_REPRESENTATIVE'), mrController.getAuditOverview);
+router.get('/audit/doctors', authorize('MEDICAL_REPRESENTATIVE'), mrController.getAuditDoctors);
+router.get('/audit/medicines', authorize('MEDICAL_REPRESENTATIVE'), mrController.getAuditMedicines);
+router.get('/audit/trends', authorize('MEDICAL_REPRESENTATIVE'), mrController.getAuditTrends);
+router.get('/audit/tracked-medicines', authorize('MEDICAL_REPRESENTATIVE'), mrController.listTrackedMedicines);
+router.post('/audit/tracked-medicines', authorize('MEDICAL_REPRESENTATIVE'), validateBody(createTrackedMedicineSchema), mrController.addTrackedMedicine);
+router.patch('/audit/tracked-medicines/:id/toggle', authorize('MEDICAL_REPRESENTATIVE'), mrController.toggleTrackedMedicine);
+router.delete('/audit/tracked-medicines/:id', authorize('MEDICAL_REPRESENTATIVE'), mrController.removeTrackedMedicine);
 
 router.get('/dashboard', authorize('MEDICAL_REPRESENTATIVE'), mrController.getDashboardStats);
 router.get('/reports/overview', authorize('MEDICAL_REPRESENTATIVE'), mrController.getReportsOverview);

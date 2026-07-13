@@ -53,3 +53,31 @@ export const getReportsMedicines = (params?: { page?: number; limit?: number; do
 
 export const getReportsRevenue = (params?: { page?: number; limit?: number }) =>
   api.get('/mr/reports/revenue', { params }).then((r) => r.data.data);
+
+// ── Audit API ──────────────────────────────────────────────────────
+
+export const getAuditOverview = () =>
+  api.get('/mr/audit/overview').then((r) => r.data.data);
+
+export const getAuditDoctors = (params?: { page?: number; limit?: number }) =>
+  api.get('/mr/audit/doctors', { params }).then((r) => r.data);
+
+export const getAuditMedicines = (params?: { page?: number; limit?: number }) =>
+  api.get('/mr/audit/medicines', { params }).then((r) => r.data);
+
+export const getAuditTrends = (params?: { doctorId?: string; medicineName?: string }) =>
+  api.get('/mr/audit/trends', { params }).then((r) => r.data.data);
+
+// ── Tracked Medicines API ──────────────────────────────────────────
+
+export const listTrackedMedicines = (params?: { page?: number; limit?: number; search?: string }) =>
+  api.get('/mr/audit/tracked-medicines', { params }).then((r) => r.data);
+
+export const addTrackedMedicine = (data: { name: string; genericName?: string; strength?: string; form?: string }) =>
+  api.post('/mr/audit/tracked-medicines', data).then((r) => r.data.data);
+
+export const toggleTrackedMedicine = (id: string) =>
+  api.patch(`/mr/audit/tracked-medicines/${id}/toggle`).then((r) => r.data.data);
+
+export const removeTrackedMedicine = (id: string) =>
+  api.delete(`/mr/audit/tracked-medicines/${id}`).then((r) => r.data.data);

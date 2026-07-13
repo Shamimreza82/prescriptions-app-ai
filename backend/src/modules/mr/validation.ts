@@ -33,3 +33,10 @@ export const subscribeDoctorSchema = z.object({
   transactionId: z.string().min(1, 'Transaction ID is required').optional(),
   notes: z.string().optional(),
 });
+
+export const createTrackedMedicineSchema = z.object({
+  name: z.string().min(1, 'Medicine name is required'),
+  genericName: z.string().optional(),
+  strength: z.string().optional(),
+  form: z.string().optional(),
+});

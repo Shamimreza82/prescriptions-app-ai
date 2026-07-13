@@ -152,6 +152,76 @@ export const useMrSubscriptions = (params?: { page?: number; limit?: number; sea
     queryFn: () => mrApi.getMrSubscriptions(params),
   });
 
+// ── Audit Hooks ────────────────────────────────────────────────────
+
+export const useAuditOverview = () =>
+  useQuery({
+    queryKey: ['mr', 'audit', 'overview'],
+    queryFn: mrApi.getAuditOverview,
+  });
+
+export const useAuditDoctors = (params?: { page?: number; limit?: number }) =>
+  useQuery({
+    queryKey: ['mr', 'audit', 'doctors', params],
+    queryFn: () => mrApi.getAuditDoctors(params),
+  });
+
+export const useAuditMedicines = (params?: { page?: number; limit?: number }) =>
+  useQuery({
+    queryKey: ['mr', 'audit', 'medicines', params],
+    queryFn: () => mrApi.getAuditMedicines(params),
+  });
+
+export const useAuditTrends = (params?: { doctorId?: string; medicineName?: string }) =>
+  useQuery({
+    queryKey: ['mr', 'audit', 'trends', params],
+    queryFn: () => mrApi.getAuditTrends(params),
+  });
+
+export const useTrackedMedicines = (params?: { page?: number; limit?: number; search?: string }) =>
+  useQuery({
+    queryKey: ['mr', 'audit', 'tracked-medicines', params],
+    queryFn: () => mrApi.listTrackedMedicines(params),
+  });
+
+export const useAddTrackedMedicine = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: mrApi.addTrackedMedicine,
+    onSuccess: () => {
+      toast.success('Medicine added to tracking');
+      qc.invalidateQueries({ queryKey: ['mr', 'audit', 'tracked-medicines'] });
+      qc.invalidateQueries({ queryKey: ['mr', 'audit', 'overview'] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to add medicine'),
+  });
+};
+
+export const useToggleTrackedMedicine = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: mrApi.toggleTrackedMedicine,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mr', 'audit', 'tracked-medicines'] });
+      qc.invalidateQueries({ queryKey: ['mr', 'audit', 'overview'] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to update medicine'),
+  });
+};
+
+export const useRemoveTrackedMedicine = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: mrApi.removeTrackedMedicine,
+    onSuccess: () => {
+      toast.success('Medicine removed from tracking');
+      qc.invalidateQueries({ queryKey: ['mr', 'audit', 'tracked-medicines'] });
+      qc.invalidateQueries({ queryKey: ['mr', 'audit', 'overview'] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to remove medicine'),
+  });
+};
+
 export const useSubscribeDoctor = () => {
   const qc = useQueryClient();
   return useMutation({

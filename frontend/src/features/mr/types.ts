@@ -137,6 +137,57 @@ export interface DashboardStats {
   recentActivity: RecentActivityItem[];
 }
 
+// ── Audit Types ────────────────────────────────────────────────────
+
+export interface TrackedMedicine {
+  id: string;
+  mrId: string;
+  name: string;
+  genericName: string | null;
+  strength: string | null;
+  form: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MrAuditOverview {
+  trackedMedicinesCount: number;
+  activeTrackedMedicinesCount: number;
+  doctorsPrescribingTracked: number;
+  totalTrackedPrescriptions: number;
+  topTrackedMedicine: { name: string; count: number } | null;
+  thisMonthTracked: number;
+  lastMonthTracked: number;
+  trendPercent: number;
+}
+
+export interface MrAuditDoctor {
+  doctorId: string;
+  doctorName: string;
+  clinicName: string;
+  totalPrescriptions: number;
+  trackedPrescriptions: number;
+  engagementPercent: number;
+  lastPrescriptionDate: string | null;
+  trend: 'up' | 'down' | 'flat';
+}
+
+export interface MrAuditMedicine {
+  name: string;
+  genericName: string | null;
+  strength: string | null;
+  form: string | null;
+  totalPrescriptions: number;
+  doctorsCount: number;
+  trend: 'up' | 'down' | 'flat';
+}
+
+export interface MrAuditTrend {
+  month: string;
+  count: number;
+}
+
 export interface MrSubscription {
   doctor: {
     id: string;
