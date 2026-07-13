@@ -9,7 +9,12 @@ const formAbbr: Record<string, string> = {
 
 export const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
 
-export const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
+export const fmtDur = (d?: string) => {
+  if (!d) return '—';
+  if (/continuous/i.test(d)) return d;
+  if (/day/i.test(d)) return d;
+  return `${d} Days`;
+};
 
 export const getApiBase = () => process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
 

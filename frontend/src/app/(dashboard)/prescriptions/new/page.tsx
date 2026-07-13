@@ -29,7 +29,12 @@ const formAbbr: Record<string, string> = {
   'Lotion': 'LOT.', 'Spray': 'SPRAY.', 'Powder': 'PDR.', 'Sachet': 'SACH.',
 };
 const getForm = (f?: string) => (f ? formAbbr[f] || f.toUpperCase() + '.' : '');
-const fmtDur = (d?: string) => (d ? (/day/i.test(d) ? d : `${d} Days`) : '—');
+const fmtDur = (d?: string) => {
+  if (!d) return '—';
+  if (/continuous/i.test(d)) return d;
+  if (/day/i.test(d)) return d;
+  return `${d} Days`;
+};
 
 function NewPrescriptionForm() {
   const router = useRouter();
@@ -682,6 +687,7 @@ function NewPrescriptionForm() {
                       <option value="45 Days" />
                       <option value="60 Days" />
                       <option value="90 Days" />
+                      <option value="Continuous / চলমান" />
                     </datalist>
                     {errors.medicines?.[i]?.duration && <p className="text-xs text-red-500">{errors.medicines[i]?.duration?.message}</p>}
                   </div>
