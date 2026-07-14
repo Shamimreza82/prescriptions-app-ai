@@ -11,13 +11,15 @@ import { prescriptionSchema } from '@/features/prescriptions/schema';
 import { useMySubscription } from '@/features/plans/hooks';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical, Activity } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical, Activity, Eye, Phone, MapPin, Droplets, Ruler, Weight, Calendar, Stethoscope } from 'lucide-react';
 import { useMedicineSearch, useLabTestSearch, useIndicationSearch } from '@/features/medicine/hooks';
 import { formatFollowUp } from '@/lib/utils';
 import QRCodeLib from 'qrcode';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSidebar } from '@/contexts/sidebar-context';
 import { DefaultTemplate } from '@/features/prescription-templates/templates/DefaultTemplate';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 
 type FormData = z.infer<typeof prescriptionSchema>;
 const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '', instructions: '' };
@@ -62,6 +64,8 @@ function NewPrescriptionForm() {
   const [ccItems, setCcItems] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [followUpPreset, setFollowUpPreset] = useState('');
+  const [showPatientDetails, setShowPatientDetails] = useState(false);
+  const [patientDetail, setPatientDetail] = useState<any>(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
   const handleFollowUpPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -240,6 +244,17 @@ function NewPrescriptionForm() {
     }
   }, [watchPatientId, patients]);
 
+  const fetchPatientDetail = useCallback(async () => {
+    if (!selectedPatient?.id) return;
+    try {
+      const res = await api.get(`/patients/${selectedPatient.id}`);
+      setPatientDetail(res.data.data);
+      setShowPatientDetails(true);
+    } catch {
+      toast.error('Failed to load patient details');
+    }
+  }, [selectedPatient]);
+
   const onSubmit = async (data: FormData) => {
     try {
       const rx = await create.mutateAsync({
@@ -371,9 +386,14 @@ function NewPrescriptionForm() {
                     )}
                   </div>
                 </div>
-                <button type="button" onClick={() => { setValue('patientId', ''); setSelectedPatient(null); }} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button type="button" onClick={fetchPatientDetail} className="p-2 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors" title="View Patient Details">
+                    <Eye className="h-5 w-5" />
+                  </button>
+                  <button type="button" onClick={() => { setValue('patientId', ''); setSelectedPatient(null); }} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
             ) : (
               <div className={cn("relative rounded-xl", errors.patientId ? "ring-2 ring-red-500" : "")}>
@@ -882,6 +902,97 @@ function NewPrescriptionForm() {
           </div>
         </div>
       )}
+
+      {/* Patient Detail Dialog */}
+      <Dialog open={showPatientDetails} onOpenChange={setShowPatientDetails}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Patient Details</DialogTitle>
+          </DialogHeader>
+          {!patientDetail ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+            </div>
+          ) : (
+            <div className="space-y-5 animate-fade-in">
+              {/* Header */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full gradient-primary shadow-glow flex items-center justify-center text-white font-bold text-2xl shrink-0">
+                  {patientDetail.fullName?.charAt(0) || '?'}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{patientDetail.fullName}</h2>
+                  <p className="text-sm text-muted-foreground font-mono">{patientDetail.patientId || '—'}</p>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                    {patientDetail.createdAt && (
+                      <span>Registered {new Date(patientDetail.createdAt).toLocaleDateString()}</span>
+                    )}
+                    {patientDetail._count && (
+                      <>
+                        <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+                        <span>{patientDetail._count.prescriptions || 0} Rx · {patientDetail._count.appointments || 0} Appts</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Grid — matches patients/[id] pattern */}
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: User, label: 'Age / Gender', value: `${patientDetail.age || '?'} yrs · ${patientDetail.gender?.charAt(0) || '?'}` },
+                  { icon: Droplets, label: 'Blood Group', value: patientDetail.bloodGroup?.replace(/_/g, ' ') || '—' },
+                  { icon: Weight, label: 'Weight', value: patientDetail.weight ? `${patientDetail.weight} kg` : '—' },
+                  { icon: Ruler, label: 'Height', value: patientDetail.height ? `${patientDetail.height} cm` : '—' },
+                  { icon: Phone, label: 'Phone', value: patientDetail.phone || '—' },
+                  { icon: MapPin, label: 'Address', value: patientDetail.address || '—' },
+                  { icon: Phone, label: 'Emergency Contact', value: patientDetail.emergencyContact || '—' },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-900/50">
+                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                      <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Medical Section */}
+              {(patientDetail.medicalHistory || patientDetail.allergies || patientDetail.previousDiseases) && (
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    <Stethoscope className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    Medical Information
+                  </h4>
+                  <div className="space-y-3">
+                    {patientDetail.medicalHistory && (
+                      <div className="rounded-xl p-3 bg-gray-50 dark:bg-gray-900/50">
+                        <p className="text-xs text-muted-foreground mb-1">Medical History</p>
+                        <p className="text-sm text-gray-900 dark:text-white">{patientDetail.medicalHistory}</p>
+                      </div>
+                    )}
+                    {patientDetail.allergies && (
+                      <div className="rounded-xl p-3 bg-gray-50 dark:bg-gray-900/50">
+                        <p className="text-xs text-muted-foreground mb-1">Allergies</p>
+                        <Badge variant="destructive" className="rounded-lg">{patientDetail.allergies}</Badge>
+                      </div>
+                    )}
+                    {patientDetail.previousDiseases && (
+                      <div className="rounded-xl p-3 bg-gray-50 dark:bg-gray-900/50">
+                        <p className="text-xs text-muted-foreground mb-1">Previous Diseases</p>
+                        <p className="text-sm text-gray-900 dark:text-white">{patientDetail.previousDiseases}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-4 sm:bottom-8 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 z-50 flex items-center justify-center gap-1 sm:gap-2 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-2xl sm:rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800 overflow-x-auto">
