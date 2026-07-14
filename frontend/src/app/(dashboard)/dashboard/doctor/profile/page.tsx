@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/lib/axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -11,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { DEGREES, SPECIALIZATIONS } from '@/lib/constants';
+import { doctorProfileSchema, chamberSlotSchema, type DoctorProfileFormData } from '@/features/doctors/schema';
 import {
   User, Mail, Phone, Award, Stethoscope, Building2, MapPin,
   FileText, Clock, Save, Image as ImageIcon, Calendar, X, Plus, Pencil, CheckCircle, XCircle, DollarSign,
@@ -19,70 +22,147 @@ import {
 const DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 type Profile = Record<string, any>;
-type Section = 'personal' | 'professional' | 'clinic' | 'fees' | null;
 
 export default function DoctorProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editingSection, setEditingSection] = useState<Section>(null);
-  const [form, setForm] = useState<Profile>({});
+  const [dialog, setDialog] = useState<'profile' | 'schedule' | null>(null);
+
+  const form = useForm<DoctorProfileFormData>({
+    resolver: zodResolver(doctorProfileSchema),
+    defaultValues: {
+      fullName: '',
+      phone: '',
+      degree: [],
+      specialization: [],
+      bmdcRegNo: '',
+      clinicName: '',
+      clinicAddress: '',
+      chamberSchedule: [],
+      feesNewVisit: '' as any,
+      feesFollowUp: '' as any,
+    },
+  });
+
+  const { fields, append, remove, update } = useFieldArray({
+    control: form.control,
+    name: 'chamberSchedule',
+  });
 
   useEffect(() => {
     api.get('/doctors/profile').then((r) => {
       const p = r.data.data;
-
       let schedule = p.chamberSchedule;
       if (!schedule || typeof schedule === 'string') {
         try { schedule = JSON.parse(schedule || '[]'); } catch { schedule = []; }
       }
       setProfile({ ...p, chamberSchedule: schedule });
-      initForm({ ...p, chamberSchedule: schedule });
+      form.reset({
+        fullName: p.fullName || '',
+        phone: p.phone || '',
+        degree: Array.isArray(p.degree) ? p.degree : [],
+        specialization: Array.isArray(p.specialization) ? p.specialization : [],
+        bmdcRegNo: p.bmdcRegNo || '',
+        clinicName: p.clinicName || '',
+        clinicAddress: p.clinicAddress || '',
+        chamberSchedule: schedule,
+      feesNewVisit: p.feesNewVisit ?? '',
+      feesFollowUp: p.feesFollowUp ?? '',
+      });
     }).catch(() => toast.error('Failed to load profile')).finally(() => setLoading(false));
   }, []);
 
-  const initForm = (p: Profile) => {
-    setForm({
-      fullName: p.fullName || '',
-      phone: p.phone || '',
-      degree: Array.isArray(p.degree) ? p.degree : [],
-      specialization: Array.isArray(p.specialization) ? p.specialization : [],
-      bmdcRegNo: p.bmdcRegNo || '',
-      clinicName: p.clinicName || '',
-      clinicAddress: p.clinicAddress || '',
-      chamberSchedule: p.chamberSchedule || [],
-      feesNewVisit: p.feesNewVisit || '',
-      feesFollowUp: p.feesFollowUp || '',
-    });
+  const openProfileDialog = () => {
+    if (profile) {
+      form.reset({
+        fullName: profile.fullName || '',
+        phone: profile.phone || '',
+        degree: Array.isArray(profile.degree) ? profile.degree : [],
+        specialization: Array.isArray(profile.specialization) ? profile.specialization : [],
+        bmdcRegNo: profile.bmdcRegNo || '',
+        clinicName: profile.clinicName || '',
+        clinicAddress: profile.clinicAddress || '',
+        chamberSchedule: profile.chamberSchedule || [],
+        feesNewVisit: profile.feesNewVisit ?? '',
+        feesFollowUp: profile.feesFollowUp ?? '',
+      });
+    }
+    setDialog('profile');
   };
 
-  const openSection = (section: Section) => {
-    if (profile) initForm(profile);
-    setEditingSection(section);
+  const openScheduleDialog = () => {
+    if (profile) {
+      form.reset({
+        fullName: profile.fullName || '',
+        phone: profile.phone || '',
+        degree: Array.isArray(profile.degree) ? profile.degree : [],
+        specialization: Array.isArray(profile.specialization) ? profile.specialization : [],
+        bmdcRegNo: profile.bmdcRegNo || '',
+        clinicName: profile.clinicName || '',
+        clinicAddress: profile.clinicAddress || '',
+        chamberSchedule: profile.chamberSchedule || [],
+        feesNewVisit: profile.feesNewVisit ?? '',
+        feesFollowUp: profile.feesFollowUp ?? '',
+      });
+    }
+    setDialog('schedule');
   };
 
   const cancelEdit = () => {
-    if (profile) initForm(profile);
-    setEditingSection(null);
+    if (profile) {
+      form.reset({
+        fullName: profile.fullName || '',
+        phone: profile.phone || '',
+        degree: Array.isArray(profile.degree) ? profile.degree : [],
+        specialization: Array.isArray(profile.specialization) ? profile.specialization : [],
+        bmdcRegNo: profile.bmdcRegNo || '',
+        clinicName: profile.clinicName || '',
+        clinicAddress: profile.clinicAddress || '',
+        chamberSchedule: profile.chamberSchedule || [],
+        feesNewVisit: profile.feesNewVisit ?? '',
+        feesFollowUp: profile.feesFollowUp ?? '',
+      });
+    }
+    form.clearErrors();
+    setDialog(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveProfile = async (data: DoctorProfileFormData) => {
     setSaving(true);
     try {
-      const { data } = await api.put('/doctors/profile', form);
-      let schedule = data.data.chamberSchedule;
+      const res = await api.put('/doctors/profile', data);
+      let schedule = res.data.data.chamberSchedule;
       if (!schedule || typeof schedule === 'string') {
         try { schedule = JSON.parse(schedule || '[]'); } catch { schedule = []; }
       }
-      setProfile({ ...data.data, chamberSchedule: schedule });
-      setEditingSection(null);
+      setProfile({ ...res.data.data, chamberSchedule: schedule });
+      setDialog(null);
       toast.success('Profile updated');
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
+  };
+
+  const onSubmitProfile = (data: DoctorProfileFormData) => saveProfile(data);
+
+  const onSubmitSchedule = (data: DoctorProfileFormData) => {
+    if (data.chamberSchedule.length === 0) {
+      form.setError('chamberSchedule', { message: 'Add at least one schedule slot' });
+      return;
+    }
+    for (const [i, slot] of data.chamberSchedule.entries()) {
+      const r = chamberSlotSchema.safeParse(slot);
+      if (!r.success) {
+        const err = r.error.errors[0];
+        const path = `chamberSchedule.${i}.${err.path[0]}` as any;
+        form.setError(path, { message: err.message });
+        return;
+      }
+    }
+    saveProfile(data);
   };
 
   const handleRemove = async (field: string) => {
@@ -108,18 +188,8 @@ export default function DoctorProfilePage() {
     }
   };
 
-  const updateSchedule = (idx: number, field: string, value: string) => {
-    const s = [...(form.chamberSchedule || [])];
-    s[idx] = { ...s[idx], [field]: value };
-    setForm((f: any) => ({ ...f, chamberSchedule: s }));
-  };
-
   const addSlot = () => {
-    setForm((f: any) => ({ ...f, chamberSchedule: [...(f.chamberSchedule || []), { day: '', startTime: '', endTime: '' }] }));
-  };
-
-  const removeSlot = (idx: number) => {
-    setForm((f: any) => ({ ...f, chamberSchedule: (f.chamberSchedule || []).filter((_: any, i: number) => i !== idx) }));
+    append({ day: '', startTime: '', endTime: '' });
   };
 
   if (loading) {
@@ -149,7 +219,7 @@ export default function DoctorProfilePage() {
       </div>
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{value || '—'}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{value || '\u2014'}</p>
       </div>
     </div>
   );
@@ -202,14 +272,10 @@ export default function DoctorProfilePage() {
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {(profile?.specialization || []).join(', ') || 'General Practitioner'}
-                {profile?.degree?.length > 0 && <span className="hidden sm:inline ml-1">· {profile?.degree?.join(', ')}</span>}
+                {profile?.degree?.length > 0 && <span className="hidden sm:inline ml-1">\u00B7 {profile?.degree?.join(', ')}</span>}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openSection('personal')}
-            >
+            <Button variant="outline" size="sm" onClick={openProfileDialog}>
               <Pencil className="h-4 w-4 mr-2" />
               Edit Profile
             </Button>
@@ -220,11 +286,11 @@ export default function DoctorProfilePage() {
       {/* Info Cards */}
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { key: 'personal', section: 'personal' as const, icon: <User />, title: 'Personal', subtitle: 'Contact details', rows: () => (<>{infoRow(<Mail />, 'Email', profile?.user?.email)}{infoRow(<Phone />, 'Phone', profile?.phone)}</>) },
-          { key: 'professional', section: 'professional' as const, icon: <Award />, title: 'Professional', subtitle: 'Credentials & expertise', rows: () => (<>{infoRow(<Award />, 'Degree', (profile?.degree || []).join(', '))}{infoRow(<Stethoscope />, 'Specialization', (profile?.specialization || []).join(', '))}{infoRow(<FileText />, 'BMDC Reg No', profile?.bmdcRegNo)}</>) },
-          { key: 'clinic', section: 'clinic' as const, icon: <Building2 />, title: 'Clinic', subtitle: 'Practice location', rows: () => (<>{infoRow(<Building2 />, 'Clinic Name', profile?.clinicName)}{infoRow(<MapPin />, 'Address', profile?.clinicAddress)}</>) },
-          { key: 'fees', section: 'fees' as const, icon: <DollarSign />, title: 'Consultation Fees', subtitle: 'New & follow-up visit', rows: () => (<>{infoRow(<DollarSign />, 'New Visit', profile?.feesNewVisit ? `BDT ${profile.feesNewVisit}` : '—')}{infoRow(<DollarSign />, 'Follow-up Visit', profile?.feesFollowUp ? `BDT ${profile.feesFollowUp}` : '—')}</>) },
-          { key: 'schedule', section: 'clinic' as const, icon: <Calendar />, title: 'Schedule', subtitle: 'Chamber hours', rows: () => (
+          { icon: <User />, title: 'Personal', subtitle: 'Contact details', rows: () => (<>{infoRow(<Mail />, 'Email', profile?.user?.email)}{infoRow(<Phone />, 'Phone', profile?.phone)}</>) },
+          { icon: <Award />, title: 'Professional', subtitle: 'Credentials & expertise', rows: () => (<>{infoRow(<Award />, 'Degree', (profile?.degree || []).join(', '))}{infoRow(<Stethoscope />, 'Specialization', (profile?.specialization || []).join(', '))}{infoRow(<FileText />, 'BMDC Reg No', profile?.bmdcRegNo)}</>) },
+          { icon: <Building2 />, title: 'Clinic', subtitle: 'Practice location', rows: () => (<>{infoRow(<Building2 />, 'Clinic Name', profile?.clinicName)}{infoRow(<MapPin />, 'Address', profile?.clinicAddress)}</>) },
+          { icon: <DollarSign />, title: 'Consultation Fees', subtitle: 'New & follow-up visit', rows: () => (<>{infoRow(<DollarSign />, 'New Visit', profile?.feesNewVisit ? `BDT ${profile.feesNewVisit}` : '\u2014')}{infoRow(<DollarSign />, 'Follow-up Visit', profile?.feesFollowUp ? `BDT ${profile.feesFollowUp}` : '\u2014')}</>) },
+          { icon: <Calendar />, title: 'Schedule', subtitle: 'Chamber hours', rows: () => (
             <div className="space-y-2">
               {(profile?.chamberSchedule || []).length === 0 ? (
                 <p className="text-sm text-muted-foreground">No schedule added</p>
@@ -235,20 +301,23 @@ export default function DoctorProfilePage() {
                       <Clock className="h-4 w-4 text-gray-500" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">{slot.day || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{slot.day || '\u2014'}</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {slot.startTime && slot.endTime
                           ? `${formatTime(slot.startTime)} - ${formatTime(slot.endTime)}`
-                          : '—'}
+                          : '\u2014'}
                       </p>
                     </div>
                   </div>
                 ))
               )}
+              <Button variant="outline" size="sm" onClick={openScheduleDialog} className="mt-2">
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit Schedule
+              </Button>
             </div>
           )},
         ].map((card) => (
-          <Card key={card.key} className="premium-card-static group">
+          <Card key={card.title} className="premium-card-static group">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-5">
                 <div className="flex items-center gap-3">
@@ -260,9 +329,6 @@ export default function DoctorProfilePage() {
                     <p className="text-xs text-muted-foreground">{card.subtitle}</p>
                   </div>
                 </div>
-                <button onClick={() => openSection(card.section)} className="p-2 rounded-lg text-muted-foreground hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all opacity-0 group-hover:opacity-100">
-                  <Pencil className="h-4 w-4" />
-                </button>
               </div>
               <div className="space-y-4">{card.rows()}</div>
             </CardContent>
@@ -272,7 +338,6 @@ export default function DoctorProfilePage() {
 
       {/* Bottom Row */}
       <div className="grid gap-5 md:grid-cols-1">
-        {/* Brand Assets */}
         <Card className="premium-card-static">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-5">
@@ -377,130 +442,212 @@ export default function DoctorProfilePage() {
         </Card>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingSection} onOpenChange={(v) => { if (!v) cancelEdit(); }}>
-        <DialogContent className="sm:max-w-xl rounded-2xl max-h-[90vh] overflow-y-auto">
+      {/* Unified Profile Edit Dialog */}
+      <Dialog open={dialog === 'profile'} onOpenChange={(v) => { if (!v) cancelEdit(); }}>
+        <DialogContent className="sm:max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingSection === 'personal' && 'Edit Personal Information'}
-              {editingSection === 'professional' && 'Edit Professional Details'}
-              {editingSection === 'clinic' && 'Edit Clinic Information'}
-              {editingSection === 'fees' && 'Edit Consultation Fees'}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {editingSection === 'personal' && 'Update your contact details'}
-              {editingSection === 'professional' && 'Update your credentials'}
-              {editingSection === 'clinic' && 'Update your practice information'}
-              {editingSection === 'fees' && 'Set your consultation charges'}
-            </p>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <p className="text-sm text-muted-foreground">Update your personal, professional, clinic, and fee information</p>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {editingSection === 'personal' && (
-              <div className="space-y-4">
+          {Object.keys(form.formState.errors).length > 0 && (
+            <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 flex items-start gap-3">
+              <div className="text-sm font-semibold text-red-800 dark:text-red-300">
+                Please fix the following errors:
+                <ul className="mt-1 list-disc list-inside text-xs font-normal">
+                  {Object.entries(form.formState.errors).map(([key, err]) => (
+                    <li key={key}>{err?.message as string || key}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-6">
+            {/* Personal */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <User className="h-4 w-4 text-blue-600" />
+                Personal Information
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Full Name</Label>
-                  <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="h-11 premium-input" placeholder="Dr. John Doe" />
+                  <Input {...form.register('fullName')} className="h-11 premium-input" placeholder="Dr. John Doe" />
+                  {form.formState.errors.fullName && (
+                    <p className="text-xs text-red-500">{form.formState.errors.fullName.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Phone</Label>
-                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-11 premium-input" placeholder="+880 1XXX-XXXXXX" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Email</Label>
-                  <Input value={profile?.user?.email || ''} disabled className="h-11 premium-input bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed" />
-                  <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                  <Input {...form.register('phone')} className="h-11 premium-input" placeholder="+880 1XXX-XXXXXX" />
+                  {form.formState.errors.phone && (
+                    <p className="text-xs text-red-500">{form.formState.errors.phone.message}</p>
+                  )}
                 </div>
               </div>
-            )}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Email</Label>
+                <Input value={profile?.user?.email || ''} disabled className="h-11 premium-input bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed" />
+                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+              </div>
+            </div>
 
-            {editingSection === 'professional' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <MultiSelect label="Degree" options={DEGREES} value={form.degree || []} onChange={(v) => setForm({ ...form, degree: v })} placeholder="Select degrees..." />
-                  <MultiSelect label="Specialization" options={SPECIALIZATIONS} value={form.specialization || []} onChange={(v) => setForm({ ...form, specialization: v })} placeholder="Select specializations..." />
+            <hr className="border-gray-100 dark:border-gray-800" />
+
+            {/* Professional */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Award className="h-4 w-4 text-purple-600" />
+                Professional Details
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <MultiSelect label="Degree" options={DEGREES} value={form.watch('degree')} onChange={(v) => form.setValue('degree', v, { shouldValidate: true })} placeholder="Select degrees..." />
+                  {form.formState.errors.degree && (
+                    <p className="text-xs text-red-500">{form.formState.errors.degree.message || 'At least one degree is required'}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">BMDC Reg No</Label>
-                  <Input value={form.bmdcRegNo} onChange={(e) => setForm({ ...form, bmdcRegNo: e.target.value })} disabled={!!profile?.isProfileComplete} className="h-11 premium-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="A-12345" />
-                  {!!profile?.isProfileComplete && <p className="text-xs text-muted-foreground">BMDC number cannot be changed after profile completion</p>}
+                  <MultiSelect label="Specialization" options={SPECIALIZATIONS} value={form.watch('specialization')} onChange={(v) => form.setValue('specialization', v, { shouldValidate: true })} placeholder="Select specializations..." />
+                  {form.formState.errors.specialization && (
+                    <p className="text-xs text-red-500">{form.formState.errors.specialization.message || 'At least one specialization is required'}</p>
+                  )}
                 </div>
               </div>
-            )}
-
-            {editingSection === 'clinic' && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Clinic Name</Label>
-                  <Input value={form.clinicName} onChange={(e) => setForm({ ...form, clinicName: e.target.value })} className="h-11 premium-input" placeholder="City Medical Center" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Chamber Address</Label>
-                  <textarea value={form.clinicAddress} onChange={(e) => setForm({ ...form, clinicAddress: e.target.value })} className="premium-input w-full rounded-xl border border-input bg-white dark:bg-gray-900 px-3 py-2.5 text-sm resize-none" rows={3} placeholder="123, Main Street, Dhaka" />
-                </div>
-                <div className="pt-2 border-t border-gray-100 dark:border-gray-800/50">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Chamber Schedule</h4>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" onClick={addSlot}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Add Slot
-                    </Button>
-                  </div>
-                  <div className="space-y-2.5">
-                    {(form.chamberSchedule || []).map((slot: any, idx: number) => (
-                      <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                        <select value={slot.day} onChange={(e) => updateSchedule(idx, 'day', e.target.value)} className="premium-input h-9 px-2.5 text-sm bg-white dark:bg-gray-900 sm:flex-1 rounded-lg">
-                          <option value="">Select day</option>
-                          {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                        <div className="flex items-center gap-2">
-                          <input type="time" value={slot.startTime} onChange={(e) => updateSchedule(idx, 'startTime', e.target.value)} className="premium-input h-9 px-2.5 text-sm flex-1 rounded-lg" />
-                          <span className="text-xs text-muted-foreground shrink-0">to</span>
-                          <input type="time" value={slot.endTime} onChange={(e) => updateSchedule(idx, 'endTime', e.target.value)} className="premium-input h-9 px-2.5 text-sm flex-1 rounded-lg" />
-                        </div>
-                        <button type="button" onClick={() => removeSlot(idx)} className="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0">
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">BMDC Reg No</Label>
+                <Input {...form.register('bmdcRegNo')} className="h-11 premium-input" placeholder="A-12345" />
+                {form.formState.errors.bmdcRegNo && (
+                  <p className="text-xs text-red-500">{form.formState.errors.bmdcRegNo.message}</p>
+                )}
               </div>
-            )}
+            </div>
 
-            {editingSection === 'fees' && (
-              <div className="space-y-4">
+            <hr className="border-gray-100 dark:border-gray-800" />
+
+            {/* Clinic */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-emerald-600" />
+                Clinic Information
+              </h4>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Clinic Name</Label>
+                <Input {...form.register('clinicName')} className="h-11 premium-input" placeholder="City Medical Center" />
+                {form.formState.errors.clinicName && (
+                  <p className="text-xs text-red-500">{form.formState.errors.clinicName.message}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Chamber Address</Label>
+                <textarea {...form.register('clinicAddress')} className="premium-input w-full rounded-xl border border-input bg-white dark:bg-gray-900 px-3 py-2.5 text-sm resize-none" rows={3} placeholder="123, Main Street, Dhaka" />
+                {form.formState.errors.clinicAddress && (
+                  <p className="text-xs text-red-500">{form.formState.errors.clinicAddress.message}</p>
+                )}
+              </div>
+            </div>
+
+            <hr className="border-gray-100 dark:border-gray-800" />
+
+            {/* Fees */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-amber-600" />
+                Consultation Fees
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">New Visit Fee (BDT)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={form.feesNewVisit}
-                    onChange={(e) => setForm({ ...form, feesNewVisit: e.target.value })}
-                    className="h-11 premium-input"
-                    placeholder="e.g. 500"
-                  />
+                  <Input type="number" min={0} {...form.register('feesNewVisit')} className="h-11 premium-input" placeholder="e.g. 500" />
+                  {form.formState.errors.feesNewVisit && (
+                    <p className="text-xs text-red-500">{form.formState.errors.feesNewVisit.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Follow-up Visit Fee (BDT)</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={form.feesFollowUp}
-                    onChange={(e) => setForm({ ...form, feesFollowUp: e.target.value })}
-                    className="h-11 premium-input"
-                    placeholder="e.g. 300"
-                  />
+                  <Input type="number" min={0} {...form.register('feesFollowUp')} className="h-11 premium-input" placeholder="e.g. 300" />
+                  {form.formState.errors.feesFollowUp && (
+                    <p className="text-xs text-red-500">{form.formState.errors.feesFollowUp.message}</p>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
 
             <div className="flex items-center gap-3 pt-2">
               <Button type="submit" disabled={saving} className="h-11 flex-1 gradient-primary text-white shadow-glow hover:opacity-90">
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button type="button" variant="outline" onClick={cancelEdit} className="h-11">
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Edit Dialog */}
+      <Dialog open={dialog === 'schedule'} onOpenChange={(v) => { if (!v) cancelEdit(); }}>
+        <DialogContent className="sm:max-w-xl rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Chamber Schedule</DialogTitle>
+            <p className="text-sm text-muted-foreground">Set your weekly chamber hours</p>
+          </DialogHeader>
+
+          <form onSubmit={form.handleSubmit(onSubmitSchedule)} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Weekly Schedule</h4>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={addSlot}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Slot
+              </Button>
+            </div>
+
+            {(form.formState.errors.chamberSchedule as any)?.message && (
+              <p className="text-xs text-red-500">{(form.formState.errors.chamberSchedule as any).message || 'Add at least one schedule slot'}</p>
+            )}
+
+            <div className="space-y-2.5">
+              {fields.map((field, idx) => (
+                <div key={field.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                  <div className="sm:flex-1">
+                    <select {...form.register(`chamberSchedule.${idx}.day`)} className="premium-input h-9 px-2.5 text-sm bg-white dark:bg-gray-900 w-full rounded-lg">
+                      <option value="">Select day</option>
+                      {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    {(form.formState.errors.chamberSchedule as any)?.[idx]?.day && (
+                      <p className="text-xs text-red-500 mt-0.5">{(form.formState.errors.chamberSchedule as any)[idx]?.day?.message as string}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <input type="time" {...form.register(`chamberSchedule.${idx}.startTime`)} className="premium-input h-9 px-2.5 text-sm flex-1 rounded-lg" />
+                      {(form.formState.errors.chamberSchedule as any)?.[idx]?.startTime && (
+                        <p className="text-xs text-red-500 mt-0.5">{(form.formState.errors.chamberSchedule as any)[idx]?.startTime?.message as string}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0">to</span>
+                    <div>
+                      <input type="time" {...form.register(`chamberSchedule.${idx}.endTime`)} className="premium-input h-9 px-2.5 text-sm flex-1 rounded-lg" />
+                      {(form.formState.errors.chamberSchedule as any)?.[idx]?.endTime && (
+                        <p className="text-xs text-red-500 mt-0.5">{(form.formState.errors.chamberSchedule as any)[idx]?.endTime?.message as string}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => remove(idx)} className="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button type="submit" disabled={saving} className="h-11 flex-1 gradient-primary text-white shadow-glow hover:opacity-90">
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? 'Saving...' : 'Save Schedule'}
               </Button>
               <Button type="button" variant="outline" onClick={cancelEdit} className="h-11">
                 Cancel
