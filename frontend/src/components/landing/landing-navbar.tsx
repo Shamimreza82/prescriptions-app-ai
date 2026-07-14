@@ -69,7 +69,7 @@ export default function LandingNavbar() {
             <div className="w-9 h-9 rounded-xl gradient-primary shadow-glow flex items-center justify-center">
               <Stethoscope className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gradient">Prescribe Pro</span>
+            <span className="text-lg font-bold text-gradient">MediCloud</span>
           </Link>
 
           <div className="flex items-center gap-3">

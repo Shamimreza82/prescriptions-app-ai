@@ -17,7 +17,7 @@ export default function CtaSection() {
               Ready to transform your practice?
             </h2>
             <p className="text-lg text-blue-100 max-w-xl mx-auto mb-8">
-              Join thousands of healthcare professionals who trust Prescribe Pro.
+              Join thousands of healthcare professionals who trust MediCloud.
               Get started free — no credit card required.
             </p>
             <Link href="/auth/register">

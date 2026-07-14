@@ -138,7 +138,7 @@ export const generatePrescriptionPDF = async (data: {
     tryImg(data.doctor.clinicLogo, lx + CONTENT_W - PX(48), 0, PX(48));
     if (data.doctor.clinicLogo) {
       doc.fontSize(PX(8)).font(FONT_BOLD).fillColor('#000')
-        .text('Forwarded by PRESMANAGE', lx + CONTENT_W - PX(60), PX(50), { width: PX(60), align: 'right' });
+        .text('Forwarded by MEDICLOUD', lx + CONTENT_W - PX(60), PX(50), { width: PX(60), align: 'right' });
       doc.fontSize(PX(9)).font(FONT_REG).fillColor('#000')
         .text(`Rx: ${data.prescriptionNo}`, lx + CONTENT_W - PX(60), PX(64), { width: PX(60), align: 'right' })
         .text(dateStr, lx + CONTENT_W - PX(60), PX(74), { width: PX(60), align: 'right' });
@@ -146,7 +146,7 @@ export const generatePrescriptionPDF = async (data: {
     } else {
       doc.roundedRect(lx + CONTENT_W - PX(48), 0, PX(40), PX(40), PX(6)).fill('#000');
       doc.fill('#fff').fontSize(PX(10)).font(FONT_BOLD).text('RX', lx + CONTENT_W - PX(40), PX(14), { width: PX(24), align: 'center' });
-      doc.fill('#000').fontSize(PX(8)).font(FONT_BOLD).text('Forwarded by PRESMANAGE', lx + CONTENT_W - PX(60), PX(42), { width: PX(60), align: 'right' });
+      doc.fill('#000').fontSize(PX(8)).font(FONT_BOLD).text('Forwarded by MEDICLOUD', lx + CONTENT_W - PX(60), PX(42), { width: PX(60), align: 'right' });
       doc.fontSize(PX(9)).font(FONT_REG).fillColor('#000')
         .text(`Rx: ${data.prescriptionNo}`, lx + CONTENT_W - PX(60), PX(56), { width: PX(60), align: 'right' })
         .text(dateStr, lx + CONTENT_W - PX(60), PX(66), { width: PX(60), align: 'right' });

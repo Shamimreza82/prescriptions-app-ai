@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Mail, Phone, MapPin, Send, Check } from 'lucide-react';
 
 const contactInfo = [
-  { icon: Mail, label: 'Email', value: 'support@prescribepro.com', href: 'mailto:support@prescribepro.com' },
+  { icon: Mail, label: 'Email', value: 'support@medicloud.app', href: 'mailto:support@medicloud.app' },
   { icon: Phone, label: 'Phone', value: '+1 (555) 123-4567', href: 'tel:+15551234567' },
   { icon: MapPin, label: 'Address', value: '123 Healthcare Ave, Medical District, NY 10001', href: null },
 ];

@@ -15,7 +15,7 @@ const highlights = [
   {
     title: 'Our Mission',
     content:
-      'Prescribe Pro was built to simplify healthcare management. We empower doctors and clinics with modern digital tools that reduce paperwork, minimize errors, and let them focus on what matters most — patient care.',
+      'MediCloud was built to simplify healthcare management. We empower doctors and clinics with modern digital tools that reduce paperwork, minimize errors, and let them focus on what matters most — patient care.',
   },
   {
     title: 'Who We Serve',
@@ -25,7 +25,7 @@ const highlights = [
   {
     title: 'Why Choose Us',
     content:
-      'Unlike generic practice management software, Prescribe Pro is purpose-built for the modern healthcare environment. We combine powerful features with an intuitive interface, enterprise-grade security, and dedicated support.',
+      'Unlike generic practice management software, MediCloud is purpose-built for the modern healthcare environment. We combine powerful features with an intuitive interface, enterprise-grade security, and dedicated support.',
   },
 ];
 
@@ -41,7 +41,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white animate-fade-in">
             About{' '}
-            <span className="text-gradient">Prescribe Pro</span>
+            <span className="text-gradient">MediCloud</span>
           </h1>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto animate-slide-up">
             Empowering healthcare professionals with modern tools to streamline practice management and improve patient care.
@@ -93,7 +93,7 @@ export default function AboutPage() {
                 Start your journey today
               </h2>
               <p className="text-lg text-blue-100 max-w-xl mx-auto mb-8">
-                Join the growing community of healthcare professionals using Prescribe Pro.
+                Join the growing community of healthcare professionals using MediCloud.
               </p>
               <Link href="/auth/register">
                 <Button size="lg" className="h-12 px-8 rounded-xl bg-white text-blue-700 hover:bg-blue-50 shadow-lg text-base font-semibold">

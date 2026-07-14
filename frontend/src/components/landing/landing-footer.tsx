@@ -18,7 +18,7 @@ export default function LandingFooter() {
             <div className="w-8 h-8 rounded-xl gradient-primary shadow-glow flex items-center justify-center">
               <Stethoscope className="h-4 w-4 text-white" />
             </div>
-            <span className="text-base font-bold text-gradient">Prescribe Pro</span>
+            <span className="text-base font-bold text-gradient">MediCloud</span>
           </Link>
 
           <nav className="flex items-center gap-6">
@@ -36,7 +36,7 @@ export default function LandingFooter() {
 
         <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800/50">
           <p className="text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Prescribe Pro. All rights reserved.
+            &copy; {new Date().getFullYear()} MediCloud. All rights reserved.
           </p>
         </div>
       </div>

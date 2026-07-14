@@ -34,7 +34,7 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
                 <span className="text-gray-500 text-[10px] font-bold">RX</span>
               </div>
             )}
-            <p className="text-[8px] text-gray-400">Forwarded by PRESMANAGE</p>
+            <p className="text-[8px] text-gray-400">Forwarded by MEDICLOUD</p>
           </div>
         </div>
       </div>
@@ -180,7 +180,7 @@ export function MinimalTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
             {rx.doctor?.user?.email && <p>Email: {rx.doctor.user.email}</p>}
           </div>
           <div className="text-right">
-            <p className="font-bold text-gray-900">PRESMANAGE</p>
+            <p className="font-bold text-gray-900">MEDICLOUD</p>
             <p>Digitally Generated Prescription</p>
           </div>
         </div>

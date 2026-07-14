@@ -50,7 +50,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
                   </svg>
                 </div>
               )}
-              <p className="text-[9px] font-bold text-teal-700 dark:text-teal-400 tracking-wide uppercase">Forwarded by PRESMANAGE</p>
+              <p className="text-[9px] font-bold text-teal-700 dark:text-teal-400 tracking-wide uppercase">Forwarded by MEDICLOUD</p>
               <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 mt-1">Rx No: {rx.prescriptionNo}</p>
               <p className="text-[10px] text-gray-400 dark:text-gray-500">{formattedDate}</p>
             </div>
@@ -302,7 +302,7 @@ export function ModernTealTemplate({ prescription, qrDataUrl, blankPrint }: Pres
             {rx.doctor?.user?.email && <p>Email: {rx.doctor.user.email}</p>}
           </div>
           <div className="text-right">
-            <p className="font-bold text-teal-700 dark:text-teal-400">PRESMANAGE</p>
+            <p className="font-bold text-teal-700 dark:text-teal-400">MEDICLOUD</p>
             <p>Digitally Generated Prescription</p>
           </div>
         </div>

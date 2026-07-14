@@ -37,7 +37,7 @@ export default function LoginPage() {
       <div className="relative z-10 flex items-center justify-center py-24 sm:py-28 px-4 sm:px-8">
         <div className="w-full max-w-md animate-fade-in">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gradient">Prescribe Pro</h1>
+            <h1 className="text-3xl font-bold text-gradient">MediCloud</h1>
             <p className="text-muted-foreground mt-1.5 text-sm">Doctor Prescription Management System</p>
           </div>
 

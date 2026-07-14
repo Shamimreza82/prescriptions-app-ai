@@ -23,7 +23,7 @@ export const env = {
     url: process.env.DATABASE_URL || '',
   },
   platform: {
-    companyName: process.env.PLATFORM_COMPANY_NAME || 'Prescribe Pro',
+    companyName: process.env.PLATFORM_COMPANY_NAME || 'MediCloud',
     address: process.env.PLATFORM_ADDRESS || '',
     phone: process.env.PLATFORM_PHONE || '',
   },

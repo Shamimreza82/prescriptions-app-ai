@@ -6,7 +6,7 @@ import { ToastProvider } from '@/providers/toast-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Prescribe Pro - Doctor Prescription Management',
+  title: 'MediCloud - Doctor Prescription Management',
   description: 'Modern SaaS platform for doctors to manage patients and prescriptions',
 };
 

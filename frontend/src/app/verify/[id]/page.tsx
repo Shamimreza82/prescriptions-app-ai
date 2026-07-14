@@ -113,7 +113,7 @@ export default function VerifyPage() {
               )}
 
               <div className="pt-3 border-t border-gray-100 text-center">
-                <p className="text-[10px] text-gray-400">This is a digitally generated prescription verified through PRESMANAGE.</p>
+                <p className="text-[10px] text-gray-400">This is a digitally generated prescription verified through MEDICLOUD.</p>
               </div>
             </div>
           </div>

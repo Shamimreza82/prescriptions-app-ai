@@ -29,7 +29,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
               <span className="text-white text-[10px] font-bold">RX</span>
             </div>
           )}
-          <p className="text-[8px] font-bold text-black">Forwarded by PRESMANAGE</p>
+          <p className="text-[8px] font-bold text-black">Forwarded by MEDICLOUD</p>
           <p className="text-[10px] font-semibold text-black mt-1">Rx: {rx.prescriptionNo}</p>
           <p className="text-[10px] font-semibold text-black">{new Date(rx.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
           {rx.updatedAt && rx.updatedAt !== rx.createdAt && <p className="text-[9px] font-semibold text-black">Last update: {new Date(rx.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} · {new Date(rx.updatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>}
@@ -165,7 +165,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint }: Prescri
             {rx.doctor?.user?.email && <p>Email: {rx.doctor.user.email}</p>}
           </div>
           <div className="text-right">
-            <p className="font-bold text-black">PRESMANAGE</p>
+            <p className="font-bold text-black">MEDICLOUD</p>
             <p>Digitally Generated Prescription</p>
           </div>
         </div>

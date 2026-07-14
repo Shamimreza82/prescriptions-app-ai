@@ -228,7 +228,7 @@ export const Sidebar = () => {
                 {isAdmin ? <Shield className="h-5 w-5 text-white" /> : isMr ? <UserRound className="h-5 w-5 text-white" /> : isRec ? <Users className="h-5 w-5 text-white" /> : <Stethoscope className="h-5 w-5 text-white" />}
               </div>
               <div className="truncate">
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">Prescribe Pro</h1>
+                <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">MediCloud</h1>
                 <p className="text-xs text-muted-foreground truncate">{isAdmin ? 'Admin Portal' : isMr ? 'MR Portal' : isRec ? 'Reception Portal' : (user?.doctor?.clinicName || 'Doctor Portal')}</p>
               </div>
             </div>
