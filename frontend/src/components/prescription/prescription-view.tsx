@@ -100,7 +100,7 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50">
+<div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50 animate-fade-in">
         <div className="h-20 bg-white dark:bg-gray-950 border-b animate-pulse" />
         <div className="flex-1 p-6 space-y-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-white dark:bg-gray-900 rounded-2xl shadow-sm animate-pulse" />)}
@@ -113,12 +113,12 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
     return (
       <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50 items-center justify-center">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-soft p-8 text-center max-w-md">
-          <div className="w-16 h-16 bg-teal-50 dark:bg-teal-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FileText className="h-8 w-8 text-teal-600" />
+          <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <FileText className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Prescription not found</h2>
-          <p className="text-muted-foreground mb-6">The prescription you are looking for does not exist or has been removed.</p>
-          <Button onClick={() => router.push(backUrl)} className="bg-teal-600 hover:bg-teal-700">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Prescription not found</h2>
+          <p className="text-sm text-muted-foreground mb-6">The prescription you are looking for does not exist or has been removed.</p>
+          <Button variant="outline" onClick={() => router.push(backUrl)}>
             <ArrowLeft className="h-4 w-4 mr-2" />Back to Prescriptions
           </Button>
         </div>
@@ -136,7 +136,7 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
   });
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50">
+    <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-50/50 dark:bg-gray-950/50 animate-fade-in">
       <style>{`
         @page { size: A4; margin: 0; }
         ${blankPrint ? '@page { margin-top: 200px; }' : ''}
@@ -171,19 +171,19 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={() => router.push(backUrl)}
-                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+                className="rounded-xl"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Prescription #{rx.prescriptionNo}
                   </h1>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 dark:bg-teal-950/30 dark:text-teal-300 dark:border-teal-800">
+                  <span className="badge-gradient-purple inline-flex items-center gap-1.5">
                     <Stethoscope className="h-3 w-3" />
                     {rx.doctor?.specialization?.[0] || 'Medical Prescription'}
                   </span>
@@ -207,42 +207,46 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
               {showActions?.new && (
                 <Button
                   variant="outline"
+                  size="sm"
                   asChild
-                  className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+                  className="rounded-lg"
                 >
                   <Link href="/prescriptions/new">
-                    <Plus className="h-4 w-4 mr-2" />New
+                    <Plus className="h-4 w-4 mr-1" />New
                   </Link>
                 </Button>
               )}
               {showActions?.edit && (
                 <Button
                   variant="outline"
+                  size="sm"
                   asChild
-                  className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+                  className="rounded-lg"
                 >
                   <Link href={`/prescriptions/${prescriptionId}/edit`}>
-                    <Pencil className="h-4 w-4 mr-2" />Edit
+                    <Pencil className="h-4 w-4 mr-1" />Edit
                   </Link>
                 </Button>
               )}
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setBlankPrint(true)}
-                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+                className="rounded-lg"
               >
-                <Printer className="h-4 w-4 mr-2" />Pad Print
+                <Printer className="h-4 w-4 mr-1" />Pad Print
               </Button>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleDownloadPdf}
-                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+                className="rounded-lg"
               >
-                <Download className="h-4 w-4 mr-2" />Download PDF
+                <Download className="h-4 w-4 mr-1" />Download PDF
               </Button>
               <Button
                 onClick={() => window.print()}
-                className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20"
+                className="rounded-xl gradient-primary hover:opacity-90 text-white shadow-glow"
               >
                 <Printer className="h-4 w-4 mr-2" />Print
               </Button>
