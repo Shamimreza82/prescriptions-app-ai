@@ -14,12 +14,17 @@ import { z } from 'zod';
 import { AlertTriangle, Plus, Trash2, Search, X, User, Pill, FlaskConical, Activity, Eye, Phone, MapPin, Droplets, Ruler, Weight, Calendar, Stethoscope } from 'lucide-react';
 import { useMedicineSearch, useLabTestSearch, useIndicationSearch } from '@/features/medicine/hooks';
 import { formatFollowUp } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import QRCodeLib from 'qrcode';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useSidebar } from '@/contexts/sidebar-context';
 import { DefaultTemplate } from '@/features/prescription-templates/templates/DefaultTemplate';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
 
 type FormData = z.infer<typeof prescriptionSchema>;
 const emptyMedicine = { name: '', strength: '', form: '', dosage: '', frequency: '', duration: '', instructions: '' };
@@ -68,8 +73,7 @@ function NewPrescriptionForm() {
   const [patientDetail, setPatientDetail] = useState<any>(null);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
-  const handleFollowUpPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
+  const handleFollowUpPreset = (val: string) => {
     setFollowUpPreset(val);
     if (val) {
       const d = new Date();
@@ -299,21 +303,21 @@ function NewPrescriptionForm() {
   }, [showPreview, setIsCollapsed]);
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20 animate-fade-in">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button type="button" onClick={() => router.push('/prescriptions')} className="p-2.5 rounded-xl hover:bg-gray-200/50 dark:hover:bg-gray-800/50 transition-colors">
+            <Button variant="ghost" size="icon" type="button" onClick={() => router.push('/prescriptions')} className="rounded-xl">
               <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
+            </Button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">New Prescription</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">New Prescription</h1>
               <p className="text-sm text-gray-400">Create a new prescription for your patient</p>
             </div>
           </div>
-          <button type="button" onClick={() => setShowPreview(!showPreview)} className="text-xs font-bold text-teal-600 flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
+          <Button variant="outline" size="sm" type="button" onClick={() => setShowPreview(!showPreview)} className="text-xs font-bold text-teal-600 flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             {showPreview ? 'Hide' : 'Show'} Preview
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
         {/* ===== LEFT SIDE: Prescription Builder ===== */}
@@ -365,11 +369,11 @@ function NewPrescriptionForm() {
 
           {/* A. Patient Selection */}
           <section className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border-l-4 border-l-blue-400 border border-blue-200/30 dark:border-blue-800/30">
-            <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block flex items-center gap-2"><span className="w-1.5 h-5 bg-blue-500 rounded-full" />Patient <span className="text-red-500">*</span></label>
+            <Label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2"><span className="w-1.5 h-5 bg-blue-500 rounded-full" />Patient <span className="text-red-500">*</span></Label>
             {errors.patientId && <p className="text-xs text-red-500 mb-2">{errors.patientId.message as string}</p>}
             {watchPatientId && selectedPatient ? (
               <div className={cn("flex items-center gap-5", errors.patientId ? "p-3 rounded-xl ring-2 ring-red-500" : "")}>
-                <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 font-bold text-2xl shrink-0">
+                <div className="w-16 h-16 rounded-full gradient-primary shadow-glow flex items-center justify-center text-white font-bold text-2xl shrink-0">
                   {selectedPatient.fullName?.charAt(0) || '?'}
                 </div>
                 <div className="flex-1">
@@ -387,23 +391,23 @@ function NewPrescriptionForm() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button type="button" onClick={fetchPatientDetail} className="p-2 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors" title="View Patient Details">
+                  <Button variant="ghost" size="icon" type="button" onClick={fetchPatientDetail} className="rounded-lg" title="View Patient Details">
                     <Eye className="h-5 w-5" />
-                  </button>
-                  <button type="button" onClick={() => { setValue('patientId', ''); setSelectedPatient(null); }} className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  </Button>
+                  <Button variant="ghost" size="icon" type="button" onClick={() => { setValue('patientId', ''); setSelectedPatient(null); }}>
                     <X className="h-5 w-5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className={cn("relative rounded-xl", errors.patientId ? "ring-2 ring-red-500" : "")}>
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
+                <Input
                   placeholder="Search Patient (Name, ID or Mobile)..."
                   value={patientSearch}
                   onChange={(e) => { setPatientSearch(e.target.value); setShowPatientResults(true); }}
                   onFocus={() => setShowPatientResults(true)}
-                  className="w-full bg-gray-100 dark:bg-gray-800/50 border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none placeholder:text-gray-400"
+                  className="bg-gray-100 dark:bg-gray-800/50 border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none placeholder:text-gray-400"
                 />
                 {showPatientResults && (
                   <>
@@ -445,15 +449,15 @@ function NewPrescriptionForm() {
           </section>
 
           {/* B. Clinical Section */}
-          <Card className="border-l-4 border-l-teal-400">
+          <Card className="premium-card border-l-4 border-l-teal-400">
           <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                <Label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                   Chief Complaint / প্রধান সমস্যা
                   <span className="text-[10px] text-gray-400 font-normal">CC</span>
-                </label>
+                </Label>
               </div>
               <div className="relative" ref={ccDropdownRef}>
                 {ccItems.length > 0 && (
@@ -461,19 +465,19 @@ function NewPrescriptionForm() {
                     {ccItems.map((item, i) => (
                       <span key={i} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-lg text-xs font-bold border border-teal-100 dark:border-teal-800 flex items-center gap-1">
                         {item}
-                        <button type="button" onClick={() => removeCcItem(i)} className="hover:text-red-500">
+                        <Button variant="ghost" size="icon" type="button" onClick={() => removeCcItem(i)} className="h-auto w-auto p-0 hover:text-red-500">
                           <X className="w-3 h-3" />
-                        </button>
+                        </Button>
                       </span>
                     ))}
                   </div>
                 )}
-                <input
+                <Input
                   value={ccQuery}
                   onChange={(e) => handleCcInputChange(e.target.value)}
                   onFocus={() => ccQuery.length >= 2 && setShowCcDropdown(true)}
                   onKeyDown={handleCcKeyDown}
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                  className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
                   placeholder="Type a chief complaint and press Enter or select from suggestions..."
                 />
                 {showCcDropdown && ccQuery.length >= 2 && (
@@ -503,9 +507,9 @@ function NewPrescriptionForm() {
               </div>
               <div className="space-y-4 pt-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                  <Label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                     Diagnosis / রোগ নির্ণয়
-                  </label>
+                  </Label>
                 </div>
                 <textarea
                   {...register('diagnosis')}
@@ -516,31 +520,31 @@ function NewPrescriptionForm() {
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Vitals / ভাইটালস</label>
+                <Label className="text-sm font-bold text-gray-800 dark:text-gray-200">Vitals / ভাইটালস</Label>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">BP</p>
-                  <input {...register('bloodPressure')} placeholder="120/80" className="w-full bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none" />
+                  <Input {...register('bloodPressure')} placeholder="120/80" className="bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none border-0 shadow-none p-0 h-auto" />
                 </div>
                 <div className="bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Pulse</p>
                   <div className="flex items-center justify-center">
-                    <input {...register('pulseRate')} placeholder="72" className="w-12 bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none" />
+                    <Input {...register('pulseRate')} placeholder="72" className="w-12 bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none border-0 shadow-none p-0 h-auto" />
                     <span className="text-[10px] text-gray-400 font-normal ml-0.5">bpm</span>
                   </div>
                 </div>
                 <div className="bg-white dark:bg-gray-900 p-2.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 shadow-sm text-center">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">SpO2</p>
                   <div className="flex items-center justify-center">
-                    <input {...register('oxygenSaturation')} placeholder="98" className="w-10 bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none" />
+                    <Input {...register('oxygenSaturation')} placeholder="98" className="w-10 bg-transparent text-center font-bold text-teal-800 dark:text-teal-300 text-sm outline-none border-0 shadow-none p-0 h-auto" />
                     <span className="text-[10px] text-gray-400 font-normal">%</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-2">
-                <input {...register('temperature')} placeholder="Temp (°F)" className="flex-1 bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-full px-4 py-2 text-xs focus:ring-2 focus:ring-teal-500/30 focus:outline-none" />
-                <input {...register('symptoms')} placeholder="Symptom (জ্বর, কাশি)..." className="flex-[2] bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-full px-4 py-2 text-xs focus:ring-2 focus:ring-teal-500/30 focus:outline-none" />
+                <Input {...register('temperature')} placeholder="Temp (°F)" className="flex-1 bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-full px-4 py-2 text-xs focus:ring-2 focus:ring-teal-500/30 focus:outline-none" />
+                <Input {...register('symptoms')} placeholder="Symptom (জ্বর, কাশি)..." className="flex-[2] bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-full px-4 py-2 text-xs focus:ring-2 focus:ring-teal-500/30 focus:outline-none" />
               </div>
             </div>
           </div>
@@ -573,14 +577,14 @@ function NewPrescriptionForm() {
                     <div key={field.id} className="bg-gray-50/50 dark:bg-gray-800/30 rounded-xl p-2.5 sm:p-3 space-y-2 border border-gray-100 dark:border-gray-700/50">
                 <div className="grid grid-cols-12 gap-2 sm:gap-3 items-start">
                     <div className="col-span-12 sm:col-span-6 md:col-span-4 space-y-1.5">
-                      <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></label>
+                      <Label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Medicine <span className="text-red-500">*</span></Label>
                       <div className="relative" ref={activeMedIndex === i ? medDropdownRef : undefined}>
-                        <input
+                        <Input
                           value={activeMedIndex === i ? medQuery : watch(`medicines.${i}.name`)}
                           onChange={(e) => handleMedInputChange(i, e.target.value)}
                           onFocus={() => { setActiveMedIndex(i); setMedQuery(watch(`medicines.${i}.name`)); }}
                           placeholder="Type Brand or Generic name..."
-                          className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.name && 'border-red-500')}
+                          className={cn("bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.name && 'border-red-500')}
                         />
                         <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         {activeMedIndex === i && medQuery.length >= 2 && (
@@ -627,12 +631,12 @@ function NewPrescriptionForm() {
                       {errors.medicines?.[i]?.name && <p className="text-xs text-red-500">{errors.medicines[i]?.name?.message}</p>}
                     </div>
                   <div className="col-span-6 sm:col-span-4 md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength <span className="text-red-500">*</span></label>
-                    <input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
+                    <Label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Strength <span className="text-red-500">*</span></Label>
+                    <Input {...register(`medicines.${i}.strength`)} placeholder="665mg" className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-semibold" />
                   </div>
                   <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Dose <span className="text-red-500">*</span></label>
-                    <input list={`dosage-suggestions-${i}`} {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
+                    <Label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Dose <span className="text-red-500">*</span></Label>
+                    <Input list={`dosage-suggestions-${i}`} {...register(`medicines.${i}.dosage`)} placeholder="1+0+1" className={cn("bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold tracking-widest", errors.medicines?.[i]?.dosage && 'border-red-500')} />
                     <datalist id={`dosage-suggestions-${i}`}>
                       <option value="1+0+0" />
                       <option value="0+0+1" />
@@ -652,15 +656,15 @@ function NewPrescriptionForm() {
                     {errors.medicines?.[i]?.dosage && <p className="text-xs text-red-500">{errors.medicines[i]?.dosage?.message}</p>}
                   </div>
                   <div className="col-span-12 sm:col-span-4 md:col-span-2 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq</label>
-                    <input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
+                    <Label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Freq</Label>
+                    <Input list={`freq-suggestions-${i}`} {...register(`medicines.${i}.frequency`)} placeholder="সকাল + রাত" className={cn("bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none", errors.medicines?.[i]?.frequency && 'border-red-500')} />
                     <datalist id={`freq-suggestions-${i}`}>
                       <option value="OD (Once daily / দৈনিক ১ বার)" />
                       <option value="BD (Twice daily / দৈনিক ২ বার)" />
                       <option value="TDS (Three times daily / দৈনিক ৩ বার)" />
                       <option value="QID (Four times daily / দৈনিক ৪ বার)" />
                       <option value="HS (At bedtime / রাত্রে)" />
-                      <option value="PRN (As needed / প্রয়োজন মত)" />
+                      <option value="PRN (As needed / প্রয়োজন মত)" />
                       <option value="Stat (Immediately)" />
                       <option value="সকাল" />
                       <option value="দুপুর" />
@@ -694,8 +698,8 @@ function NewPrescriptionForm() {
                     {errors.medicines?.[i]?.frequency && <p className="text-xs text-red-500">{errors.medicines[i]?.frequency?.message}</p>}
                   </div>
                   <div className="col-span-6 sm:col-span-3 md:col-span-1 space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days <span className="text-red-500">*</span></label>
-                    <input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("w-full bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
+                    <Label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Days <span className="text-red-500">*</span></Label>
+                    <Input list={`duration-suggestions-${i}`} {...register(`medicines.${i}.duration`)} placeholder="7" className={cn("bg-gray-50 dark:bg-gray-800/50 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none text-center font-bold", errors.medicines?.[i]?.duration && 'border-red-500')} />
                     <datalist id={`duration-suggestions-${i}`}>
                       <option value="3 Days" />
                       <option value="5 Days" />
@@ -713,14 +717,14 @@ function NewPrescriptionForm() {
                   </div>
                   <div className="col-span-6 sm:col-span-3 md:col-span-1 flex items-end justify-end pt-1.5">
                     {medFields.length > 1 && (
-                      <button type="button" onClick={() => removeMed(i)} className="p-3 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border border-transparent hover:border-red-200">
+                      <Button variant="ghost" size="icon" type="button" onClick={() => removeMed(i)} className="text-gray-400 hover:text-red-500">
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Instructions / নির্দেশনা</label>
+                    <Label className="text-[11px] font-bold text-gray-500 uppercase ml-1">Instructions / নির্দেশনা</Label>
                     <textarea
                       {...register(`medicines.${i}.instructions`)}
                       placeholder="e.g. Before meal, Avoid dairy..."
@@ -733,20 +737,20 @@ function NewPrescriptionForm() {
             </div>
 
             <div className="flex items-center gap-4 mt-6">
-              <button type="button" onClick={() => addMed(emptyMedicine)} className="flex-1 bg-teal-600 text-white font-bold h-[46px] rounded-xl shadow-md shadow-teal-600/20 hover:scale-[1.01] transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm">
+              <Button type="button" onClick={() => addMed(emptyMedicine)} className="flex-1 bg-teal-600 text-white font-bold h-[46px] rounded-xl shadow-md shadow-teal-600/20 hover:scale-[1.01] transition-transform active:scale-95 flex items-center justify-center gap-2 text-sm">
                 <Plus className="w-5 h-5" /> Add to Prescription
-              </button>
+              </Button>
             </div>
           </section>
 
           {/* Investigations */}
           <div className="space-y-4 pl-3 border-l-4 border-l-purple-400">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+              <Label className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <span className="w-1.5 h-5 bg-purple-500 rounded-full" />
                 Investigations / ল্যাব টেস্ট
                 <span className="text-[10px] text-gray-400 font-normal">Lab</span>
-              </label>
+              </Label>
             </div>
             <div className="relative" ref={invDropdownRef}>
               {invFields.filter((_, i) => watch(`investigations.${i}.name`)).length > 0 && (
@@ -757,21 +761,21 @@ function NewPrescriptionForm() {
                     return (
                       <span key={field.id} className="bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 px-3 py-1 rounded-lg text-xs font-bold border border-teal-100 dark:border-teal-800 flex items-center gap-1">
                         {name}
-                        <button type="button" onClick={() => removeInv(i)} className="hover:text-red-500">
+                        <Button variant="ghost" size="icon" type="button" onClick={() => removeInv(i)} className="h-auto w-auto p-0 hover:text-red-500">
                           <X className="w-3 h-3" />
-                        </button>
+                        </Button>
                       </span>
                     );
                   })}
                 </div>
               )}
-              <input
+              <Input
                 id="inv-input"
                 value={invQuery}
                 onChange={(e) => handleInvInputChange(e.target.value)}
                 onFocus={() => invQuery.length >= 2 && setShowInvDropdown(true)}
                 onKeyDown={handleInvKeyDown}
-                className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
+                className="bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none shadow-sm"
                 placeholder="Type a test name and press Enter or select from suggestions..."
               />
               {showInvDropdown && invQuery.length >= 2 && (
@@ -802,32 +806,32 @@ function NewPrescriptionForm() {
           </div>
 
           {/* F. Advice & Tests */}
-          <Card className="border-l-4 border-l-emerald-400">
+          <Card className="premium-card border-l-4 border-l-emerald-400">
           <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
-              <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Lifestyle Advice / পরামর্শ</label>
+              <Label className="text-sm font-bold text-gray-800 dark:text-gray-200">Lifestyle Advice / পরামর্শ</Label>
               <textarea {...register('advice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[80px] shadow-sm resize-none" placeholder="e.g. Walk 30 mins daily, Low salt diet..." />
             </div>
             <div className="space-y-4">
-              <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Food Advice / খাদ্য</label>
+              <Label className="text-sm font-bold text-gray-800 dark:text-gray-200">Food Advice / খাদ্য</Label>
               <textarea {...register('foodAdvice')} className="w-full bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none min-h-[60px] shadow-sm resize-none" placeholder="Dietary recommendations..." />
-              <label className="text-sm font-bold text-gray-800 dark:text-gray-200">Follow-up / পুনরায়</label>
+              <Label className="text-sm font-bold text-gray-800 dark:text-gray-200">Follow-up / পুনরায়</Label>
               <div className="flex gap-2">
-                <select
-                  value={followUpPreset}
-                  onChange={handleFollowUpPreset}
-                  className="w-1/2 bg-white dark:bg-gray-900 border border-gray-200/60 dark:border-gray-700/60 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500/30 focus:outline-none appearance-none"
-                >
-                  <option value="">Quick select</option>
-                  <option value="1">1 Day</option>
-                  <option value="2">2 Days</option>
-                  <option value="3">3 Days</option>
-                  <option value="7">7 Days</option>
-                  <option value="14">14 Days</option>
-                  <option value="30">1 Month</option>
-                </select>
-                <input
+                <Select value={followUpPreset} onValueChange={handleFollowUpPreset}>
+                  <SelectTrigger className="w-1/2">
+                    <SelectValue placeholder="Quick select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Day</SelectItem>
+                    <SelectItem value="2">2 Days</SelectItem>
+                    <SelectItem value="3">3 Days</SelectItem>
+                    <SelectItem value="7">7 Days</SelectItem>
+                    <SelectItem value="14">14 Days</SelectItem>
+                    <SelectItem value="30">1 Month</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
                   type="date"
                   {...register('followUpDate')}
                   onChange={(e) => {
@@ -937,7 +941,7 @@ function NewPrescriptionForm() {
                 </div>
               </div>
 
-              {/* Info Grid — matches patients/[id] pattern */}
+              {/* Info Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { icon: User, label: 'Age / Gender', value: `${patientDetail.age || '?'} yrs · ${patientDetail.gender?.charAt(0) || '?'}` },
@@ -997,15 +1001,15 @@ function NewPrescriptionForm() {
       {/* Bottom Action Bar */}
       <div className="fixed bottom-4 sm:bottom-8 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 z-50 flex items-center justify-center gap-1 sm:gap-2 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl rounded-2xl sm:rounded-full shadow-2xl p-2 border border-gray-200 dark:border-gray-800 overflow-x-auto">
 
-        <button type="button" onClick={saveDraft} className="text-gray-600 dark:text-gray-300 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+        <Button type="button" variant="ghost" onClick={saveDraft} className="text-gray-600 dark:text-gray-300 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
           <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
           <span className="hidden sm:inline">Save</span><span> Draft</span>
-        </button>
-        <button type="button" onClick={clearDraft} className="text-red-500 dark:text-red-400 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+        </Button>
+        <Button type="button" variant="ghost" onClick={clearDraft} className="text-red-500 dark:text-red-400 px-3 sm:px-6 py-3 flex items-center gap-1 sm:gap-2 hover:scale-105 transition-transform active:scale-95 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
           <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           Clear
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={create.isPending || !profileStatus.isVerified || !profileStatus.isProfileComplete || (subscription ? rxCount >= subscription.prescriptionLimit : false)}
           onClick={handleSubmit(onSubmit)}
@@ -1013,14 +1017,10 @@ function NewPrescriptionForm() {
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
           {create.isPending ? 'Creating...' : subscription && rxCount >= subscription.prescriptionLimit ? 'Limit Reached' : 'Finalize & Send'}
-        </button>
+        </Button>
       </div>
     </div>
   );
-}
-
-function cn(...classes: (string | false | undefined | null)[]) {
-  return classes.filter(Boolean).join(' ');
 }
 
 export default function Page() {
