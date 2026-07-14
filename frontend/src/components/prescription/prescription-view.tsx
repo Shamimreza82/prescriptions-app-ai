@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, Pencil, Plus, Calendar, FileText, Stethoscope } from 'lucide-react';
+import { ArrowLeft, Printer, Pencil, Plus, Calendar, FileText, Stethoscope, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { useEffect, useState } from 'react';
 import QRCodeLib from 'qrcode';
 import { TemplateSelector } from '@/features/prescription-templates/components/TemplateSelector';
@@ -58,6 +60,41 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
     setSelectedTemplateId(templateId);
     if (typeof window !== 'undefined') {
       localStorage.setItem(TEMPLATE_STORAGE_KEY, templateId);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    const element = document.getElementById('print-content');
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+      const ratio = pdfW / canvas.width;
+      const imgH = canvas.height * ratio;
+
+      let pos = 0;
+      pdf.addImage(imgData, 'PNG', 0, pos, pdfW, imgH);
+      let rem = imgH - pdfH;
+      while (rem > 0) {
+        pos -= pdfH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, pos, pdfW, imgH);
+        rem -= pdfH;
+      }
+
+      pdf.save(`prescription-${rx.prescriptionNo || rx.id}.pdf`);
+    } catch (error) {
+      console.error('PDF generation failed:', error);
     }
   };
 
@@ -195,6 +232,13 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
                 className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
               >
                 <Printer className="h-4 w-4 mr-2" />Pad Print
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleDownloadPdf}
+                className="rounded-xl border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:text-teal-800"
+              >
+                <Download className="h-4 w-4 mr-2" />Download PDF
               </Button>
               <Button
                 onClick={() => window.print()}
