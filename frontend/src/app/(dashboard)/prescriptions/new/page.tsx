@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -326,15 +327,20 @@ function NewPrescriptionForm() {
           {!profileStatus.loading && (!profileStatus.isVerified || !profileStatus.isProfileComplete) && (
             <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
                   {!profileStatus.isVerified ? 'Account Pending Approval' : 'Profile Incomplete'}
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
                   {!profileStatus.isVerified
-                    ?  'Please complete your profile before creating prescriptions. You must have a BMDC number added for verification.'
-                    : 'Your account has not been verified by an admin yet.'}
+                    ? 'Your account is pending admin verification. Please ensure your BMDC number is added.'
+                    : 'Complete your profile to start creating prescriptions.'}
                 </p>
+                <Link href="/dashboard/doctor/profile/edit">
+                  <Button size="sm" variant="outline" className="mt-3 h-8 text-xs border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/50">
+                    Complete Profile
+                  </Button>
+                </Link>
               </div>
             </div>
           )}

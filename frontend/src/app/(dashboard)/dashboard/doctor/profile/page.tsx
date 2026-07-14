@@ -6,14 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/lib/axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { MultiSelect } from '@/components/ui/multi-select';
-import { DEGREES, SPECIALIZATIONS } from '@/lib/constants';
 import { doctorProfileSchema, chamberSlotSchema, type DoctorProfileFormData } from '@/features/doctors/schema';
+import Link from 'next/link';
 import {
   User, Mail, Phone, Award, Stethoscope, Building2, MapPin,
   FileText, Clock, Save, Image as ImageIcon, Calendar, X, Plus, Pencil, CheckCircle, XCircle, DollarSign,
@@ -73,24 +71,6 @@ export default function DoctorProfilePage() {
     }).catch(() => toast.error('Failed to load profile')).finally(() => setLoading(false));
   }, []);
 
-  const openProfileDialog = () => {
-    if (profile) {
-      form.reset({
-        fullName: profile.fullName || '',
-        phone: profile.phone || '',
-        degree: Array.isArray(profile.degree) ? profile.degree : [],
-        specialization: Array.isArray(profile.specialization) ? profile.specialization : [],
-        bmdcRegNo: profile.bmdcRegNo || '',
-        clinicName: profile.clinicName || '',
-        clinicAddress: profile.clinicAddress || '',
-        chamberSchedule: profile.chamberSchedule || [],
-        feesNewVisit: profile.feesNewVisit ?? '',
-        feesFollowUp: profile.feesFollowUp ?? '',
-      });
-    }
-    setDialog('profile');
-  };
-
   const openScheduleDialog = () => {
     if (profile) {
       form.reset({
@@ -145,8 +125,6 @@ export default function DoctorProfilePage() {
       setSaving(false);
     }
   };
-
-  const onSubmitProfile = (data: DoctorProfileFormData) => saveProfile(data);
 
   const onSubmitSchedule = (data: DoctorProfileFormData) => {
     if (data.chamberSchedule.length === 0) {
@@ -275,10 +253,12 @@ export default function DoctorProfilePage() {
                 {profile?.degree?.length > 0 && <span className="hidden sm:inline ml-1">\u00B7 {profile?.degree?.join(', ')}</span>}
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={openProfileDialog}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
+            <Link href="/dashboard/doctor/profile/edit">
+              <Button variant="outline" size="sm">
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -442,154 +422,9 @@ export default function DoctorProfilePage() {
         </Card>
       </div>
 
-      {/* Unified Profile Edit Dialog */}
-      <Dialog open={dialog === 'profile'} onOpenChange={(v) => { if (!v) cancelEdit(); }}>
-        <DialogContent className="sm:max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Profile</DialogTitle>
-            <p className="text-sm text-muted-foreground">Update your personal, professional, clinic, and fee information</p>
-          </DialogHeader>
-
-          {Object.keys(form.formState.errors).length > 0 && (
-            <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 flex items-start gap-3">
-              <div className="text-sm font-semibold text-red-800 dark:text-red-300">
-                Please fix the following errors:
-                <ul className="mt-1 list-disc list-inside text-xs font-normal">
-                  {Object.entries(form.formState.errors).map(([key, err]) => (
-                    <li key={key}>{err?.message as string || key}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-6">
-            {/* Personal */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <User className="h-4 w-4 text-blue-600" />
-                Personal Information
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Full Name</Label>
-                  <Input {...form.register('fullName')} className="h-11 premium-input" placeholder="Dr. John Doe" />
-                  {form.formState.errors.fullName && (
-                    <p className="text-xs text-red-500">{form.formState.errors.fullName.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Phone</Label>
-                  <Input {...form.register('phone')} className="h-11 premium-input" placeholder="+880 1XXX-XXXXXX" />
-                  {form.formState.errors.phone && (
-                    <p className="text-xs text-red-500">{form.formState.errors.phone.message}</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Email</Label>
-                <Input value={profile?.user?.email || ''} disabled className="h-11 premium-input bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed" />
-                <p className="text-xs text-muted-foreground">Email cannot be changed</p>
-              </div>
-            </div>
-
-            <hr className="border-gray-100 dark:border-gray-800" />
-
-            {/* Professional */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Award className="h-4 w-4 text-purple-600" />
-                Professional Details
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <MultiSelect label="Degree" options={DEGREES} value={form.watch('degree')} onChange={(v) => form.setValue('degree', v, { shouldValidate: true })} placeholder="Select degrees..." />
-                  {form.formState.errors.degree && (
-                    <p className="text-xs text-red-500">{form.formState.errors.degree.message || 'At least one degree is required'}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <MultiSelect label="Specialization" options={SPECIALIZATIONS} value={form.watch('specialization')} onChange={(v) => form.setValue('specialization', v, { shouldValidate: true })} placeholder="Select specializations..." />
-                  {form.formState.errors.specialization && (
-                    <p className="text-xs text-red-500">{form.formState.errors.specialization.message || 'At least one specialization is required'}</p>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">BMDC Reg No</Label>
-                <Input {...form.register('bmdcRegNo')} className="h-11 premium-input" placeholder="A-12345" />
-                {form.formState.errors.bmdcRegNo && (
-                  <p className="text-xs text-red-500">{form.formState.errors.bmdcRegNo.message}</p>
-                )}
-              </div>
-            </div>
-
-            <hr className="border-gray-100 dark:border-gray-800" />
-
-            {/* Clinic */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-emerald-600" />
-                Clinic Information
-              </h4>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Clinic Name</Label>
-                <Input {...form.register('clinicName')} className="h-11 premium-input" placeholder="City Medical Center" />
-                {form.formState.errors.clinicName && (
-                  <p className="text-xs text-red-500">{form.formState.errors.clinicName.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Chamber Address</Label>
-                <textarea {...form.register('clinicAddress')} className="premium-input w-full rounded-xl border border-input bg-white dark:bg-gray-900 px-3 py-2.5 text-sm resize-none" rows={3} placeholder="123, Main Street, Dhaka" />
-                {form.formState.errors.clinicAddress && (
-                  <p className="text-xs text-red-500">{form.formState.errors.clinicAddress.message}</p>
-                )}
-              </div>
-            </div>
-
-            <hr className="border-gray-100 dark:border-gray-800" />
-
-            {/* Fees */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-amber-600" />
-                Consultation Fees
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">New Visit Fee (BDT)</Label>
-                  <Input type="number" min={0} {...form.register('feesNewVisit')} className="h-11 premium-input" placeholder="e.g. 500" />
-                  {form.formState.errors.feesNewVisit && (
-                    <p className="text-xs text-red-500">{form.formState.errors.feesNewVisit.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Follow-up Visit Fee (BDT)</Label>
-                  <Input type="number" min={0} {...form.register('feesFollowUp')} className="h-11 premium-input" placeholder="e.g. 300" />
-                  {form.formState.errors.feesFollowUp && (
-                    <p className="text-xs text-red-500">{form.formState.errors.feesFollowUp.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <Button type="submit" disabled={saving} className="h-11 flex-1 gradient-primary text-white shadow-glow hover:opacity-90">
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
-              <Button type="button" variant="outline" onClick={cancelEdit} className="h-11">
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* Schedule Edit Dialog */}
       <Dialog open={dialog === 'schedule'} onOpenChange={(v) => { if (!v) cancelEdit(); }}>
-        <DialogContent className="sm:max-w-xl rounded-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-xl rounded-2xl max-sm:w-[95vw] max-sm:!top-4 max-sm:!translate-y-0 max-sm:!left-1/2 max-sm:!-translate-x-1/2 max-sm:max-h-[90dvh] max-sm:overflow-y-auto max-sm:p-4">
           <DialogHeader>
             <DialogTitle>Edit Chamber Schedule</DialogTitle>
             <p className="text-sm text-muted-foreground">Set your weekly chamber hours</p>
