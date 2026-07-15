@@ -24,11 +24,11 @@ export default function EditPatientPage() {
     return <div className="text-center py-12 text-muted-foreground">Patient not found</div>;
   }
 
-  const initialData = {
+  const defaultValues = {
     fullName: patient.fullName,
     age: patient.age,
-    gender: patient.gender as 'MALE' | 'FEMALE' | 'OTHER',
-    bloodGroup: patient.bloodGroup as 'A_POSITIVE' | 'A_NEGATIVE' | 'B_POSITIVE' | 'B_NEGATIVE' | 'AB_POSITIVE' | 'AB_NEGATIVE' | 'O_POSITIVE' | 'O_NEGATIVE' | undefined,
+    gender: patient.gender as any,
+    bloodGroup: patient.bloodGroup as any,
     weight: patient.weight,
     height: patient.height,
     phone: patient.phone,
@@ -37,8 +37,6 @@ export default function EditPatientPage() {
     allergies: patient.allergies,
     previousDiseases: patient.previousDiseases,
     emergencyContact: patient.emergencyContact,
-    doctorId: patient.doctorId,
-    id: patient.id,
   };
 
   return (
@@ -52,7 +50,7 @@ export default function EditPatientPage() {
           <p className="text-sm text-muted-foreground font-mono">{patient.patientId}</p>
         </div>
       </div>
-      <PatientForm initialData={initialData} onSuccess={() => router.push('/patients')} />
+      <PatientForm mode="doctor" defaultValues={defaultValues} patientId={id} onSuccess={() => router.push('/patients')} />
     </div>
   );
 }

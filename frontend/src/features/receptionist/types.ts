@@ -25,6 +25,7 @@ export interface ReceptionistPatient {
   emergencyContact?: string;
   createdAt: string;
   _count?: { prescriptions: number; appointments: number };
+  prescriptions?: any[];
 }
 
 export interface CreatePatientInput {

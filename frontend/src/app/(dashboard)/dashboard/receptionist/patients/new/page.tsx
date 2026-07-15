@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { RecPatientForm } from '@/features/receptionist/components/RecPatientForm';
+import { PatientForm } from '@/features/patients/components/PatientForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -17,7 +17,7 @@ export default function RecNewPatientPage() {
         </Link>
         <h1 className="text-2xl font-bold">Add New Patient</h1>
       </div>
-      <RecPatientForm onSuccess={() => router.push('/dashboard/receptionist/patients')} />
+      <PatientForm mode="receptionist" onSuccess={() => router.push('/dashboard/receptionist/patients')} />
     </div>
   );
 }

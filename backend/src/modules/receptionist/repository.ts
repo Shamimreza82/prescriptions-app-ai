@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../../config/database';
-import { PaginationParams } from '../../utils/pagination';
+import { PaginationParams, PaginationParamsExtended } from '../../utils/pagination';
 
 export const findReceptionistByUserId = (userId: string) =>
   db.receptionist.findUnique({
@@ -38,7 +38,13 @@ export const findPatientsByDoctor = (doctorId: string, pagination: PaginationPar
 export const findPatientById = (id: string, doctorId: string) =>
   db.patient.findFirst({
     where: { id, doctorId },
-    include: { _count: { select: { appointments: true } } },
+    include: {
+      _count: { select: { appointments: true } },
+      prescriptions: {
+        orderBy: { createdAt: 'desc' },
+        include: { medicines: true, investigations: true },
+      },
+    },
   });
 
 export const createPatient = (data: any) =>
@@ -122,13 +128,18 @@ export const findTodayAppointments = (doctorId: string) => {
 export const countPrescriptionsByDoctor = (doctorId: string) =>
   db.prescription.count({ where: { doctorId } });
 
-export const findPrescriptionsByDoctor = (doctorId: string, pagination: PaginationParams) => {
+export const findPrescriptionsByDoctor = (doctorId: string, pagination: PaginationParamsExtended) => {
   const where: any = { doctorId };
   if (pagination.search) {
     where.OR = [
       { prescriptionNo: { contains: pagination.search, mode: 'insensitive' } },
       { patient: { fullName: { contains: pagination.search, mode: 'insensitive' } } },
     ];
+  }
+  if (pagination.dateFrom || pagination.dateTo) {
+    where.createdAt = {};
+    if (pagination.dateFrom) where.createdAt.gte = new Date(pagination.dateFrom);
+    if (pagination.dateTo) where.createdAt.lte = new Date(pagination.dateTo + 'T23:59:59.999Z');
   }
 
   return Promise.all([

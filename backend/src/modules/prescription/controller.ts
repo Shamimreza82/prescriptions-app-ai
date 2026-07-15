@@ -3,7 +3,21 @@ import { AuthRequest } from '../../types/express';
 import { sendSuccess, sendPaginated } from '../../utils/apiResponse';
 import { createAuditLog } from '../../utils/auditLogger';
 import * as prescriptionService from './service';
-import { generatePrescriptionPDF } from './pdf';
+import { generatePrescriptionPDF, PdfOptions } from './pdf';
+
+function parsePdfOptions(query: any): PdfOptions {
+  return {
+    showQRCode: query.showQRCode !== undefined ? query.showQRCode === 'true' : undefined,
+    showSignature: query.showSignature !== undefined ? query.showSignature === 'true' : undefined,
+    showLetterhead: query.showLetterhead !== undefined ? query.showLetterhead === 'true' : undefined,
+    showVitals: query.showVitals !== undefined ? query.showVitals === 'true' : undefined,
+    showDiagnosis: query.showDiagnosis !== undefined ? query.showDiagnosis === 'true' : undefined,
+    showGenericName: query.showGenericName !== undefined ? query.showGenericName === 'true' : undefined,
+    showInvestigations: query.showInvestigations !== undefined ? query.showInvestigations === 'true' : undefined,
+    showAdvice: query.showAdvice !== undefined ? query.showAdvice === 'true' : undefined,
+    showFoodAdvice: query.showFoodAdvice !== undefined ? query.showFoodAdvice === 'true' : undefined,
+  };
+}
 
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -64,7 +78,8 @@ export const downloadPdf = async (req: AuthRequest, res: Response, next: NextFun
   try {
     const rx = await prescriptionService.getPrescriptionById(req.params.id as string, req.user!.doctorId!);
     const pdfData = { ...rx, createdAt: rx.createdAt.toISOString(), updatedAt: rx.updatedAt?.toISOString() };
-    const pdf = await generatePrescriptionPDF(pdfData);
+    const pdfOpts = parsePdfOptions(req.query);
+    const pdf = await generatePrescriptionPDF(pdfData, pdfOpts);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=prescription-${rx.prescriptionNo}.pdf`);
     res.send(pdf);
@@ -77,7 +92,8 @@ export const printPdf = async (req: AuthRequest, res: Response, next: NextFuncti
   try {
     const rx = await prescriptionService.getPrescriptionById(req.params.id as string, req.user!.doctorId!);
     const pdfData = { ...rx, createdAt: rx.createdAt.toISOString(), updatedAt: rx.updatedAt?.toISOString() };
-    const pdf = await generatePrescriptionPDF(pdfData);
+    const pdfOpts = parsePdfOptions(req.query);
+    const pdf = await generatePrescriptionPDF(pdfData, pdfOpts);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename=prescription.pdf');
     res.send(pdf);

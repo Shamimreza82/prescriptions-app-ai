@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRecPatient } from '@/features/receptionist/hooks';
-import { RecPatientForm } from '@/features/receptionist/components/RecPatientForm';
+import { PatientForm } from '@/features/patients/components/PatientForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
@@ -49,7 +49,8 @@ export default function RecEditPatientPage() {
           <p className="text-sm text-muted-foreground">{patient.patientId} &middot; {patient.fullName}</p>
         </div>
       </div>
-      <RecPatientForm
+      <PatientForm
+        mode="receptionist"
         defaultValues={defaultValues}
         patientId={id}
         onSuccess={() => router.push('/dashboard/receptionist/patients')}

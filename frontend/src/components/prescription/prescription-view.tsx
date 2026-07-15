@@ -3,13 +3,16 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Printer, Pencil, Plus, Calendar, FileText, Stethoscope, Download } from 'lucide-react';
+import { ArrowLeft, Printer, Pencil, Plus, Calendar, FileText, Stethoscope, Download, Settings } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import QRCodeLib from 'qrcode';
 import { TemplateSelector } from '@/features/prescription-templates/components/TemplateSelector';
 import { getTemplateById, defaultTemplateId } from '@/features/prescription-templates/registry';
+import { SettingsPanel } from '@/features/prescription-templates/components/SettingsPanel';
+import { usePrescriptionOptions } from '@/features/prescription-templates/lib/usePrescriptionOptions';
+import { defaultOptions } from '@/features/prescription-templates/types';
 
 const TEMPLATE_STORAGE_KEY = 'prescription-template-preference';
 
@@ -30,6 +33,8 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [blankPrint, setBlankPrint] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(propDefaultId || defaultTemplateId);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { options, updateOption, resetOptions } = usePrescriptionOptions();
 
   useEffect(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
@@ -204,6 +209,15 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSettingsOpen(true)}
+                className="rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-teal-400"
+                title="Prescription Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
               {showActions?.new && (
                 <Button
                   variant="outline"
@@ -271,6 +285,7 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
                 prescription={rx}
                 qrDataUrl={qrDataUrl}
                 blankPrint={blankPrint}
+                options={options}
               />
             </div>
             <p className="text-center text-xs text-gray-400 mt-4">
@@ -279,6 +294,13 @@ export function PrescriptionView({ isLoading, prescription: rx, backUrl, prescri
           </div>
         </div>
       </div>
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        options={options}
+        onUpdate={updateOption}
+        onReset={resetOptions}
+      />
     </div>
   );
 }

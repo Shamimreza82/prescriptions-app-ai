@@ -17,7 +17,7 @@ export default function NewPatientPage() {
         </Link>
         <h1 className="text-2xl font-bold">Add New Patient</h1>
       </div>
-      <PatientForm onSuccess={() => router.push('/patients')} />
+      <PatientForm mode="doctor" onSuccess={() => router.push('/patients')} />
     </div>
   );
 }

@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { api } from '@/lib/axios';
-import { useQueryClient } from '@tanstack/react-query';
-import { patientKeys } from '../hooks';
-import { useAdminDoctors } from '@/features/dashboard/hooks';
+import { patientSchema } from '../schema';
+import { useCreatePatient, useUpdatePatient } from '../hooks';
+import { useCreateRecPatient, useUpdateRecPatient } from '@/features/receptionist/hooks';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 const BLOOD_GROUPS = [
@@ -24,103 +26,48 @@ const BLOOD_GROUPS = [
   { value: 'O_NEGATIVE', label: 'O-' },
 ];
 
+type FormData = z.infer<typeof patientSchema>;
+
 interface PatientFormProps {
+  mode: 'doctor' | 'receptionist';
   onSuccess?: () => void;
-  initialData?: Record<string, any>;
+  defaultValues?: FormData;
+  patientId?: string;
 }
 
-export const PatientForm = ({ onSuccess, initialData }: PatientFormProps) => {
-  const qc = useQueryClient();
-  const { data: doctors } = useAdminDoctors({ limit: 200 });
-  const isEdit = !!initialData;
-  const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+export const PatientForm = ({ mode, onSuccess, defaultValues, patientId }: PatientFormProps) => {
+  const createDoctor = useCreatePatient();
+  const updateDoctor = useUpdatePatient();
+  const createRec = useCreateRecPatient();
+  const updateRec = useUpdateRecPatient();
 
-  const [form, setForm] = useState({
-    fullName: '',
-    age: '',
-    gender: '',
-    bloodGroup: '',
-    weight: '',
-    height: '',
-    phone: '',
-    emergencyContact: '',
-    address: '',
-    medicalHistory: '',
-    allergies: '',
-    previousDiseases: '',
-    doctorId: '',
-  });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<FormData>({ resolver: zodResolver(patientSchema) });
 
   useEffect(() => {
-    if (initialData) {
-      setForm({
-        fullName: initialData.fullName || '',
-        age: initialData.age?.toString() || '',
-        gender: initialData.gender || '',
-        bloodGroup: initialData.bloodGroup || '',
-        weight: initialData.weight?.toString() || '',
-        height: initialData.height?.toString() || '',
-        phone: initialData.phone || '',
-        emergencyContact: initialData.emergencyContact || '',
-        address: initialData.address || '',
-        medicalHistory: initialData.medicalHistory || '',
-        allergies: initialData.allergies || '',
-        previousDiseases: initialData.previousDiseases || '',
-        doctorId: initialData.doctorId || '',
-      });
-    }
-  }, []);
+    if (defaultValues) reset(defaultValues);
+  }, [defaultValues, reset]);
 
-  const set = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
-    if (field === 'phone' && value.length > 11) {
-      setErrors(prev => ({ ...prev, phone: 'Phone number cannot exceed 11 characters' }));
-    }
-  };
+  const createMut = mode === 'doctor' ? createDoctor : createRec;
+  const updateMut = mode === 'doctor' ? updateDoctor : updateRec;
+  const isPending = createMut.isPending || updateMut.isPending;
 
-  const validate = () => {
-    const errs: Record<string, string> = {};
-    if (!form.fullName || form.fullName.length < 2) errs.fullName = 'Name must be at least 2 characters';
-    if (!form.age || isNaN(Number(form.age)) || Number(form.age) < 1) errs.age = 'Age must be a positive number';
-    if (!form.gender) errs.gender = 'Gender is required';
-    if (!form.phone || form.phone.length !== 11) errs.phone = 'Phone number must be exactly 11 characters';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const onSubmit = async () => {
-    if (!validate()) return;
-    setSaving(true);
+  const onSubmit = async (data: FormData) => {
     try {
-      const payload: Record<string, any> = {};
-      for (const key of Object.keys(form)) {
-        const val = form[key as keyof typeof form];
-        if (val !== '') {
-          if (key === 'age' || key === 'weight' || key === 'height') {
-            payload[key] = Number(val);
-          } else {
-            payload[key] = val;
-          }
-        }
-      }
-      if (isEdit && initialData?.id) {
-        await api.put(`/patients/${initialData.id}`, payload);
-        qc.invalidateQueries({ queryKey: patientKeys.all });
-        qc.invalidateQueries({ queryKey: patientKeys.detail(initialData.id) });
-        toast.success('Patient updated');
+      if (patientId) {
+        await updateMut.mutateAsync({ id: patientId, data });
       } else {
-        await api.post('/patients', payload);
-        qc.invalidateQueries({ queryKey: patientKeys.all });
-        toast.success('Patient created');
+        await createMut.mutateAsync(data);
       }
+      toast.success(patientId ? 'Patient updated successfully' : 'Patient added successfully');
       onSuccess?.();
-    } catch (e: any) {
+    } catch (e) {
       console.error(e);
-      toast.error(e.response?.data?.message || 'Failed to save patient');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -128,21 +75,21 @@ export const PatientForm = ({ onSuccess, initialData }: PatientFormProps) => {
     <div className="animate-fade-in">
       <Card>
         <CardContent className="pt-6">
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Full Name <span className="text-red-500">*</span></Label>
-                <Input placeholder="Enter full name" value={form.fullName} onChange={e => set('fullName', e.target.value)} />
-                {errors.fullName && <p className="text-xs text-red-500">{errors.fullName}</p>}
+                <Input {...register('fullName')} />
+                {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Age <span className="text-red-500">*</span></Label>
-                <Input type="number" placeholder="Enter age" value={form.age} onChange={e => set('age', e.target.value)} />
-                {errors.age && <p className="text-xs text-red-500">{errors.age}</p>}
+                <Input type="number" {...register('age')} />
+                {errors.age && <p className="text-xs text-red-500">{errors.age.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Gender <span className="text-red-500">*</span></Label>
-                <Select value={form.gender} onValueChange={v => set('gender', v)}>
+                <Select onValueChange={(v) => setValue('gender', v as any)} defaultValue={defaultValues?.gender}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="MALE">Male</SelectItem>
@@ -150,11 +97,11 @@ export const PatientForm = ({ onSuccess, initialData }: PatientFormProps) => {
                     <SelectItem value="OTHER">Other</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.gender && <p className="text-xs text-red-500">{errors.gender}</p>}
+                {errors.gender && <p className="text-xs text-red-500">{errors.gender.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Blood Group</Label>
-                <Select value={form.bloodGroup} onValueChange={v => set('bloodGroup', v)}>
+                <Select onValueChange={(v) => setValue('bloodGroup', v as any)} defaultValue={defaultValues?.bloodGroup}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
                     {BLOOD_GROUPS.map((bg) => (
@@ -165,58 +112,47 @@ export const PatientForm = ({ onSuccess, initialData }: PatientFormProps) => {
               </div>
               <div className="space-y-2">
                 <Label>Weight (kg)</Label>
-                <Input type="number" step="0.1" placeholder="e.g. 70" value={form.weight} onChange={e => set('weight', e.target.value)} />
+                <Input type="number" step="0.1" {...register('weight')} />
               </div>
               <div className="space-y-2">
                 <Label>Height (cm)</Label>
-                <Input type="number" step="0.1" placeholder="e.g. 175" value={form.height} onChange={e => set('height', e.target.value)} />
+                <Input type="number" step="0.1" {...register('height')} />
               </div>
               <div className="space-y-2">
-                <Label>Phone <span className="text-red-500">*</span></Label>
-                <Input placeholder="e.g. 01712345678" value={form.phone} onChange={e => set('phone', e.target.value)} />
-                {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+                <Label>Phone</Label>
+                <Input {...register('phone')} />
+                {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Emergency Contact</Label>
-                <Input placeholder="Enter emergency contact" value={form.emergencyContact} onChange={e => set('emergencyContact', e.target.value)} />
+                <Input {...register('emergencyContact')} />
               </div>
             </div>
 
-            {isEdit && doctors?.data && (
+            {mode === 'doctor' && (
               <div className="space-y-2">
-                <Label>Assigned Doctor</Label>
-                <Select value={form.doctorId} onValueChange={v => set('doctorId', v)}>
-                  <SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger>
-                  <SelectContent>
-                    {doctors.data.map((d: any) => (
-                      <SelectItem key={d.id} value={d.id}>{d.fullName} — {d.clinicName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Previous Diseases</Label>
+                <Textarea {...register('previousDiseases')} />
               </div>
             )}
 
             <div className="space-y-2">
               <Label>Address</Label>
-              <Textarea placeholder="Enter address" value={form.address} onChange={e => set('address', e.target.value)} />
+              <Textarea {...register('address')} />
             </div>
             <div className="space-y-2">
               <Label>Medical History</Label>
-              <Textarea placeholder="Enter medical history" value={form.medicalHistory} onChange={e => set('medicalHistory', e.target.value)} />
+              <Textarea {...register('medicalHistory')} />
             </div>
             <div className="space-y-2">
               <Label>Allergies</Label>
-              <Textarea placeholder="Enter allergies" value={form.allergies} onChange={e => set('allergies', e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Previous Diseases</Label>
-              <Textarea placeholder="Enter previous diseases" value={form.previousDiseases} onChange={e => set('previousDiseases', e.target.value)} />
+              <Textarea {...register('allergies')} />
             </div>
 
-            <Button onClick={onSubmit} disabled={saving} className="w-full">
-              {saving ? 'Saving...' : isEdit ? 'Update Patient' : 'Save Patient'}
+            <Button type="submit" disabled={isPending} className="w-full">
+              {isPending ? 'Saving...' : patientId ? 'Update Patient' : 'Save Patient'}
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>
