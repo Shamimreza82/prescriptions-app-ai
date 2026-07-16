@@ -2,6 +2,7 @@ import { AuthRequest } from '../../types/express';
 import { sendSuccess, sendPaginated } from '../../utils/apiResponse';
 import { catchAsync } from '../../utils/catchAsync';
 import { createAuditLog } from '../../utils/auditLogger';
+import { getRelativePath } from '../../middlewares/upload';
 import * as adminService from './service';
 import * as doctorService from '../doctor/service';
 
@@ -114,19 +115,19 @@ export const clearDoctorMrAssignments = catchAsync(async (req: AuthRequest, res)
 });
 
 export const uploadDoctorProfileImg = catchAsync(async (req: AuthRequest, res) => {
-  const result = await doctorService.uploadProfileImg(req.params.doctorId as string, req.file!.filename);
+  const result = await doctorService.uploadProfileImg(req.params.doctorId as string, getRelativePath(req.file!));
   await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'upload_profile_img' } });
   sendSuccess(res, { profileImg: result.profileImg });
 });
 
 export const uploadDoctorSignature = catchAsync(async (req: AuthRequest, res) => {
-  const result = await doctorService.uploadSignature(req.params.doctorId as string, req.file!.filename);
+  const result = await doctorService.uploadSignature(req.params.doctorId as string, getRelativePath(req.file!));
   await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'upload_signature' } });
   sendSuccess(res, { signatureImg: result.signatureImg });
 });
 
 export const uploadDoctorLogo = catchAsync(async (req: AuthRequest, res) => {
-  const result = await doctorService.uploadLogo(req.params.doctorId as string, req.file!.filename);
+  const result = await doctorService.uploadLogo(req.params.doctorId as string, getRelativePath(req.file!));
   await createAuditLog({ userId: req.user!.userId, action: 'UPDATE', entity: 'Doctor', entityId: req.params.doctorId as string, details: { action: 'upload_logo' } });
   sendSuccess(res, { clinicLogo: result.clinicLogo });
 });

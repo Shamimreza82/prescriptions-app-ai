@@ -16,6 +16,7 @@ import {
   User, Mail, Phone, Award, Stethoscope, Building2, MapPin,
   FileText, Clock, Save, Image as ImageIcon, Calendar, X, Plus, Pencil, CheckCircle, XCircle, DollarSign,
 } from 'lucide-react';
+import { getUploadUrl } from '@/lib/utils';
 
 const DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -218,7 +219,7 @@ export default function DoctorProfilePage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <div className="relative group/avatar w-16 h-16 shrink-0">
               {profile?.profileImg ? (
-                <img src={`http://localhost:5000/uploads/${profile.profileImg}`} alt="Profile" className="w-full h-full rounded-2xl object-cover" />
+                <img src={getUploadUrl(profile.profileImg)} alt="Profile" className="w-full h-full rounded-2xl object-cover" />
               ) : (
                 <div className="w-full h-full rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <span className="text-xl font-bold text-gray-600 dark:text-gray-300">{initials}</span>
@@ -334,7 +335,7 @@ export default function DoctorProfilePage() {
                 <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
                   {profile?.profileImg ? (
                     <>
-                      <img src={`http://localhost:5000/uploads/${profile.profileImg}`} alt="Profile" className="h-full w-full object-cover" />
+                      <img src={getUploadUrl(profile.profileImg)} alt="Profile" className="h-full w-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Label htmlFor="prof-img" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
                           Change
@@ -362,7 +363,7 @@ export default function DoctorProfilePage() {
                 <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
                   {profile?.signatureImg ? (
                     <>
-                      <img src={`http://localhost:5000/uploads/${profile.signatureImg}`} alt="Signature" className="h-full w-full object-contain p-2" />
+                      <img src={getUploadUrl(profile.signatureImg)} alt="Signature" className="h-full w-full object-contain p-2" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Label htmlFor="sig" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
                           Change
@@ -393,7 +394,7 @@ export default function DoctorProfilePage() {
                 <div className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 flex flex-col items-center justify-center gap-1 overflow-hidden transition-colors hover:border-gray-400 dark:hover:border-gray-500">
                   {profile?.clinicLogo ? (
                     <>
-                      <img src={`http://localhost:5000/uploads/${profile.clinicLogo}`} alt="Logo" className="h-full w-full object-contain p-2" />
+                      <img src={getUploadUrl(profile.clinicLogo)} alt="Logo" className="h-full w-full object-contain p-2" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Label htmlFor="logo" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30 transition-colors">
                           Change

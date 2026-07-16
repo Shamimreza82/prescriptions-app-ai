@@ -1,6 +1,7 @@
 import { NextFunction, Response } from 'express';
 import { AuthRequest } from '../../types/express';
 import { sendSuccess, sendPaginated } from '../../utils/apiResponse';
+import { getRelativePath } from '../../middlewares/upload';
 import * as doctorService from './service';
 
 export const getProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -30,8 +31,8 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
     }
     if (req.files) {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      if (files.signature?.[0]) data.signatureImg = files.signature[0].filename;
-      if (files.logo?.[0]) data.clinicLogo = files.logo[0].filename;
+      if (files.signature?.[0]) data.signatureImg = getRelativePath(files.signature[0]);
+      if (files.logo?.[0]) data.clinicLogo = getRelativePath(files.logo[0]);
     }
     const doctor = await doctorService.updateDoctorProfile(req.user!.doctorId!, data);
     sendSuccess(res, doctor);
@@ -42,7 +43,7 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
 
 export const uploadSignature = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await doctorService.uploadSignature(req.user!.doctorId!, req.file!.filename);
+    const result = await doctorService.uploadSignature(req.user!.doctorId!, getRelativePath(req.file!));
     sendSuccess(res, { signatureImg: result.signatureImg });
   } catch (error) {
     next(error);
@@ -51,7 +52,7 @@ export const uploadSignature = async (req: AuthRequest, res: Response, next: Nex
 
 export const uploadLogo = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await doctorService.uploadLogo(req.user!.doctorId!, req.file!.filename);
+    const result = await doctorService.uploadLogo(req.user!.doctorId!, getRelativePath(req.file!));
     sendSuccess(res, { clinicLogo: result.clinicLogo });
   } catch (error) {
     next(error);
@@ -78,7 +79,7 @@ export const removeLogo = async (req: AuthRequest, res: Response, next: NextFunc
 
 export const uploadProfileImg = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await doctorService.uploadProfileImg(req.user!.doctorId!, req.file!.filename);
+    const result = await doctorService.uploadProfileImg(req.user!.doctorId!, getRelativePath(req.file!));
     sendSuccess(res, { profileImg: result.profileImg });
   } catch (error) {
     next(error);

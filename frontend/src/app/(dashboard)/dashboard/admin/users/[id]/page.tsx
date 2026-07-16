@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ArrowLeft, Mail, Shield, Calendar, Clock, CheckCircle, XCircle, User, Building2, Stethoscope, FileText, Pill, Syringe, CreditCard, Activity, KeyRound, Eye, EyeOff, ImageIcon } from 'lucide-react';
+import { getUploadUrl } from '@/lib/utils';
 
 export default function AdminUserDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -210,7 +211,7 @@ export default function AdminUserDetailPage() {
                     <div className="relative group/upload aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
                       {doc.profileImg ? (
                         <>
-                          <img src={`http://localhost:5000/uploads/${doc.profileImg}`} alt="Profile" className="h-full w-full object-cover" />
+                          <img src={getUploadUrl(doc.profileImg)} alt="Profile" className="h-full w-full object-cover" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-1">
                             <Label htmlFor="admin-profile-img" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30">Change</Label>
                             <button onClick={() => handleRemove('profile-img')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500">Remove</button>
@@ -232,7 +233,7 @@ export default function AdminUserDetailPage() {
                     <div className="relative group/upload aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
                       {doc.signatureImg ? (
                         <>
-                          <img src={`http://localhost:5000/uploads/${doc.signatureImg}`} alt="Signature" className="h-full w-full object-contain p-2" />
+                          <img src={getUploadUrl(doc.signatureImg)} alt="Signature" className="h-full w-full object-contain p-2" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-1">
                             <Label htmlFor="admin-sig" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30">Change</Label>
                             <button onClick={() => handleRemove('signature')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500">Remove</button>
@@ -254,7 +255,7 @@ export default function AdminUserDetailPage() {
                     <div className="relative group/upload aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 overflow-hidden bg-gray-50 dark:bg-gray-900/50">
                       {doc.clinicLogo ? (
                         <>
-                          <img src={`http://localhost:5000/uploads/${doc.clinicLogo}`} alt="Logo" className="h-full w-full object-contain p-2" />
+                          <img src={getUploadUrl(doc.clinicLogo)} alt="Logo" className="h-full w-full object-contain p-2" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/upload:opacity-100 transition-opacity flex items-center justify-center gap-1">
                             <Label htmlFor="admin-logo" className="cursor-pointer text-[10px] text-white bg-white/20 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-white/30">Change</Label>
                             <button onClick={() => handleRemove('logo')} className="text-[10px] text-white bg-red-500/80 backdrop-blur-sm px-2 py-1 rounded-lg hover:bg-red-500">Remove</button>

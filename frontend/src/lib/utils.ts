@@ -4,6 +4,12 @@ import { differenceInDays, startOfDay } from 'date-fns';
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
+export const getUploadUrl = (path?: string | null) => {
+  if (!path) return '';
+  const base = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
+  return `${base}/uploads/${path}`;
+};
+
 export const formatDate = (d: string | Date) =>
   new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
