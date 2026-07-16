@@ -79,18 +79,18 @@ export const PatientForm = ({ mode, onSuccess, defaultValues, patientId }: Patie
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Full Name <span className="text-red-500">*</span></Label>
-                <Input {...register('fullName')} />
+                <Input placeholder="e.g. John Doe" {...register('fullName')} />
                 {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Age <span className="text-red-500">*</span></Label>
-                <Input type="number" {...register('age')} />
+                <Input type="number" placeholder="e.g. 30" {...register('age')} />
                 {errors.age && <p className="text-xs text-red-500">{errors.age.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Gender <span className="text-red-500">*</span></Label>
                 <Select onValueChange={(v) => setValue('gender', v as any)} defaultValue={defaultValues?.gender}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="MALE">Male</SelectItem>
                     <SelectItem value="FEMALE">Female</SelectItem>
@@ -102,7 +102,7 @@ export const PatientForm = ({ mode, onSuccess, defaultValues, patientId }: Patie
               <div className="space-y-2">
                 <Label>Blood Group</Label>
                 <Select onValueChange={(v) => setValue('bloodGroup', v as any)} defaultValue={defaultValues?.bloodGroup}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
                   <SelectContent>
                     {BLOOD_GROUPS.map((bg) => (
                       <SelectItem key={bg.value} value={bg.value}>{bg.label}</SelectItem>
@@ -112,41 +112,41 @@ export const PatientForm = ({ mode, onSuccess, defaultValues, patientId }: Patie
               </div>
               <div className="space-y-2">
                 <Label>Weight (kg)</Label>
-                <Input type="number" step="0.1" {...register('weight')} />
+                <Input type="number" step="0.1" placeholder="e.g. 65" {...register('weight')} />
               </div>
               <div className="space-y-2">
                 <Label>Height (cm)</Label>
-                <Input type="number" step="0.1" {...register('height')} />
+                <Input type="number" step="0.1" placeholder="e.g. 170" {...register('height')} />
               </div>
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input {...register('phone')} />
+                <Label>Phone <span className="text-red-500">*</span></Label>
+                <Input placeholder="e.g. 01712345678" {...register('phone')} />
                 {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Emergency Contact</Label>
-                <Input {...register('emergencyContact')} />
+                <Input placeholder="e.g. 01987654321" {...register('emergencyContact')} />
               </div>
             </div>
 
             {mode === 'doctor' && (
               <div className="space-y-2">
                 <Label>Previous Diseases</Label>
-                <Textarea {...register('previousDiseases')} />
+                <Textarea placeholder="Any pre-existing conditions..." {...register('previousDiseases')} />
               </div>
             )}
 
             <div className="space-y-2">
               <Label>Address</Label>
-              <Textarea {...register('address')} />
+              <Textarea placeholder="e.g. 123, Main Street, Dhaka" {...register('address')} />
             </div>
             <div className="space-y-2">
               <Label>Medical History</Label>
-              <Textarea {...register('medicalHistory')} />
+              <Textarea placeholder="Past illnesses, surgeries, treatments..." {...register('medicalHistory')} />
             </div>
             <div className="space-y-2">
               <Label>Allergies</Label>
-              <Textarea {...register('allergies')} />
+              <Textarea placeholder="Drug or food allergies..." {...register('allergies')} />
             </div>
 
             <Button type="submit" disabled={isPending} className="w-full">

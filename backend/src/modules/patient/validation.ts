@@ -7,7 +7,10 @@ export const createPatientSchema = z.object({
   bloodGroup: z.enum(['A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE', 'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE']).optional(),
   weight: z.number().positive().optional(),
   height: z.number().positive().optional(),
-  phone: z.string().min(5, 'Invalid phone number').optional(),
+  phone: z
+    .string()
+    .length(11, 'Phone number must be exactly 11 digits')
+    .regex(/^01[3-9]\d{8}$/, 'Please enter a valid Bangladeshi phone number (e.g., 01XXXXXXXXX)'),
   address: z.string().optional(),
   medicalHistory: z.string().optional(),
   allergies: z.string().optional(),

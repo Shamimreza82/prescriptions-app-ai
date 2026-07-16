@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/lib/axios';
 import { Lock, ArrowLeft, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
@@ -49,24 +51,27 @@ export default function ChangePasswordPage() {
     const regKey = field === 'current' ? 'currentPassword' as const : field === 'new' ? 'newPassword' as const : 'confirmPassword' as const;
     const showKey = field === 'current' ? 'current' as const : field === 'new' ? 'new' as const : 'confirm' as const;
     return (
-      <div>
-        <label className="block text-sm font-medium mb-1.5">{label} <span className="text-red-500">*</span></label>
+      <div className="space-y-2">
+        <Label>
+          {label} <span className="text-red-500">*</span>
+        </Label>
         <div className="relative">
-          <input
+          <Input
             type={showFields[showKey] ? 'text' : 'password'}
             {...register(regKey)}
-            className="premium-input w-full h-11 px-4 pr-11"
+            className="h-11 premium-input pr-11"
             placeholder={placeholder}
           />
           <button
             type="button"
+            tabIndex={-1}
             onClick={() => setShowFields((prev) => ({ ...prev, [showKey]: !prev[showKey] }))}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
             {showFields[showKey] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        {errors[regKey] && <p className="text-xs text-red-500 mt-1">{errors[regKey].message}</p>}
+        {errors[regKey] && <p className="text-xs text-red-500">{errors[regKey].message}</p>}
       </div>
     );
   };

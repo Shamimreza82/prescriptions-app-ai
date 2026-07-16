@@ -31,7 +31,7 @@ export default function EditPatientPage() {
     bloodGroup: patient.bloodGroup as any,
     weight: patient.weight,
     height: patient.height,
-    phone: patient.phone,
+    phone: patient.phone ?? '',
     address: patient.address,
     medicalHistory: patient.medicalHistory,
     allergies: patient.allergies,

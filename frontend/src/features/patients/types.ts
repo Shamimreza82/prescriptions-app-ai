@@ -27,7 +27,7 @@ export interface CreatePatientInput {
   bloodGroup?: string;
   weight?: number;
   height?: number;
-  phone?: string;
+  phone: string;
   address?: string;
   medicalHistory?: string;
   allergies?: string;

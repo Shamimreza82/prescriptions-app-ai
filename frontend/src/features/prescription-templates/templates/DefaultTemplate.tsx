@@ -52,7 +52,7 @@ export function DefaultTemplate({ prescription, qrDataUrl, blankPrint, options }
 
       {/* Letterhead */}
       {opts.showLetterhead && (
-        <div className="letterhead p-6 border-b-4 border-black grid grid-cols-2 items-start">
+        <div className="letterhead p-6 border-b-2 border-black grid grid-cols-2 items-start">
           <div>
             <p className={cn('font-extrabold text-black', opts.fontSize === 'large' ? 'text-3xl' : opts.fontSize === 'small' ? 'text-xl' : 'text-2xl')}>{docName}</p>
             {(rx.doctor?.degree || []).length > 0 && <p className="text-sm font-bold text-black">{(rx.doctor?.degree || []).join(', ')}</p>}
